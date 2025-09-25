@@ -1,0 +1,22 @@
+# Global owners
+* @RonoHenry
+
+# Frontend code
+/apps/frontend/ @RonoHenry
+/apps/frontend/src/components/ @RonoHenry
+/apps/frontend/src/pages/ @RonoHenry
+
+# Backend services
+/apps/design-service/ @RonoHenry
+/apps/analytics-service/ @RonoHenry
+/apps/user-service/ @RonoHenry
+/apps/project-service/ @RonoHenry
+/apps/marketplace-service/ @RonoHenry
+
+# Infrastructure and DevOps
+/infra/ @RonoHenry
+/.github/ @RonoHenry
+/docs/ @RonoHenry
+
+# Shared packages
+/packages/ @RonoHenry

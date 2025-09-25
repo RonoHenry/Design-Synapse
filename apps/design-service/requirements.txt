@@ -1,0 +1,43 @@
+# Web Framework
+fastapi==0.103.1           # Modern web framework
+uvicorn[standard]==0.23.2  # ASGI server
+python-multipart==0.0.6    # Form data parsing
+pydantic==2.3.0           # Data validation
+pydantic-settings==2.0.3  # Settings management
+email-validator==2.0.0.post2  # Email validation
+
+# Database
+sqlalchemy==2.0.21        # ORM
+alembic==1.12.0          # Database migrations
+psycopg2-binary==2.9.7   # PostgreSQL adapter
+redis==5.0.1             # Redis client
+
+# AI/ML
+tensorflow==2.13.0        # Machine learning framework
+torch==2.0.1             # PyTorch for deep learning
+transformers==4.33.2     # Hugging Face transformers
+opencv-python==4.8.0.76  # Computer vision
+scikit-learn==1.3.0      # Machine learning utilities
+numpy==1.24.3            # Numerical computations
+pandas==2.1.1            # Data manipulation
+
+# 3D Processing
+open3d==0.17.0           # 3D data processing
+trimesh==3.23.5          # 3D mesh processing
+pyrender==0.1.45         # 3D rendering
+
+# File Storage
+python-jose[cryptography]==3.3.0  # JWT
+passlib[bcrypt]==1.7.4    # Password hashing
+python-multipart==0.0.6   # File upload
+minio==7.1.17            # S3-compatible storage
+boto3==1.28.36           # AWS SDK
+
+# Monitoring
+prometheus-client==0.17.1 # Metrics
+sentry-sdk==1.31.0       # Error tracking
+python-json-logger==2.0.7 # JSON logging
+
+# Performance
+tenacity==8.2.3          # Retrying operations
+cachetools==5.3.1        # Caching
