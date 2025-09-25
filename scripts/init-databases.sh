@@ -37,18 +37,18 @@ for db in user marketplace design project analytics; do
         REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
         REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC;
         REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
-        
+
         GRANT ALL ON ALL TABLES IN SCHEMA public TO design_synapse_${db};
         GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO design_synapse_${db};
         GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO design_synapse_${db};
-        
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public
         GRANT ALL ON TABLES TO design_synapse_${db};
-        
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public
         GRANT ALL ON SEQUENCES TO design_synapse_${db};
-        
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public
         GRANT ALL ON FUNCTIONS TO design_synapse_${db};
 EOSQL
 done

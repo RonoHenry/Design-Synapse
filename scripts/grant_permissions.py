@@ -7,7 +7,7 @@ conn = psycopg2.connect(
     user="postgres",
     password="postgres",
     host="localhost",
-    port="5432"
+    port="5432",
 )
 
 # Set isolation level to AUTOCOMMIT
@@ -18,7 +18,7 @@ cur = conn.cursor()
 
 try:
     # Grant all privileges on user_roles table to design_synapse_user
-    cur.execute('GRANT ALL PRIVILEGES ON TABLE user_roles TO design_synapse_user')
+    cur.execute("GRANT ALL PRIVILEGES ON TABLE user_roles TO design_synapse_user")
     print("Successfully granted permissions on user_roles table")
 
 except Exception as e:

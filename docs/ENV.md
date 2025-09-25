@@ -196,11 +196,11 @@ class Settings(BaseSettings):
     postgres_user: str
     postgres_password: str
     postgres_db: str
-    
+
     # Service specific
     model_endpoint: str
     model_api_key: str
-    
+
     class Config:
         env_file = f".env.{env_name}"
 
@@ -239,7 +239,7 @@ def validate_environment():
         'MODEL_ENDPOINT',
         'AWS_ACCESS_KEY_ID'
     ]
-    
+
     missing = [var for var in required_vars if not os.getenv(var)]
     if missing:
         raise ValueError(f"Missing required environment variables: {missing}")
