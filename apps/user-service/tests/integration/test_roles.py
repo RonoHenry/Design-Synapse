@@ -1,6 +1,5 @@
-"""
-Tests for role-based access control functionality.
-"""
+"""Tests for role-based access control functionality."""
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -31,10 +30,12 @@ def override_dependency(db_session: Session):
 @pytest.fixture
 def admin_role(db_session: Session) -> Role:
     """Create an admin role for testing."""
-    role = Role(name="admin", description="Administrator role")
-    db_session.add(role)
-    db_session.commit()
-    db_session.refresh(role)
+    role = db_session.query(Role).filter_by(name="admin").first()
+    if not role:
+        role = Role(name="admin", description="Administrator role")
+        db_session.add(role)
+        db_session.commit()
+        db_session.refresh(role)
     return role
 
 
