@@ -1,12 +1,10 @@
-"""
-Authentication and authorization services.
-"""
+"""Authentication and authorization services for JWT token management."""
+
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from jose import JWTError, jwt
 from src.core.config import settings
-from src.models.user import User
 
 
 def create_access_token(
@@ -19,12 +17,13 @@ def create_access_token(
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-    to_encode.update({"exp": expire, "roles": roles if roles is not None else []})
+        expire = datetime.now(timezone.utc) + timedelta(minutes=60)
+    role_list = roles if roles is not None else []
+    to_encode.update({"exp": expire, "roles": role_list})
     encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
     )
     return encoded_jwt
 
@@ -53,18 +52,10 @@ def verify_token(token: str, credentials_exception) -> dict:
 def verify_refresh_token(token: str) -> dict:
     """Verify and decode a refresh token."""
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        return jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
         )
-        return payload
     except JWTError:
         raise
-
-
-# Install the required package
-try:
-    import jose
-except ImportError:
-    raise ImportError(
-        "The 'python-jose' package is not installed. Please install it by running 'pip install python-jose'."
-    )

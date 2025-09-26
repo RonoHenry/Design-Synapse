@@ -1,6 +1,5 @@
-"""
-Role model and role-related database models.
-"""
+"""Database models for role-based access control."""
+
 from sqlalchemy import Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
 from src.infrastructure.database import Base
@@ -27,4 +26,9 @@ class Role(Base):
     users = relationship("User", secondary=user_roles, back_populates="roles")
 
     def __repr__(self):
+        """Get a string representation of the role.
+
+        Returns:
+            str: A string in the format "<Role name>"
+        """
         return f"<Role {self.name}>"

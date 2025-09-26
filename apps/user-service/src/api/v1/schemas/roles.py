@@ -1,9 +1,8 @@
-"""
-Request and response models for role management.
-"""
+"""Request and response models for role management operations."""
+
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class RoleBase(BaseModel):
@@ -26,10 +25,7 @@ class RoleResponse(RoleBase):
 
     id: int = Field(..., description="The unique identifier of the role")
 
-    class Config:
-        """Pydantic configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RoleList(BaseModel):
