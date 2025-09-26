@@ -1,14 +1,12 @@
-"""
-Database configuration and connection pooling.
-"""
-from contextlib import asynccontextmanager
+"""Database configuration and connection pooling functionality."""
+
+from contextlib import contextmanager
 from functools import lru_cache
-from typing import AsyncGenerator
+from typing import Iterator
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from sqlalchemy.pool import QueuePool
 
 
@@ -22,9 +20,7 @@ class DatabaseSettings(BaseSettings):
     postgres_host: str = "localhost"
     postgres_port: int = 5432
     postgres_user: str = "design_synapse_user"  # The service-specific role
-    postgres_password: str = (
-        "design_synapse_password"  # The main user password from docker-compose.yml
-    )
+    postgres_password: str = "design_synapse_password"
     postgres_db: str = ""  # Will be set based on service_name
 
     # Connection pool settings
@@ -33,7 +29,12 @@ class DatabaseSettings(BaseSettings):
     pool_timeout: int = 30
     pool_recycle: int = 1800  # Recycle connections after 30 minutes
 
-    model_config = SettingsConfigDict(env_file=".env", extra="allow")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="allow",
+        validate_assignment=True,
+        protected_namespaces=("model_",),
+    )
 
     def __init__(self, **kwargs):
         """Initialize settings and set postgres_db based on service name."""
@@ -74,9 +75,6 @@ def create_db_engine():
 engine = create_db_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-
-from contextlib import contextmanager
-from typing import Iterator
 
 
 @contextmanager

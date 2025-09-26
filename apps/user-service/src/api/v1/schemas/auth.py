@@ -1,6 +1,5 @@
-"""
-Request and response models for authentication.
-"""
+"""Request and response models for authentication endpoints."""
+
 from typing import List
 
 from pydantic import BaseModel, Field
@@ -11,7 +10,7 @@ class Token(BaseModel):
 
     access_token: str = Field(..., description="JWT access token")
     refresh_token: str = Field(
-        ..., description="JWT refresh token for obtaining new access tokens"
+        ..., description="JWT refresh token for access token renewal"
     )
     token_type: str = Field("bearer", description="Token type, always 'bearer'")
     roles: List[str] = Field(..., description="List of user's roles")

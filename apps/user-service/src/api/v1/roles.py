@@ -1,18 +1,12 @@
-"""
-API endpoints for role management.
-"""
+"""API endpoints for managing roles and role assignments."""
+
 from typing import List
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from src.api.dependencies import get_current_user, has_role
-from src.api.v1.schemas.roles import (
-    RoleAssignmentResponse,
-    RoleCreate,
-    RoleList,
-    RoleResponse,
-    UserRolesResponse,
-)
+from src.api.v1.schemas.roles import (RoleAssignmentResponse, RoleCreate,
+                                      RoleList, RoleResponse)
 from src.core.exceptions import NotFoundError, ValidationError
 from src.infrastructure.database import get_db
 from src.models.role import Role
@@ -55,7 +49,7 @@ def create_role(
             details={"name": role_data.name},
         )
 
-    role = Role(**role_data.dict())
+    role = Role(**role_data.model_dump())
     db.add(role)
     db.commit()
     db.refresh(role)
@@ -87,8 +81,9 @@ def assign_role_to_user(
 
     user.add_role(role)
     db.commit()
+    msg = f"Role {role_name} assigned to user {user.email}"
     return RoleAssignmentResponse(
-        message=f"Role {role_name} assigned to user {user.email}",
+        message=msg,
         user_id=user_id,
         role_name=role_name,
     )
@@ -123,15 +118,18 @@ def remove_role_from_user(
 
     user.remove_role(role)
     db.commit()
+    msg = f"Role {role_name} removed from user {user.email}"
     return RoleAssignmentResponse(
-        message=f"Role {role_name} removed from user {user.email}",
+        message=msg,
         user_id=user_id,
         role_name=role_name,
     )
 
 
 @router.get("/users/me/roles", response_model=List[RoleResponse])
-def get_my_roles(current_user: User = Depends(get_current_user)) -> List[RoleResponse]:
+def get_my_roles(
+    current_user: User = Depends(get_current_user),
+) -> List[RoleResponse]:
     """
     Get the roles of the current authenticated user.
 

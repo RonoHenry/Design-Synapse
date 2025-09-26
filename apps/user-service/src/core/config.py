@@ -1,6 +1,12 @@
+"""Configuration settings management for the application.
+
+This module handles application-wide settings including:
+- Environment variables loading
+- Security configuration (JWT settings)
+- Token expiration times
+- Other application-specific settings
 """
-Core application settings.
-"""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
