@@ -1,7 +1,7 @@
 """Test configuration and fixtures for the project service."""
 
 import asyncio
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator, Generator, Dict, Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 from src.infrastructure.database import Base, get_db
 from src.main import app
+from src.models.project import Project
+from src.models.comment import Comment
 
 # Test database URL for SQLite in-memory database
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -85,3 +87,30 @@ def client(db: Session) -> Generator[TestClient, None, None]:
         test_client.headers["Accept"] = "application/vnd.design-synapse.v1+json"
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def test_project(db: Session) -> Project:
+    """Create a test project."""
+    project = Project(
+        name="Test Project",
+        description="Test project description",
+        owner_id=1,
+        status="active"
+    )
+    db.add(project)
+    db.commit()
+    return project # No refresh needed as the object is still attached
+
+
+@pytest.fixture
+def test_comment(db: Session, test_project: Project) -> Comment:
+    """Create a test comment."""
+    comment = Comment(
+        content="Test comment",
+        project_id=test_project.id,
+        author_id=1,
+    )
+    db.add(comment)
+    db.commit()
+    return comment # No refresh needed as the object is still attached
