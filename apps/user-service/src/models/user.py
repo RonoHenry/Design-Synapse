@@ -3,12 +3,12 @@ User model definition.
 """
 import re
 from datetime import datetime, timezone
-from typing import List, Optional, Set, cast
+from typing import List, Optional, cast
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, event
-from sqlalchemy.orm import Query, relationship
-from src.infrastructure.database import Base
-from src.models.role import user_roles
+from sqlalchemy import Boolean, DateTime, Integer, String, event
+from sqlalchemy.orm import Mapped, relationship, mapped_column
+from ..infrastructure.database import Base
+from .role import user_roles
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
@@ -17,19 +17,19 @@ class User(Base):
 
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)
-    email = Column(String, unique=True, nullable=False, index=True)
-    username = Column(String, unique=True, nullable=False, index=True)
-    _password = Column("password", String, nullable=False)
-    first_name = Column(String)
-    last_name = Column(String)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
+    username: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
+    _password: Mapped[str] = mapped_column("password", String, nullable=False)
+    first_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    last_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
-    is_active = Column(Boolean, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     @property
     def first_name_str(self) -> Optional[str]:
@@ -60,7 +60,7 @@ class User(Base):
         )
 
     # Relationship with roles through the association table
-    roles = relationship("Role", secondary=user_roles, back_populates="users")
+    roles: Mapped[List["Role"]] = relationship("Role", secondary=user_roles, back_populates="users")
 
     def __init__(
         self,
@@ -81,11 +81,12 @@ class User(Base):
         self.roles = roles or []
 
         # Import here to avoid circular imports
-        from src.infrastructure.database import SessionLocal
-        from src.models.role import Role
+        from ..infrastructure.database import SessionLocal
 
         # Add default user role if no roles provided
         if not roles:
+            # Import Role locally to avoid circular dependency
+            from .role import Role
             with SessionLocal() as session:
                 user_role = session.query(Role).filter_by(name="user").first()
                 if not user_role:
@@ -135,9 +136,7 @@ class User(Base):
     @property
     def role_names(self) -> List[str]:
         """Get list of role names."""
-        from src.models.role import Role
-
-        return [cast(str, role.name) for role in cast(List[Role], self.roles)]
+        return [cast(str, role.name) for role in self.roles]
 
     def has_role(self, role_name: str) -> bool:
         """Check if user has a specific role."""

@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -16,6 +16,8 @@ class ErrorResponse(BaseModel):
     message: str
     error_code: str
     details: Optional[Dict[str, Any]] = None
+    
+    model_config = ConfigDict(from_attributes=True)
 
 
 class APIError(Exception):
@@ -106,7 +108,7 @@ async def validation_error_handler(
             message="Validation error",
             error_code="VALIDATION_ERROR",
             details={"errors": exc.errors()},
-        ).dict(exclude_none=True),
+        ).model_dump(exclude_none=True),
     )
 
 
@@ -118,7 +120,7 @@ async def sqlalchemy_error_handler(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
             message="Database error occurred", error_code="DATABASE_ERROR"
-        ).dict(exclude_none=True),
+        ).model_dump(exclude_none=True),
     )
 
 
@@ -128,5 +130,5 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
             message="An unexpected error occurred", error_code="INTERNAL_SERVER_ERROR"
-        ).dict(exclude_none=True),
+        ).model_dump(exclude_none=True),
     )
