@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
-from src.core.config import settings
+from .config import settings
 
 oauth2_scheme = HTTPBearer(auto_error=False)
 

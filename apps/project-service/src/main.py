@@ -6,16 +6,17 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.api.v1.routes import router as projects_router
-from src.core.constants import V1_PREFIX
-from src.core.exceptions import (
+from .api.v1.routes.comments import router as comments_router
+from .api.v1.routes.projects import router as projects_router
+from .core.constants import V1_PREFIX
+from .core.exceptions import (
     APIError,
     api_error_handler,
     general_exception_handler,
     sqlalchemy_error_handler,
     validation_error_handler,
 )
-from src.core.versioning import get_api_version
+from .core.versioning import get_api_version
 
 app = FastAPI(
     title="Project Service",
@@ -41,6 +42,12 @@ app.add_exception_handler(Exception, general_exception_handler)
 # Register routers
 app.include_router(
     projects_router,
+    prefix=V1_PREFIX,
+    dependencies=[Depends(get_api_version)]
+)
+
+app.include_router(
+    comments_router,
     prefix=V1_PREFIX,
     dependencies=[Depends(get_api_version)]
 )
