@@ -5,18 +5,17 @@ from typing import List
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from src.api.dependencies import get_current_user, has_role
-from src.api.v1.schemas.roles import (
+from ..dependencies import get_current_user, has_role
+from .schemas.roles import (
     RoleAssignmentResponse,
     RoleCreate,
     RoleList,
     RoleResponse,
     UserRolesResponse,
 )
-from src.core.exceptions import NotFoundError, ValidationError
-from src.infrastructure.database import get_db
-from src.models.role import Role
-from src.models.user import User
+from ...core.exceptions import NotFoundError, ValidationError
+from ...infrastructure.database import get_db
+from ...models import Role, User
 
 router = APIRouter()
 

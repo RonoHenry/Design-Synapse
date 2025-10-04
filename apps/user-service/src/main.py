@@ -5,8 +5,8 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
-from src.api.v1 import auth, roles
-from src.core.exceptions import (
+from .api.v1 import auth, roles
+from .core.exceptions import (
     APIError,
     api_error_handler,
     general_exception_handler,
@@ -35,10 +35,10 @@ app.add_exception_handler(RequestValidationError, validation_error_handler)
 app.add_exception_handler(SQLAlchemyError, sqlalchemy_error_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
-from src.core.constants import V1_PREFIX
+from .core.constants import V1_PREFIX
 
 # Import API versioning and constants
-from src.core.versioning import get_api_version
+from .core.versioning import get_api_version
 
 # Register routers with versioning
 app.include_router(
