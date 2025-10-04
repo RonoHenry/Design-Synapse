@@ -1,10 +1,10 @@
-"""
-API endpoints for authentication.
-"""
-from fastapi import APIRouter, Body, Depends, status
+"""API endpoints for user authentication and token management."""
+
+from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError
 from sqlalchemy.orm import Session
+
 from .schemas.auth import Token, TokenRefresh, TokenResponse
 from ...core.exceptions import AuthenticationError
 from ...core.security import (
@@ -33,7 +33,8 @@ router = APIRouter(
     """,
 )
 def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
 ) -> Token:
     """
     Create an access token for user authentication.
@@ -48,21 +49,15 @@ def login_for_access_token(
     Raises:
         AuthenticationError: If credentials are invalid
     """
-    print(f"Attempting to log in user: {form_data.username}")
     user = db.query(User).filter(User.email == form_data.username).first()
-    if not user:
-        print("User not found in database.")
-    else:
-        print(f"User found: {user.email}")
-        password_verified = user.verify_password(form_data.password)
-        print(f"Password verification result: {password_verified}")
 
     if not user or not user.verify_password(form_data.password):
         raise AuthenticationError("Incorrect username or password")
 
     user_roles = [role.name for role in user.roles]
-    access_token = create_access_token(data={"sub": user.email}, roles=user_roles)
-    refresh_token = create_refresh_token(data={"sub": user.email})
+    token_data = {"sub": user.email}
+    access_token = create_access_token(data=token_data, roles=user_roles)
+    refresh_token = create_refresh_token(data=token_data)
 
     return Token(
         access_token=access_token,
@@ -79,12 +74,13 @@ def login_for_access_token(
     description="""
     Use a refresh token to obtain a new access token.
 
-    This endpoint is used when an access token has expired but the refresh token is still valid.
-    The new access token will include the user's current roles.
+    This endpoint is used when an access token has expired but the refresh token is
+    still valid. The new access token will include the user's current roles.
     """,
 )
 def refresh_access_token(
-    token_data: TokenRefresh, db: Session = Depends(get_db)
+    token_data: TokenRefresh,
+    db: Session = Depends(get_db),
 ) -> TokenResponse:
     """
     Create a new access token using a refresh token.
@@ -101,16 +97,18 @@ def refresh_access_token(
     """
     try:
         payload = verify_refresh_token(token_data.refresh_token)
-        user = db.query(User).filter(User.email == payload.get("sub")).first()
+        sub = payload.get("sub")
+        user = db.query(User).filter(User.email == sub).first()
         if not user:
             raise AuthenticationError("Could not find user")
 
         user_roles = [role.name for role in user.roles]
-        new_access_token = create_access_token(
-            data={"sub": payload.get("sub")}, roles=user_roles
-        )
+        token_data = {"sub": sub}
+        new_access_token = create_access_token(data=token_data, roles=user_roles)
         return TokenResponse(
-            access_token=new_access_token, token_type="bearer", roles=user_roles
+            access_token=new_access_token,
+            token_type="bearer",
+            roles=user_roles,
         )
     except JWTError:
         raise AuthenticationError("Invalid refresh token")

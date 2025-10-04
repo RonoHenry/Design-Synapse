@@ -1,4 +1,11 @@
-"""
+"""Configuration settings management for the application.
+
+This module handles application-wide settings including:
+- Environment variables loading
+- Security configuration (JWT settings)
+- Token expiration times
+- Other application-specific settings
+
 User Service Configuration.
 
 This module provides configuration management for the User Service using

@@ -1,15 +1,15 @@
-"""
-User model definition.
-"""
+"""User model for authentication and authorization."""
+
 import re
 from datetime import datetime, timezone
 from typing import List, Optional, cast
 
 from sqlalchemy import Boolean, DateTime, Integer, String, event
 from sqlalchemy.orm import Mapped, relationship, mapped_column
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from ..infrastructure.database import Base
 from .role import user_roles
-from werkzeug.security import check_password_hash, generate_password_hash
 
 
 class User(Base):
@@ -44,20 +44,16 @@ class User(Base):
     @property
     def created_at_datetime(self) -> datetime:
         """Get created_at as datetime."""
-        return (
-            self.created_at
-            if isinstance(self.created_at, datetime)
-            else datetime.now(timezone.utc)
-        )
+        if isinstance(self.created_at, datetime):
+            return self.created_at
+        return datetime.now(timezone.utc)
 
     @property
     def updated_at_datetime(self) -> datetime:
         """Get updated_at as datetime."""
-        return (
-            self.updated_at
-            if isinstance(self.updated_at, datetime)
-            else datetime.now(timezone.utc)
-        )
+        if isinstance(self.updated_at, datetime):
+            return self.updated_at
+        return datetime.now(timezone.utc)
 
     # Relationship with roles through the association table
     roles: Mapped[List["Role"]] = relationship("Role", secondary=user_roles, back_populates="users")
@@ -117,7 +113,8 @@ class User(Base):
     @staticmethod
     def _validate_email(email: str) -> str:
         """Validate email format."""
-        email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        email_pattern = re.compile(pattern)
         if not email_pattern.match(email):
             raise ValueError("Invalid email format")
         return email.lower()
@@ -128,9 +125,11 @@ class User(Base):
         if not username or len(username) < 3:
             raise ValueError("Username must be at least 3 characters long")
         if not re.match(r"^[a-zA-Z0-9_-]+$", username):
-            raise ValueError(
-                "Username can only contain letters, numbers, underscores, and hyphens"
+            msg = (
+                "Username can only contain letters, numbers, "
+                "underscores, and hyphens"
             )
+            raise ValueError(msg)
         return username.lower()
 
     @property
