@@ -4,7 +4,9 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from jose import JWTError, jwt
-from src.core.config import settings
+
+from .config import settings
+from ..models import User
 
 
 def create_access_token(

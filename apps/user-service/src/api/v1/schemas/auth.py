@@ -2,11 +2,13 @@
 
 from typing import List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Token(BaseModel):
     """Model for token response."""
+    
+    model_config = ConfigDict(from_attributes=True)
 
     access_token: str = Field(..., description="JWT access token")
     refresh_token: str = Field(
@@ -18,12 +20,16 @@ class Token(BaseModel):
 
 class TokenRefresh(BaseModel):
     """Model for token refresh request."""
+    
+    model_config = ConfigDict(from_attributes=True)
 
     refresh_token: str = Field(..., description="The refresh token to use")
 
 
 class TokenResponse(BaseModel):
     """Model for refresh token response."""
+    
+    model_config = ConfigDict(from_attributes=True)
 
     access_token: str = Field(..., description="New JWT access token")
     token_type: str = Field("bearer", description="Token type, always 'bearer'")

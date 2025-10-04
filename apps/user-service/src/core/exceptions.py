@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -19,6 +19,8 @@ class ErrorResponse(BaseModel):
     message: str
     error_code: str
     details: Optional[Dict[str, Any]] = None
+    
+    model_config = ConfigDict(from_attributes=True)
 
 
 class APIError(Exception):
@@ -145,7 +147,7 @@ async def validation_error_handler(
     )
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=error_response.dict(exclude_none=True),
+        content=error_response.model_dump(exclude_none=True),
     )
 
 
@@ -158,7 +160,7 @@ async def sqlalchemy_error_handler(
     )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.dict(exclude_none=True),
+        content=error_response.model_dump(exclude_none=True),
     )
 
 
@@ -170,5 +172,5 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
     )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.dict(exclude_none=True),
+        content=error_response.model_dump(exclude_none=True),
     )

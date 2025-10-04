@@ -1,6 +1,6 @@
 """Constants and configuration values used across the API."""
 
-from src.core.versioning import ApiVersion
+from .versioning import ApiVersion
 
 # API versioning
 LATEST_VERSION = ApiVersion.V1

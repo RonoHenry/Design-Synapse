@@ -5,11 +5,10 @@ from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from src.api.v1.schemas.comment import Comment, CommentCreate, CommentUpdate
-from src.core.auth import get_current_user, check_comment_permission
-from src.infrastructure.database import get_db
-from src.models.comment import Comment as CommentModel
-from src.models.project import Project as ProjectModel
+from ..schemas.comment import Comment, CommentCreate, CommentUpdate
+from ....core.auth import get_current_user, check_comment_permission
+from ....infrastructure.database import get_db
+from ....models import Comment as CommentModel, Project as ProjectModel
 
 router = APIRouter(prefix="/projects/{project_id}/comments", tags=["comments"])
 

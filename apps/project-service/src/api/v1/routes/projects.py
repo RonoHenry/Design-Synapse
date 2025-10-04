@@ -7,15 +7,15 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from src.api.v1.schemas.project import (
+from ..schemas.project import (
     Project,
     ProjectCreate,
     ProjectStatusUpdate,
     ProjectUpdate,
 )
-from src.core.config import settings
-from src.infrastructure.database import get_db
-from src.models.project import Project as ProjectModel
+from ....core.config import settings
+from ....infrastructure.database import get_db
+from ....models import Project as ProjectModel
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 

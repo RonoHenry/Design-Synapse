@@ -7,7 +7,7 @@ database before the application starts.
 """
 
 from sqlalchemy import text
-from src.infrastructure.database import engine
+from ..infrastructure.database import engine
 
 
 def create_default_roles():

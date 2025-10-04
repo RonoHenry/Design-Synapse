@@ -4,12 +4,16 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError
 from sqlalchemy.orm import Session
-from src.api.v1.schemas.auth import Token, TokenRefresh, TokenResponse
-from src.core.exceptions import AuthenticationError
-from src.core.security import (create_access_token, create_refresh_token,
-                               verify_refresh_token)
-from src.infrastructure.database import get_db
-from src.models.user import User
+
+from .schemas.auth import Token, TokenRefresh, TokenResponse
+from ...core.exceptions import AuthenticationError
+from ...core.security import (
+    create_access_token,
+    create_refresh_token,
+    verify_refresh_token,
+)
+from ...infrastructure.database import get_db
+from ...models import User
 
 router = APIRouter(
     tags=["authentication"],

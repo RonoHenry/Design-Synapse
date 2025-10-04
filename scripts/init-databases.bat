@@ -11,7 +11,7 @@ set PGPORT=5432
 set PGBIN=C:\Program Files\PostgreSQL\16\bin
 
 :: Create databases for each service
-for %%d in (user marketplace design project analytics) do (
+for %%d in (user marketplace design project analytics knowledge) do (
     echo Processing database design_synapse_%%d_db...
 
     :: Check if database exists

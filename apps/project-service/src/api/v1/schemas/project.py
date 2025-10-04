@@ -5,15 +5,16 @@ Project API schemas.
 from datetime import datetime
 from typing import Dict, Optional
 
-from pydantic import BaseModel, Field, constr
+from typing import Annotated
+from pydantic import BaseModel, Field, ConfigDict
 
-from src.core.config import settings
+from ....core.config import settings
 
 
 class ProjectBase(BaseModel):
     """Base schema for project data common to both input and output."""
 
-    name: constr(min_length=1, max_length=settings.MAX_PROJECT_NAME_LENGTH)
+    name: Annotated[str, Field(min_length=1, max_length=settings.MAX_PROJECT_NAME_LENGTH)]
     description: Optional[str] = Field(None, max_length=settings.MAX_PROJECT_DESCRIPTION_LENGTH)
     is_public: bool = False
 
@@ -27,21 +28,19 @@ class ProjectCreate(ProjectBase):
 class ProjectUpdate(ProjectBase):
     """Schema for updating an existing project."""
 
-    status: str = Field(
-        ...,  # Required field
+    status: Annotated[str, Field(
         description="Project status",
         pattern=f"^({'|'.join(settings.ALLOWED_PROJECT_STATUSES)})$"
-    )
+    )]
 
 
 class ProjectStatusUpdate(BaseModel):
     """Schema for updating just the project status."""
 
-    status: str = Field(
-        ...,  # Required field
+    status: Annotated[str, Field(
         description="Project status",
         pattern=f"^({'|'.join(settings.ALLOWED_PROJECT_STATUSES)})$"
-    )
+    )]
 
 
 class Project(ProjectBase):
@@ -56,7 +55,4 @@ class Project(ProjectBase):
     updated_at: datetime
     is_archived: bool
 
-    class Config:
-        """Pydantic configuration."""
-
-        from_attributes = True  # Allow converting SQLAlchemy model to Pydantic model
+    model_config = ConfigDict(from_attributes=True)
