@@ -15,9 +15,9 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.orm import Mapped, relationship
-from src.core.config import settings
-from src.infrastructure.database import Base
+from sqlalchemy.orm import Mapped, relationship, mapped_column
+from ..core.config import settings
+from ..infrastructure.database import Base
 
 # Project collaborators association table
 project_collaborators = Table(
@@ -33,26 +33,26 @@ class Project(Base):
 
     __tablename__ = "projects"
 
-    id: Mapped[int] = Column(Integer, primary_key=True)
-    name: Mapped[str] = Column(String(settings.MAX_PROJECT_NAME_LENGTH), nullable=False)
-    description: Mapped[Optional[str]] = Column(Text, nullable=True)
-    owner_id: Mapped[int] = Column(Integer, nullable=False)  # Reference to user ID in user service
-    status: Mapped[str] = Column(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(settings.MAX_PROJECT_NAME_LENGTH), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    owner_id: Mapped[int] = mapped_column(Integer, nullable=False)  # Reference to user ID in user service
+    status: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
         default="draft",
         server_default="draft"
     )
-    is_public: Mapped[bool] = Column(Boolean, default=False, server_default="false")
-    is_archived: Mapped[bool] = Column(Boolean, default=False, server_default="false")
-    version: Mapped[int] = Column(Integer, default=1, server_default="1")
-    project_metadata: Mapped[dict] = Column(JSON, default=dict, server_default="{}")
-    created_at: Mapped[datetime] = Column(
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    is_archived: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    project_metadata: Mapped[dict] = mapped_column(JSON, default=dict, server_default="{}")
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False
     )
-    updated_at: Mapped[datetime] = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
@@ -60,9 +60,9 @@ class Project(Base):
     )
 
     # Note: Relationships with User model are managed through the user service API
-    # These relationships will be added when we implement comments and versioning
-    # comments = relationship("Comment", back_populates="project", cascade="all, delete-orphan")
-    # versions = relationship("ProjectVersion", back_populates="project", cascade="all, delete-orphan")
+    # Relationships
+    comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="project", cascade="all, delete-orphan")
+    # versions: Mapped[list["ProjectVersion"]] = relationship("ProjectVersion", back_populates="project", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         """Initialize a project with defaults and validation."""
