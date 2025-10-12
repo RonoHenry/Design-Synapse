@@ -3,10 +3,10 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text, func
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy import DateTime, ForeignKey, Integer, Text, func
+from sqlalchemy.orm import Mapped, relationship, mapped_column
 
-from src.infrastructure.database import Base
+from ..infrastructure.database import Base
 
 
 class Comment(Base):
@@ -14,25 +14,25 @@ class Comment(Base):
 
     __tablename__ = "comments"
 
-    id: Mapped[int] = Column(Integer, primary_key=True)
-    content: Mapped[str] = Column(Text, nullable=False)
-    author_id: Mapped[int] = Column(Integer, nullable=False)  # Reference to user ID in user service
-    project_id: Mapped[int] = Column(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    author_id: Mapped[int] = mapped_column(Integer, nullable=False)  # Reference to user ID in user service
+    project_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False
     )
-    parent_id: Mapped[Optional[int]] = Column(
+    parent_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         ForeignKey("comments.id", ondelete="CASCADE"),
         nullable=True
     )
-    created_at: Mapped[datetime] = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False
     )
-    updated_at: Mapped[datetime] = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
@@ -40,8 +40,8 @@ class Comment(Base):
     )
 
     # Relationships
-    project = relationship("Project", back_populates="comments")
-    parent = relationship("Comment", remote_side=[id], backref="replies")  # self-referential relationship
+    project: Mapped["Project"] = relationship("Project", back_populates="comments")
+    parent: Mapped[Optional["Comment"]] = relationship("Comment", remote_side=[id], backref="replies")  # self-referential relationship
 
     def __init__(self, **kwargs):
         """Initialize a comment."""

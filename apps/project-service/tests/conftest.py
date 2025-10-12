@@ -1,7 +1,14 @@
-"""Test configuration and fixtures for the project service."""
+"""Test configuration and fixtures for the project service.
+
+Environment Variables:
+    TEST_DATABASE_URL: Optional database URL for integration testing.
+                      If not set, uses SQLite in-memory for fast unit tests.
+                      Example: mysql+pymysql://user:pass@host:port/db?charset=utf8mb4
+"""
 
 import asyncio
-from typing import AsyncGenerator, Generator, Dict, Any
+import os
+from typing import Any, AsyncGenerator, Dict, Generator
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,26 +18,44 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 from src.infrastructure.database import Base, get_db
 from src.main import app
-from src.models.project import Project
 from src.models.comment import Comment
+from src.models.project import Project
 
-# Test database URL for SQLite in-memory database
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-TEST_ASYNC_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-# Create the SQLite engine for testing
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
+# Test database URL for SQLite in-memory database (default)
+SQLALCHEMY_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite:///:memory:")
+TEST_ASYNC_DATABASE_URL = os.getenv(
+    "TEST_ASYNC_DATABASE_URL", "sqlite+aiosqlite:///:memory:"
 )
+
+# Create the test engine with appropriate configuration
+if "sqlite" in SQLALCHEMY_DATABASE_URL:
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    # MySQL/TiDB configuration
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        pool_pre_ping=True,
+        pool_recycle=3600,
+    )
 
 # Create async engine for async tests
-async_engine = create_async_engine(
-    TEST_ASYNC_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+if "sqlite" in TEST_ASYNC_DATABASE_URL:
+    async_engine = create_async_engine(
+        TEST_ASYNC_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    # MySQL/TiDB async configuration
+    async_engine = create_async_engine(
+        TEST_ASYNC_DATABASE_URL,
+        pool_pre_ping=True,
+        pool_recycle=3600,
+    )
 
 # Create test session factories
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -96,11 +121,11 @@ def test_project(db: Session) -> Project:
         name="Test Project",
         description="Test project description",
         owner_id=1,
-        status="active"
+        status="active",
     )
     db.add(project)
     db.commit()
-    return project # No refresh needed as the object is still attached
+    return project  # No refresh needed as the object is still attached
 
 
 @pytest.fixture
@@ -113,4 +138,4 @@ def test_comment(db: Session, test_project: Project) -> Comment:
     )
     db.add(comment)
     db.commit()
-    return comment # No refresh needed as the object is still attached
+    return comment  # No refresh needed as the object is still attached

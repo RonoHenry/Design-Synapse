@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class CommentBase(BaseModel):
@@ -35,10 +35,7 @@ class Comment(CommentBase):
     updated_at: datetime
     replies: List["Comment"] = []
 
-    class Config:
-        """Pydantic model config."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Update forward reference for nested comments

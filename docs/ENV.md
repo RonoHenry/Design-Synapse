@@ -56,6 +56,27 @@ apps/
     └── .env.production
 ```
 
+## Database Naming Conventions
+
+DesignSynapse uses separate databases for each microservice to ensure data isolation and independent scaling:
+
+| Service | Database Name | Purpose |
+|---------|--------------|---------|
+| User Service | `design_synapse_user_db` | User accounts, authentication, roles, permissions |
+| Project Service | `design_synapse_project_db` | Projects, tasks, comments, collaboration |
+| Knowledge Service | `design_synapse_knowledge_db` | Resources, bookmarks, citations, search |
+
+**Naming Pattern**: `design_synapse_{service}_db`
+
+**Character Set**: All databases use `utf8mb4` with `utf8mb4_unicode_ci` collation for full Unicode support.
+
+**Creation Example**:
+```sql
+CREATE DATABASE IF NOT EXISTS design_synapse_user_db
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+```
+
 ## Environment Variables
 
 ### Common Variables (Root Level)
@@ -70,12 +91,28 @@ DESIGN_SERVICE_URL=http://localhost:8000
 USER_SERVICE_URL=http://localhost:8001
 FRONTEND_URL=http://localhost:3000
 
-# Database
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=designsynapse
+# TiDB Serverless Database Configuration
+# TiDB is a MySQL-compatible distributed SQL database with auto-scaling
+DATABASE_HOST=gateway01.eu-central-1.prod.aws.tidbcloud.com
+DATABASE_PORT=4000
+DATABASE_USER=your_cluster_id.root
+DATABASE_PASSWORD=your_secure_password
+
+# SSL Configuration (REQUIRED for TiDB Serverless)
+# Download ca.pem from TiDB Cloud console
+DATABASE_SSL_CA=./ca.pem
+DATABASE_SSL_VERIFY_CERT=true
+DATABASE_SSL_VERIFY_IDENTITY=true
+
+# Service-specific databases (each service has its own database)
+USER_SERVICE_DB=design_synapse_user_db
+PROJECT_SERVICE_DB=design_synapse_project_db
+KNOWLEDGE_SERVICE_DB=design_synapse_knowledge_db
+
+# Connection Pool Settings (optimized for TiDB)
+DATABASE_POOL_SIZE=10
+DATABASE_MAX_OVERFLOW=20
+DATABASE_POOL_RECYCLE=3600
 
 # Redis
 REDIS_HOST=localhost
@@ -190,12 +227,22 @@ from functools import lru_cache
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    # Database
-    postgres_host: str
-    postgres_port: int
-    postgres_user: str
-    postgres_password: str
-    postgres_db: str
+    # TiDB Database Configuration
+    database_host: str
+    database_port: int = 4000
+    database_user: str
+    database_password: str
+    database_name: str  # Service-specific database (e.g., design_synapse_user_db)
+
+    # SSL Configuration (required for TiDB Serverless)
+    database_ssl_ca: str = "./ca.pem"
+    database_ssl_verify_cert: bool = True
+    database_ssl_verify_identity: bool = True
+
+    # Connection Pool Settings
+    database_pool_size: int = 10
+    database_max_overflow: int = 20
+    database_pool_recycle: int = 3600
 
     # Service specific
     model_endpoint: str
@@ -203,6 +250,27 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = f".env.{env_name}"
+
+    @property
+    def database_url(self) -> str:
+        """
+        Construct TiDB connection URL with SSL parameters.
+
+        Format: mysql+pymysql://user:pass@host:port/db?ssl_params
+
+        TiDB Serverless requires:
+        - mysql+pymysql dialect (MySQL-compatible)
+        - SSL/TLS encryption
+        - utf8mb4 character set for full Unicode support
+        """
+        return (
+            f"mysql+pymysql://{self.database_user}:{self.database_password}"
+            f"@{self.database_host}:{self.database_port}/{self.database_name}"
+            f"?ssl_ca={self.database_ssl_ca}"
+            f"&ssl_verify_cert={str(self.database_ssl_verify_cert).lower()}"
+            f"&ssl_verify_identity={str(self.database_ssl_verify_identity).lower()}"
+            f"&charset=utf8mb4"
+        )
 
 @lru_cache()
 def get_settings():
@@ -233,9 +301,20 @@ module.exports = {
 Example validation:
 ```python
 def validate_environment():
+    """
+    Validate required environment variables for TiDB connection.
+
+    TiDB Serverless requires:
+    - Database connection parameters
+    - SSL certificate for encrypted connection
+    - Service-specific database name
+    """
     required_vars = [
-        'POSTGRES_HOST',
-        'POSTGRES_PORT',
+        'DATABASE_HOST',
+        'DATABASE_PORT',
+        'DATABASE_USER',
+        'DATABASE_PASSWORD',
+        'DATABASE_SSL_CA',
         'MODEL_ENDPOINT',
         'AWS_ACCESS_KEY_ID'
     ]
@@ -243,6 +322,15 @@ def validate_environment():
     missing = [var for var in required_vars if not os.getenv(var)]
     if missing:
         raise ValueError(f"Missing required environment variables: {missing}")
+
+    # Validate TiDB SSL certificate exists (required for TiDB Serverless)
+    ssl_ca_path = os.getenv('DATABASE_SSL_CA')
+    if ssl_ca_path and not os.path.exists(ssl_ca_path):
+        raise ValueError(
+            f"TiDB SSL certificate not found at: {ssl_ca_path}\n"
+            f"Download ca.pem from TiDB Cloud console: "
+            f"https://tidbcloud.com/console/clusters"
+        )
 ```
 
 ## Development Workflow

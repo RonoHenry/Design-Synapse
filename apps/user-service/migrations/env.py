@@ -1,7 +1,12 @@
 from logging.config import fileConfig
+import os
+import sys
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
+
+# Add the parent directory to the path to import from packages
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -21,6 +26,24 @@ from src.models.role import Role
 from src.models.user import User
 
 target_metadata = Base.metadata
+
+# Override the sqlalchemy.url from environment variables if available
+# This allows using the DatabaseConfig for TiDB connection
+try:
+    # Change to project root to find .env file
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+    os.chdir(project_root)
+    
+    from packages.common.config.database import DatabaseConfig
+    db_config = DatabaseConfig()
+    connection_url = db_config.get_connection_url(async_driver=False)
+    config.set_main_option('sqlalchemy.url', connection_url)
+    print(f"Using database connection: {db_config.host}:{db_config.port}/{db_config.database}")
+except Exception as e:
+    # Fall back to the URL in alembic.ini if config fails
+    print(f"Warning: Could not load DatabaseConfig: {e}")
+    print("Falling back to alembic.ini URL")
+    pass
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

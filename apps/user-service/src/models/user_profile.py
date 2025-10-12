@@ -20,11 +20,11 @@ class UserProfile(Base):
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    display_name = Column(String)
-    bio = Column(String)
-    organization = Column(String)
-    phone_number = Column(String)
-    location = Column(String)
+    display_name = Column(String(255))
+    bio = Column(String(1000))
+    organization = Column(String(255))
+    phone_number = Column(String(50))
+    location = Column(String(255))
     social_links = Column(JSON, default=dict)
     preferences = Column(JSON, default=dict)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

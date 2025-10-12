@@ -1,19 +1,31 @@
 version: '3.8'
 
+# Note: This project uses TiDB Serverless for database services.
+# TiDB is a cloud-native, distributed SQL database that provides:
+# - Auto-scaling based on workload
+# - MySQL compatibility
+# - HTAP capabilities (transactional + analytical)
+# - High availability without infrastructure management
+#
+# Database connection is configured via environment variables in .env:
+# - DATABASE_HOST: TiDB gateway endpoint
+# - DATABASE_PORT: 4000 (TiDB default)
+# - DATABASE_USER: Your TiDB username
+# - DATABASE_PASSWORD: Your TiDB password
+# - DATABASE_NAME: Service-specific database name
+# - DATABASE_SSL_CA: Path to TiDB CA certificate (ca.pem)
+#
+# No local database container is needed. All services connect directly to TiDB Serverless.
+
 services:
-  postgres:
-    image: postgres:13-alpine
-    container_name: design-synapse-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+  # Add your application services here
+  # Example:
+  # user-service:
+  #   build: ./apps/user-service
+  #   ports:
+  #     - "8001:8001"
+  #   env_file:
+  #     - .env
 
 volumes:
-  postgres_data:
-    driver: local
+  # Add application-specific volumes here if needed

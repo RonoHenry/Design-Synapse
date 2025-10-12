@@ -1,8 +1,10 @@
 """Database models for role-based access control."""
 
+from typing import List, Optional
+
 from sqlalchemy import Column, ForeignKey, Integer, String, Table
-from sqlalchemy.orm import relationship
-from src.infrastructure.database import Base
+from sqlalchemy.orm import Mapped, relationship, mapped_column
+from ..infrastructure.database import Base
 
 # Association table for many-to-many relationship between users and roles
 user_roles = Table(
@@ -18,12 +20,12 @@ class Role(Base):
 
     __tablename__ = "roles"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)
-    description = Column(String, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     # Relationship with users through the association table
-    users = relationship("User", secondary=user_roles, back_populates="roles")
+    users: Mapped[List["User"]] = relationship("User", secondary=user_roles, back_populates="roles")
 
     def __repr__(self):
         """Get a string representation of the role.
