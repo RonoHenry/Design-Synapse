@@ -27,23 +27,20 @@ class RoleFactory(BaseFactory):
     name = factory.Sequence(lambda n: f"role_{n}")
     description = factory.LazyAttribute(lambda obj: f"Description for {obj.name}")
     
-    @factory.Trait
-    def admin(self):
-        """Trait for admin role."""
-        name = "admin"
-        description = "Administrator role with full permissions"
-    
-    @factory.Trait
-    def user(self):
-        """Trait for default user role."""
-        name = "user"
-        description = "Default user role"
-    
-    @factory.Trait
-    def moderator(self):
-        """Trait for moderator role."""
-        name = "moderator"
-        description = "Moderator role with limited admin permissions"
+    class Params:
+        """Traits for different role types."""
+        admin = factory.Trait(
+            name="admin",
+            description="Administrator role with full permissions"
+        )
+        user = factory.Trait(
+            name="user",
+            description="Default user role"
+        )
+        moderator = factory.Trait(
+            name="moderator",
+            description="Moderator role with limited admin permissions"
+        )
 
 
 class UserFactory(BaseFactory, FakerMixin, TimestampMixin):
@@ -114,30 +111,11 @@ class UserFactory(BaseFactory, FakerMixin, TimestampMixin):
         
         return instance
     
-    @factory.Trait
-    def inactive(self):
-        """Trait for inactive users."""
-        is_active = False
-    
-    @factory.Trait
-    def admin(self):
-        """Trait for admin users."""
-        @factory.post_generation
-        def admin_roles(obj, create, extracted, **kwargs):
-            if create:
-                session = obj._meta.sqlalchemy_session if hasattr(obj, '_meta') else None
-                if session:
-                    admin_role = session.query(Role).filter_by(name="admin").first()
-                    if not admin_role:
-                        admin_role = RoleFactory(name="admin", description="Administrator role")
-                        session.add(admin_role)
-                        session.commit()
-                    obj.roles.append(admin_role)
-    
-    @factory.Trait
-    def with_custom_password(self):
-        """Trait for users with custom password."""
-        password = "custompass123"
+    class Params:
+        """Traits for different user types."""
+        inactive = factory.Trait(
+            is_active=False
+        )
 
 
 class UserWithRolesFactory(UserFactory):

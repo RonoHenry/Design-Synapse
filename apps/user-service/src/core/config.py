@@ -33,7 +33,8 @@ class JWTSettings(BaseSettings):
         env_prefix="JWT_",
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=False
+        case_sensitive=False,
+        extra="ignore"  # Ignore extra fields from .env file
     )
     
     # JWT Configuration

@@ -1,5 +1,10 @@
 """
 Test configuration and shared fixtures for the user service tests.
+
+Environment Variables:
+    TEST_DATABASE_URL: Optional database URL for integration testing.
+                      If not set, uses SQLite in-memory for fast unit tests.
+                      Example: mysql+pymysql://user:pass@host:port/db?charset=utf8mb4
 """
 import pytest
 import asyncio
@@ -32,15 +37,15 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 @pytest.fixture(scope="function")
 def db_engine():
     """Create a test database engine with proper isolation."""
-    # Use SQLite in-memory for fast, isolated tests
-    engine = create_test_engine("sqlite:///:memory:", echo=False)
+    # Check if TiDB integration testing is enabled
+    test_db_url = os.getenv("TEST_DATABASE_URL")
     
-    # Enable foreign key constraints for SQLite
-    @event.listens_for(engine, "connect")
-    def set_sqlite_pragma(dbapi_connection, connection_record):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
+    if test_db_url:
+        # Use TiDB for integration testing
+        engine = create_test_engine(test_db_url, echo=False)
+    else:
+        # Use SQLite in-memory for fast, isolated tests (default)
+        engine = create_test_engine("sqlite:///:memory:", echo=False)
     
     return engine
 

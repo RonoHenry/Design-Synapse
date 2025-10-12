@@ -57,6 +57,9 @@ class User(Base):
 
     # Relationship with roles through the association table
     roles: Mapped[List["Role"]] = relationship("Role", secondary=user_roles, back_populates="users")
+    
+    # Relationship with user profile (one-to-one)
+    profile: Mapped[Optional["UserProfile"]] = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     def __init__(
         self,
@@ -75,22 +78,6 @@ class User(Base):
         self.last_name = last_name
         self.is_active = True
         self.roles = roles or []
-
-        # Import here to avoid circular imports
-        from ..infrastructure.database import SessionLocal
-
-        # Add default user role if no roles provided
-        if not roles:
-            # Import Role locally to avoid circular dependency
-            from .role import Role
-            with SessionLocal() as session:
-                user_role = session.query(Role).filter_by(name="user").first()
-                if not user_role:
-                    user_role = Role(name="user", description="Default user role")
-                    session.add(user_role)
-                    session.commit()
-                self.roles = [user_role]
-
         self.created_at = datetime.now(timezone.utc)
         self.updated_at = self.created_at
 

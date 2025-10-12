@@ -21,8 +21,8 @@ class Role(Base):
     __tablename__ = "roles"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String, unique=True, index=True)
-    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     # Relationship with users through the association table
     users: Mapped[List["User"]] = relationship("User", secondary=user_roles, back_populates="roles")
