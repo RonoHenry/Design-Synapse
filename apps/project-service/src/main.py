@@ -19,13 +19,10 @@ from .api.v1.routes.comments import router as comments_router
 from .api.v1.routes.projects import router as projects_router
 from .core.config import settings
 from .core.constants import V1_PREFIX
-from .core.exceptions import (
-    APIError,
-    api_error_handler,
-    general_exception_handler,
-    sqlalchemy_error_handler,
-    validation_error_handler,
-)
+from .core.exceptions import (APIError, api_error_handler,
+                              general_exception_handler,
+                              sqlalchemy_error_handler,
+                              validation_error_handler)
 from .core.versioning import get_api_version
 
 app = FastAPI(
@@ -51,15 +48,11 @@ app.add_exception_handler(Exception, general_exception_handler)
 
 # Register routers
 app.include_router(
-    projects_router,
-    prefix=V1_PREFIX,
-    dependencies=[Depends(get_api_version)]
+    projects_router, prefix=V1_PREFIX, dependencies=[Depends(get_api_version)]
 )
 
 app.include_router(
-    comments_router,
-    prefix=V1_PREFIX,
-    dependencies=[Depends(get_api_version)]
+    comments_router, prefix=V1_PREFIX, dependencies=[Depends(get_api_version)]
 )
 
 
@@ -73,7 +66,7 @@ def read_root():
         ssl_verify_cert=settings.database.ssl_verify_cert,
         ssl_verify_identity=settings.database.ssl_verify_identity,
     )
-    
+
     return {
         "message": "Welcome to the Project Service",
         "version": "1.0.0",

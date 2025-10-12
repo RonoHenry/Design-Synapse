@@ -35,7 +35,7 @@
   - Event loop fixture for async tests
 
 #### 3. Unit Tests (✓ Complete)
-- **Files**: 
+- **Files**:
   - `apps/project-service/tests/unit/models/test_project.py`
   - `apps/project-service/tests/unit/models/test_comment.py`
 - **Status**: Comprehensive test coverage

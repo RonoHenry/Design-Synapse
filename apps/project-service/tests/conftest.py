@@ -8,7 +8,7 @@ Environment Variables:
 
 import asyncio
 import os
-from typing import AsyncGenerator, Generator, Dict, Any
+from typing import Any, AsyncGenerator, Dict, Generator
 
 import pytest
 from fastapi.testclient import TestClient
@@ -18,12 +18,14 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 from src.infrastructure.database import Base, get_db
 from src.main import app
-from src.models.project import Project
 from src.models.comment import Comment
+from src.models.project import Project
 
 # Test database URL for SQLite in-memory database (default)
 SQLALCHEMY_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite:///:memory:")
-TEST_ASYNC_DATABASE_URL = os.getenv("TEST_ASYNC_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+TEST_ASYNC_DATABASE_URL = os.getenv(
+    "TEST_ASYNC_DATABASE_URL", "sqlite+aiosqlite:///:memory:"
+)
 
 # Create the test engine with appropriate configuration
 if "sqlite" in SQLALCHEMY_DATABASE_URL:
@@ -119,11 +121,11 @@ def test_project(db: Session) -> Project:
         name="Test Project",
         description="Test project description",
         owner_id=1,
-        status="active"
+        status="active",
     )
     db.add(project)
     db.commit()
-    return project # No refresh needed as the object is still attached
+    return project  # No refresh needed as the object is still attached
 
 
 @pytest.fixture
@@ -136,4 +138,4 @@ def test_comment(db: Session, test_project: Project) -> Comment:
     )
     db.add(comment)
     db.commit()
-    return comment # No refresh needed as the object is still attached
+    return comment  # No refresh needed as the object is still attached
