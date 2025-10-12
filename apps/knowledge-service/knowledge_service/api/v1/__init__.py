@@ -11,8 +11,8 @@ sys.path.insert(0, str(packages_path))
 from common.database.health import check_database_health
 
 from ...core.config import settings
-from .resources import router as resources_router
 from .citations import router as citations_router
+from .resources import router as resources_router
 from .search import router as search_router
 
 api_router = APIRouter()
@@ -21,6 +21,7 @@ api_router = APIRouter()
 api_router.include_router(resources_router, prefix="/resources", tags=["resources"])
 api_router.include_router(citations_router, prefix="/citations", tags=["citations"])
 api_router.include_router(search_router, prefix="/search", tags=["search"])
+
 
 @api_router.get("/health")
 def health_check():
@@ -32,7 +33,7 @@ def health_check():
         ssl_verify_cert=settings.database.ssl_verify_cert,
         ssl_verify_identity=settings.database.ssl_verify_identity,
     )
-    
+
     return {
         "status": "healthy" if db_health.is_healthy else "degraded",
         "version": "1.0.0",

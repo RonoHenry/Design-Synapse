@@ -9,10 +9,11 @@ Environment Variables:
 import asyncio
 import os
 import sys
+
 import pytest
-from sqlalchemy import Column, Integer, String, Boolean, create_engine, event
-from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
+from sqlalchemy import Boolean, Column, Integer, String, create_engine, event
+from sqlalchemy.orm import Session, sessionmaker
 
 # Add knowledge_service directory to Python path
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,26 +24,30 @@ if root_dir not in sys.path:
 os.environ["OPENAI_API_KEY"] = "dummy-key-for-testing"
 
 from knowledge_service.infrastructure.database import Base, get_db
-
-# Import all models first to register them with Base.metadata
-from knowledge_service.models.resource import Resource, Topic, resource_topics, Citation
-from knowledge_service.models.bookmark import Bookmark
 from knowledge_service.main import app
+from knowledge_service.models.bookmark import Bookmark
+# Import all models first to register them with Base.metadata
+from knowledge_service.models.resource import (Citation, Resource, Topic,
+                                               resource_topics)
+
 
 # Define User model after importing other models
 class User(Base):
     """Mock User class for testing."""
+
     __tablename__ = "users"
-    __table_args__ = {'extend_existing': True}
-    
+    __table_args__ = {"extend_existing": True}
+
     id = Column(Integer, primary_key=True)
     email = Column(String)
     full_name = Column(String)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
 
+
 # This ensures all models are loaded and registered before table creation
 all_models_loaded = True
+
 
 @pytest.fixture
 def event_loop():
@@ -52,15 +57,17 @@ def event_loop():
     yield loop
     loop.close()
 
+
 def create_access_token(data):
     """Mock token creation."""
-    return data['sub']
+    return data["sub"]
+
 
 # Test database URL - check environment variable or use SQLite default
 SQLALCHEMY_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL",
-    "sqlite:///file:memdb?mode=memory&cache=shared&uri=true"
+    "TEST_DATABASE_URL", "sqlite:///file:memdb?mode=memory&cache=shared&uri=true"
 )
+
 
 @pytest.fixture(scope="function")
 def db_engine():
@@ -69,18 +76,16 @@ def db_engine():
         engine = create_engine(
             SQLALCHEMY_DATABASE_URL,
             echo=False,
-            connect_args={
-                "check_same_thread": False,
-                "uri": True
-            }
+            connect_args={"check_same_thread": False, "uri": True},
         )
-        
+
         # Register event listener to enable foreign key support in SQLite
         @event.listens_for(engine, "connect")
         def set_sqlite_pragma(dbapi_connection, connection_record):
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.close()
+
     else:
         # MySQL/TiDB configuration
         engine = create_engine(
@@ -89,7 +94,7 @@ def db_engine():
             pool_pre_ping=True,
             pool_recycle=3600,
         )
-        
+
         # Set MySQL/TiDB specific session variables
         @event.listens_for(engine, "connect")
         def set_mysql_pragma(dbapi_connection, connection_record):
@@ -98,12 +103,12 @@ def db_engine():
             cursor.execute("SET CHARACTER SET utf8mb4")
             cursor.execute("SET character_set_connection=utf8mb4")
             cursor.close()
-    
+
     # Create all tables first
     Base.metadata.create_all(bind=engine)
-    
+
     yield engine
-    
+
     # Clean up after test
     Base.metadata.drop_all(bind=engine)
 
@@ -113,15 +118,17 @@ def db_session(db_engine):
     """Create tables and return a test database session."""
     SessionLocal = sessionmaker(bind=db_engine)
     session = SessionLocal()
-    
+
     yield session
-    
+
     # Close session after test
     session.close()
+
 
 @pytest.fixture
 def client(db_session):
     """Create a test client."""
+
     def override_get_db():
         try:
             yield db_session
@@ -133,6 +140,7 @@ def client(db_session):
         yield test_client
     app.dependency_overrides.clear()
 
+
 @pytest.fixture
 def test_user(db_session):
     """Create a test user."""
@@ -140,12 +148,13 @@ def test_user(db_session):
         email="test@example.com",
         hashed_password="test_hashed_password",
         full_name="Test User",
-        is_active=True
+        is_active=True,
     )
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)
     return user
+
 
 @pytest.fixture
 def auth_headers(test_user):
