@@ -72,8 +72,8 @@ DesignSynapse uses separate databases for each microservice to ensure data isola
 
 **Creation Example**:
 ```sql
-CREATE DATABASE IF NOT EXISTS design_synapse_user_db 
-CHARACTER SET utf8mb4 
+CREATE DATABASE IF NOT EXISTS design_synapse_user_db
+CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
 ```
 
@@ -233,12 +233,12 @@ class Settings(BaseSettings):
     database_user: str
     database_password: str
     database_name: str  # Service-specific database (e.g., design_synapse_user_db)
-    
+
     # SSL Configuration (required for TiDB Serverless)
     database_ssl_ca: str = "./ca.pem"
     database_ssl_verify_cert: bool = True
     database_ssl_verify_identity: bool = True
-    
+
     # Connection Pool Settings
     database_pool_size: int = 10
     database_max_overflow: int = 20
@@ -250,14 +250,14 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = f".env.{env_name}"
-    
+
     @property
     def database_url(self) -> str:
         """
         Construct TiDB connection URL with SSL parameters.
-        
+
         Format: mysql+pymysql://user:pass@host:port/db?ssl_params
-        
+
         TiDB Serverless requires:
         - mysql+pymysql dialect (MySQL-compatible)
         - SSL/TLS encryption
@@ -303,7 +303,7 @@ Example validation:
 def validate_environment():
     """
     Validate required environment variables for TiDB connection.
-    
+
     TiDB Serverless requires:
     - Database connection parameters
     - SSL certificate for encrypted connection
@@ -322,7 +322,7 @@ def validate_environment():
     missing = [var for var in required_vars if not os.getenv(var)]
     if missing:
         raise ValueError(f"Missing required environment variables: {missing}")
-    
+
     # Validate TiDB SSL certificate exists (required for TiDB Serverless)
     ssl_ca_path = os.getenv('DATABASE_SSL_CA')
     if ssl_ca_path and not os.path.exists(ssl_ca_path):
