@@ -1,9 +1,9 @@
 """Test TiDB connection."""
-import sys
 import os
+import sys
 
 # Add packages to path
-sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath("."))
 
 from packages.common.config.database import DatabaseConfig
 
@@ -22,13 +22,12 @@ from sqlalchemy import create_engine, text
 
 try:
     engine = create_engine(
-        config.get_connection_url(async_driver=False),
-        **config.get_engine_kwargs()
+        config.get_connection_url(async_driver=False), **config.get_engine_kwargs()
     )
-    
+
     with engine.connect() as conn:
         result = conn.execute(text("SELECT 1 as test"))
         print(f"\n✅ Connection successful! Result: {result.fetchone()}")
-        
+
 except Exception as e:
     print(f"\n❌ Connection failed: {e}")

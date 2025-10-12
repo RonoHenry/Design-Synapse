@@ -1,16 +1,16 @@
 """Apply knowledge-service migration."""
-import sys
 import os
+import sys
 
-sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath("."))
+
+from sqlalchemy import create_engine, text
 
 from packages.common.config.database import DatabaseConfig
-from sqlalchemy import create_engine, text
 
 config = DatabaseConfig()
 engine = create_engine(
-    config.get_connection_url(async_driver=False),
-    **config.get_engine_kwargs()
+    config.get_connection_url(async_driver=False), **config.get_engine_kwargs()
 )
 
 # SQL from the migration file
@@ -82,7 +82,7 @@ INSERT INTO alembic_version (version_num) VALUES ('c3d4e5f6a7b8');
 """
 
 with engine.connect() as conn:
-    for statement in migration_sql.strip().split(';'):
+    for statement in migration_sql.strip().split(";"):
         statement = statement.strip()
         if statement:
             try:
@@ -91,6 +91,6 @@ with engine.connect() as conn:
             except Exception as e:
                 print(f"❌ Error: {e}")
                 print(f"   Statement: {statement[:100]}")
-    
+
     conn.commit()
     print("\n✅ Knowledge-service migration applied successfully!")
