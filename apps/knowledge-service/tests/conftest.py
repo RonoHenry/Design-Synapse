@@ -1,4 +1,10 @@
-"""Test configuration and fixtures."""
+"""Test configuration and fixtures.
+
+Environment Variables:
+    TEST_DATABASE_URL: Optional database URL for integration testing.
+                      If not set, uses SQLite in-memory for fast unit tests.
+                      Example: mysql+pymysql://user:pass@host:port/db?charset=utf8mb4
+"""
 
 import asyncio
 import os
@@ -50,27 +56,48 @@ def create_access_token(data):
     """Mock token creation."""
     return data['sub']
 
-# Test database URL using SQLite for testing with shared memory
-SQLALCHEMY_DATABASE_URL = "sqlite:///file:memdb?mode=memory&cache=shared&uri=true"
+# Test database URL - check environment variable or use SQLite default
+SQLALCHEMY_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL",
+    "sqlite:///file:memdb?mode=memory&cache=shared&uri=true"
+)
 
 @pytest.fixture(scope="function")
 def db_engine():
     """Create a test database engine for each test."""
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL,
-        echo=True,
-        connect_args={
-            "check_same_thread": False,
-            "uri": True
-        }
-    )
-    
-    # Register event listener to enable foreign key support in SQLite
-    @event.listens_for(engine, "connect")
-    def set_sqlite_pragma(dbapi_connection, connection_record):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
+    if "sqlite" in SQLALCHEMY_DATABASE_URL:
+        engine = create_engine(
+            SQLALCHEMY_DATABASE_URL,
+            echo=False,
+            connect_args={
+                "check_same_thread": False,
+                "uri": True
+            }
+        )
+        
+        # Register event listener to enable foreign key support in SQLite
+        @event.listens_for(engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+    else:
+        # MySQL/TiDB configuration
+        engine = create_engine(
+            SQLALCHEMY_DATABASE_URL,
+            echo=False,
+            pool_pre_ping=True,
+            pool_recycle=3600,
+        )
+        
+        # Set MySQL/TiDB specific session variables
+        @event.listens_for(engine, "connect")
+        def set_mysql_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("SET NAMES utf8mb4")
+            cursor.execute("SET CHARACTER SET utf8mb4")
+            cursor.execute("SET character_set_connection=utf8mb4")
+            cursor.close()
     
     # Create all tables first
     Base.metadata.create_all(bind=engine)

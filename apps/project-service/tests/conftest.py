@@ -1,6 +1,13 @@
-"""Test configuration and fixtures for the project service."""
+"""Test configuration and fixtures for the project service.
+
+Environment Variables:
+    TEST_DATABASE_URL: Optional database URL for integration testing.
+                      If not set, uses SQLite in-memory for fast unit tests.
+                      Example: mysql+pymysql://user:pass@host:port/db?charset=utf8mb4
+"""
 
 import asyncio
+import os
 from typing import AsyncGenerator, Generator, Dict, Any
 
 import pytest
@@ -14,23 +21,39 @@ from src.main import app
 from src.models.project import Project
 from src.models.comment import Comment
 
-# Test database URL for SQLite in-memory database
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-TEST_ASYNC_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Test database URL for SQLite in-memory database (default)
+SQLALCHEMY_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite:///:memory:")
+TEST_ASYNC_DATABASE_URL = os.getenv("TEST_ASYNC_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
-# Create the SQLite engine for testing
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+# Create the test engine with appropriate configuration
+if "sqlite" in SQLALCHEMY_DATABASE_URL:
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    # MySQL/TiDB configuration
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        pool_pre_ping=True,
+        pool_recycle=3600,
+    )
 
 # Create async engine for async tests
-async_engine = create_async_engine(
-    TEST_ASYNC_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+if "sqlite" in TEST_ASYNC_DATABASE_URL:
+    async_engine = create_async_engine(
+        TEST_ASYNC_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    # MySQL/TiDB async configuration
+    async_engine = create_async_engine(
+        TEST_ASYNC_DATABASE_URL,
+        pool_pre_ping=True,
+        pool_recycle=3600,
+    )
 
 # Create test session factories
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

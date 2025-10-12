@@ -1,4 +1,4 @@
-# Implementation Plan
+mplementation Plan
 
 ## Current Status Summary
 **MAJOR PROGRESS COMPLETED:**
@@ -8,20 +8,23 @@
 - ✅ Import structures cleaned up and circular dependencies resolved
 - ✅ Database models have proper relationships and constraints
 - ✅ URL validation regex pattern fixed in Resource model
-- ✅ Basic test infrastructure exists with proper database isolation
+- ✅ Comprehensive test infrastructure with factories and shared utilities
 - ✅ User service has comprehensive error handling patterns
-- ✅ Project service has basic error handling patterns
+- ✅ Knowledge service has comprehensive error handling patterns
+- ✅ Project service has basic error handling patterns (needs shared error integration)
 - ✅ Project service schemas fully updated to Pydantic v2
 - ✅ Dependencies updated to modern versions (SQLAlchemy 2.0.25+, Pydantic v2.5+)
+- ✅ All services have Alembic migrations configured
 
 **REMAINING WORK:**
-- 🔄 Test infrastructure enhancement (factories, shared utilities)
-- 🔄 Error handling standardization (knowledge service missing exceptions.py)
-- 🔄 Service boundary enforcement (health checks missing in user/project services)
+- 🔄 Project service error handling integration with shared error classes
+- 🔄 Service boundary enforcement (health checks missing in user/project services, /ready endpoints needed)
+- 🔄 Inter-service HTTP communication infrastructure
 - 🔄 Database migration validation and testing
 - 🔄 Integration testing and validation
+- 🔄 API documentation updates
 
-**PRIORITY NEXT TASKS:** Focus on tasks 6.1-6.4 (Test Infrastructure) and 7.1, 7.3 (Knowledge Service Error Handling)
+**PRIORITY NEXT TASKS:** Focus on tasks 7.4 (Project Service Error Handling), 8.2 (Health Checks), 8.3 (Service Communication), and 9.x (Migration Validation)
 
 ---
 
@@ -246,25 +249,13 @@
 
 
 
-- [ ] 6. Test Infrastructure Enhancement
-
-
-
-
-
-
-
-
-
+- [x] 6. Test Infrastructure Enhancement
   - Enhance existing test infrastructure with factory patterns and shared utilities
   - Improve database isolation and test data creation
   - Add comprehensive model and API testing
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-
 - [x] 6.1 Create Shared Test Infrastructure
-
-
   - Create packages/common/testing/ with shared test utilities and base classes
   - Implement factory base classes using factory_boy for consistent test data creation across services
   - Create database isolation utilities that can be reused by all services
@@ -273,14 +264,7 @@
   - Add factory_boy to requirements.txt files for all services
   - _Requirements: 4.1, 4.2, 4.5_
 
-
-
 - [x] 6.2 Enhance User Service Test Infrastructure
-
-
-
-
-
   - Create apps/user-service/tests/factories.py with UserFactory and RoleFactory using factory_boy
   - Enhance existing conftest.py with better database isolation and cleanup
   - Write comprehensive unit tests for User and Role models with 80%+ coverage
@@ -288,30 +272,26 @@
   - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
 - [x] 6.3 Enhance Knowledge Service Test Infrastructure
-
-
   - Create apps/knowledge-service/tests/factories.py for Resource, Citation, Bookmark, and Topic models
   - Enhance existing test infrastructure with better isolation and mock external services
   - Write comprehensive unit tests for model validation, relationships, and cascade behavior
   - Add integration tests for search and citation endpoints with proper mocking
   - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
-- [ ] 6.4 Enhance Project Service Test Infrastructure
+- [x] 6.4 Enhance Project Service Test Infrastructure
   - Create apps/project-service/tests/factories.py for Project and Comment models using factory_boy
   - Enhance existing test infrastructure with better isolation and async test support
   - Write comprehensive unit tests for project model validation and business logic
   - Add integration tests for project CRUD operations and comment functionality
   - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
-- [ ] 7. Error Handling Standardization
+- [-] 7. Error Handling Standardization
   - Implement consistent error response formats across all services
   - Add proper database error handling with meaningful messages
   - Create error handling middleware for common patterns
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-
 - [x] 7.1 Create Shared Error Handling Classes
-
   - Create packages/common/errors/ with StandardErrorResponse classes and ErrorType enum
   - Implement error detail structures and validation error formatting
   - Add error handling decorators for common database operations and external service calls
@@ -325,22 +305,25 @@
   - Update API endpoints to return consistent error responses
   - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-
 - [x] 7.3 Update Knowledge Service Error Handling
-
-
   - Create knowledge_service/core/exceptions.py with standard error handling
   - Implement proper error responses for LLM service failures
   - Add validation error handling for resource creation and updates
   - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
 - [ ] 7.4 Update Project Service Error Handling
-  - Create apps/project-service/src/core/exceptions.py with standard error handling
-  - Implement proper error responses for project validation failures
-  - Add database constraint violation handling
+
+
+
+  - Migrate apps/project-service/src/core/exceptions.py to use shared error handling classes
+  - Replace custom APIError, ProjectNotFoundError, and ProjectAccessError with shared error classes
+  - Update main.py to use register_error_handlers from common.errors
+  - Implement proper error responses for project validation failures using shared patterns
+  - Add database constraint violation handling using shared database error utilities
+  - Update all API endpoints to use shared error response formats
   - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 8. Service Boundary Enforcement
+- [-] 8. Service Boundary Enforcement
   - Remove direct database access between services
   - Implement proper API communication patterns
   - Add comprehensive service health checks and monitoring
@@ -352,19 +335,29 @@
   - Update service dependencies to use API-based communication
   - _Requirements: 6.1, 6.2, 6.3_
 
+
+
+
 - [ ] 8.2 Implement Comprehensive Service Health Checks
-  - Add health check endpoints to user-service and project-service (/health, /ready)
-  - Enhance knowledge-service health checks with database and external service checks (basic /health exists)
-  - Implement database connection health checks for all services
-  - Add external service dependency health checks (Pinecone, OpenAI)
-  - Add /ready endpoint that checks all dependencies are available
+  - Add /health endpoint to user-service (basic endpoint returning service status)
+  - Add /health endpoint to project-service (basic endpoint returning service status)
+  - Enhance knowledge-service /health endpoint with database connection check
+  - Add /ready endpoint to all three services that checks database connectivity
+  - Add external service dependency health checks to knowledge-service /ready (Pinecone, OpenAI availability)
+  - Implement health check response format with status, service name, version, and dependency checks
   - _Requirements: 6.4, 6.5_
 
-- [ ] 8.3 Create Service Communication Infrastructure
-  - Create packages/common/http/ with HTTP client utilities for inter-service communication
-  - Implement proper retry and timeout mechanisms for service calls
-  - Add circuit breaker patterns for external service calls
-  - Create service discovery and configuration for API endpoints
+- [x] 8.3 Create Service Communication Infrastructure
+
+
+
+  - Create packages/common/http/ directory with HTTP client utilities for inter-service communication
+  - Implement base HTTP client class with proper error handling and timeout configuration
+  - Add retry mechanism with exponential backoff for transient failures
+  - Implement circuit breaker pattern for external service calls to prevent cascade failures
+  - Create service registry/configuration for API endpoint discovery (service URLs, ports)
+  - Add request/response logging and tracing utilities for debugging inter-service calls
+  - Create typed client classes for each service (UserServiceClient, ProjectServiceClient, KnowledgeServiceClient)
   - _Requirements: 6.1, 6.2, 6.4_
 
 - [ ] 9. Database Migration Validation and Updates
@@ -374,25 +367,33 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
 - [ ] 9.1 Validate User Service Migrations
-  - Test existing Alembic migrations work with updated User and Role models
-  - Generate additional migrations if model changes require them
-  - Test migrations on sample data to ensure no data loss
-  - Validate rollback procedures work correctly
-  - Create migration testing script to validate schema consistency
+  - Review existing Alembic migrations in apps/user-service/migrations/versions/
+  - Test migrations against updated User and Role models with SQLAlchemy 2.0 Mapped types
+  - Run alembic upgrade head on a test database and verify schema matches model definitions
+  - Generate new migration if model changes (Mapped types, relationship patterns) require schema updates
+  - Test migration rollback with alembic downgrade -1 to ensure reversibility
+  - Create automated migration testing script that validates schema consistency
+  - Test migrations with sample data to ensure no data loss or corruption
   - _Requirements: 1.1, 1.2, 1.3_
 
 - [ ] 9.2 Validate Knowledge Service Migrations
-  - Test existing migrations work with updated Resource, Citation, and Bookmark models
-  - Generate additional migrations for any new constraints or relationships
-  - Test cascade delete behavior with existing data
-  - Validate that URL regex fixes don't break existing URLs
+  - Review existing Alembic migrations in apps/knowledge-service/migrations/versions/
+  - Test migrations work with updated Resource, Citation, and Bookmark models (SQLAlchemy 2.0 patterns)
+  - Verify CASCADE delete constraints are properly defined in migrations for Citation and Bookmark
+  - Generate new migration if URL validation regex changes or relationship updates require schema changes
+  - Test cascade delete behavior: delete a Resource and verify Citations and Bookmarks are removed
+  - Validate that existing URLs in database still validate with updated regex pattern
+  - Test migration rollback procedures to ensure safe downgrade path
   - _Requirements: 1.1, 1.2, 1.4, 1.5_
 
 - [ ] 9.3 Validate Project Service Migrations
-  - Test existing migrations work with updated Project and Comment models
-  - Generate additional migrations if needed for constraint changes
-  - Test that existing project data validates with new constraints
-  - Create data migration scripts if needed for constraint changes
+  - Review existing Alembic migrations in apps/project-service/migrations/versions/
+  - Test migrations work with updated Project and Comment models (SQLAlchemy 2.0 Mapped types)
+  - Verify foreign key constraints and CASCADE deletes are properly defined for Comment model
+  - Generate new migration if model constraint changes (status enum, name length, etc.) require updates
+  - Test that existing project data validates with new constraints (allowed_statuses, name length limits)
+  - Create data migration script if needed to update existing data to meet new constraints
+  - Test migration rollback to ensure safe downgrade without data loss
   - _Requirements: 1.1, 1.2, 1.3, 1.6_
 
 - [ ] 10. Integration Testing and Validation
@@ -402,21 +403,32 @@
   - _Requirements: 4.3, 4.4, 7.3, 7.4, 7.5_
 
 - [ ] 10.1 Service Integration Testing
-  - Create integration tests that verify service-to-service communication
-  - Test authentication flow across services
-  - Validate that error responses are consistent across services
+  - Create end-to-end integration test suite in tests/integration/ at workspace root
+  - Test authentication flow: user login in user-service, token validation in other services
+  - Test cross-service workflows: create project in project-service, add resources in knowledge-service
+  - Verify service-to-service communication using HTTP clients (once 8.3 is complete)
+  - Validate that error responses are consistent across all services (same format, status codes)
+  - Test service startup and shutdown procedures for all three services
   - _Requirements: 4.3, 7.3, 7.4_
 
 - [ ] 10.2 Database Integration Testing
-  - Test that all database operations work with new model constraints
-  - Validate cascade delete behavior in realistic scenarios
-  - Test database connection pooling and error recovery
+  - Test all CRUD operations work correctly with SQLAlchemy 2.0 model patterns
+  - Validate CASCADE delete behavior: delete Resource and verify Citations/Bookmarks removed
+  - Validate CASCADE delete behavior: delete Project and verify Comments removed
+  - Test foreign key constraint violations return proper error messages
+  - Test database connection pooling under load (concurrent requests)
+  - Test database error recovery: simulate connection loss and verify reconnection
+  - Test transaction rollback scenarios for data integrity
   - _Requirements: 1.4, 1.5, 4.3, 4.4_
 
 - [ ] 10.3 Configuration Validation Testing
-  - Test all services with various configuration scenarios
-  - Validate error messages for missing or invalid configuration
-  - Test fallback mechanisms for external service failures
+  - Test each service starts successfully with valid configuration
+  - Test services fail fast with clear error messages for missing required config (DB credentials, JWT secret)
+  - Test knowledge-service with missing LLM API keys (should fail or use fallback)
+  - Test knowledge-service with missing Pinecone config (should fail with clear message)
+  - Test configuration validation for invalid values (negative pool_size, invalid JWT algorithm)
+  - Test environment-specific configuration (development, testing, production modes)
+  - Test fallback mechanisms: LLM provider fallback when primary fails
   - _Requirements: 3.4, 3.5, 7.3, 7.5_
 
 - [ ] 11. API Documentation and Validation
@@ -426,8 +438,15 @@
   - _Requirements: 5.2, 5.4_
 
 - [ ] 11.1 Update Service API Documentation
-  - Regenerate OpenAPI specs for all services with updated schemas
-  - Add example requests/responses using new validation patterns
-  - Update service-specific documentation with configuration examples
-  - Test API documentation accuracy with contract testing
+  - Verify OpenAPI specs are auto-generated correctly by FastAPI with Pydantic v2 schemas
+  - Test OpenAPI documentation endpoints (/docs, /redoc) for all three services
+  - Add example requests/responses to Pydantic schemas using Field(examples=[...])
+  - Create or update README.md for each service with:
+    - Service overview and purpose
+    - Configuration requirements and environment variables
+    - API endpoint documentation with curl examples
+    - Development setup instructions
+    - Testing instructions
+  - Add API contract tests that validate responses match OpenAPI schema definitions
+  - Document error response formats and status codes for each endpoint
   - _Requirements: 5.2, 5.4_

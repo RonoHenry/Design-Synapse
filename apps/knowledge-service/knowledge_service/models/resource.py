@@ -75,7 +75,7 @@ class Resource(Base):
             r'localhost|'  # localhost...
             r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
             r'(?::\d+)?'  # optional port
-            r'(?:/?|[/?]\S+)$'$',  # path
+            r'(?:/?|[/?]\S+)$',  # path
             re.IGNORECASE)
         if not url_pattern.match(url):
             raise ValueError(f"Invalid URL format: {url}")

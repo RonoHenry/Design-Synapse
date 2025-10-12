@@ -1,13 +1,23 @@
 """
 Main application file.
 """
+import sys
+from pathlib import Path
+
 from fastapi import Depends, FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 
+# Add packages to path for common imports
+packages_path = Path(__file__).parent.parent.parent.parent / "packages"
+sys.path.insert(0, str(packages_path))
+
+from common.database.health import check_database_health
+
 from .api.v1.routes.comments import router as comments_router
 from .api.v1.routes.projects import router as projects_router
+from .core.config import settings
 from .core.constants import V1_PREFIX
 from .core.exceptions import (
     APIError,
@@ -55,9 +65,24 @@ app.include_router(
 
 @app.get("/")
 def read_root():
-    """Root endpoint."""
+    """Root endpoint with database health check."""
+    # Check database connectivity
+    db_health = check_database_health(
+        connection_url=settings.get_database_url(),
+        ssl_ca=settings.database.ssl_ca,
+        ssl_verify_cert=settings.database.ssl_verify_cert,
+        ssl_verify_identity=settings.database.ssl_verify_identity,
+    )
+    
     return {
         "message": "Welcome to the Project Service",
         "version": "1.0.0",
-        "status": "healthy",
+        "status": "healthy" if db_health.is_healthy else "degraded",
+        "database": {
+            "status": "connected" if db_health.is_healthy else "disconnected",
+            "response_time_ms": db_health.response_time_ms,
+            "version": db_health.database_version,
+            "ssl_enabled": db_health.ssl_enabled,
+            "error": db_health.error,
+        },
     }

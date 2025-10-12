@@ -6,8 +6,9 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 alembic==1.12.0
 
-# Database
-psycopg2-binary==2.9.7
+# Database drivers for TiDB/MySQL
+pymysql==1.1.0
+cryptography==41.0.7
 
 # Authentication
 python-jose[cryptography]==3.3.0

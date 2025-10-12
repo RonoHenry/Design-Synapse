@@ -17,8 +17,8 @@ def create_test_token(user_id: int, roles: list[str] = None) -> str:
     }
     return jwt.encode(
         token_data,
-        settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM
+        settings.jwt.secret_key,
+        algorithm=settings.jwt.algorithm
     )
 
 

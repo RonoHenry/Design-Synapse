@@ -93,11 +93,30 @@ def create_test_engine(
     
     default_kwargs = {
         "echo": echo,
-        "connect_args": {"check_same_thread": False} if "sqlite" in database_url else {},
     }
     
+    # Configure connection args based on database type
     if "sqlite" in database_url:
+        default_kwargs["connect_args"] = {"check_same_thread": False}
         default_kwargs["poolclass"] = StaticPool
+    elif "mysql" in database_url or "tidb" in database_url:
+        # MySQL/TiDB specific configuration
+        connect_args = {}
+        
+        # Handle SSL configuration for TiDB
+        if "ssl_ca=" in database_url:
+            import ssl
+            # SSL parameters are in the URL, pymysql will handle them
+            connect_args["ssl"] = {
+                "ssl_mode": "VERIFY_IDENTITY"
+            }
+        
+        if connect_args:
+            default_kwargs["connect_args"] = connect_args
+        
+        # Use connection pooling for MySQL/TiDB
+        default_kwargs["pool_pre_ping"] = True
+        default_kwargs["pool_recycle"] = 3600
     
     # Merge with user-provided kwargs
     default_kwargs.update(engine_kwargs)
@@ -110,6 +129,17 @@ def create_test_engine(
         def set_sqlite_pragma(dbapi_connection, connection_record):
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+    
+    # Set MySQL/TiDB specific session variables
+    if "mysql" in database_url or "tidb" in database_url:
+        @event.listens_for(engine, "connect")
+        def set_mysql_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            # Ensure UTF-8 encoding
+            cursor.execute("SET NAMES utf8mb4")
+            cursor.execute("SET CHARACTER SET utf8mb4")
+            cursor.execute("SET character_set_connection=utf8mb4")
             cursor.close()
     
     return engine
@@ -285,4 +315,6 @@ TEST_DATABASE_URLS = {
     "sqlite_async_file": "sqlite+aiosqlite:///test.db",
     "postgresql_test": "postgresql://test_user:test_pass@localhost:5432/test_db",
     "postgresql_async_test": "postgresql+asyncpg://test_user:test_pass@localhost:5432/test_db",
+    "mysql_test": "mysql+pymysql://test_user:test_pass@localhost:3306/test_db?charset=utf8mb4",
+    "tidb_test": "mysql+pymysql://test_user:test_pass@gateway.tidbcloud.com:4000/test_db?charset=utf8mb4&ssl_ca=/path/to/ca.pem&ssl_verify_cert=true&ssl_verify_identity=true",
 }
