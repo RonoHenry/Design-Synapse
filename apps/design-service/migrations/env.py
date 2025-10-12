@@ -1,12 +1,14 @@
-from logging.config import fileConfig
 import os
 import sys
+from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 # Add the parent directory to the path to import from packages
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,6 +22,7 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 from src.infrastructure.database import Base
+
 # Import all models here so they are registered with Base.metadata
 # from src.models.design import Design
 # from src.models.design_iteration import DesignIteration
@@ -30,14 +33,19 @@ target_metadata = Base.metadata
 # This allows using the DatabaseConfig for TiDB connection
 try:
     # Change to project root to find .env file
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+    project_root = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "..")
+    )
     os.chdir(project_root)
-    
+
     from packages.common.config.database import DatabaseConfig
+
     db_config = DatabaseConfig()
     connection_url = db_config.get_connection_url(async_driver=False)
-    config.set_main_option('sqlalchemy.url', connection_url)
-    print(f"Using database connection: {db_config.host}:{db_config.port}/{db_config.database}")
+    config.set_main_option("sqlalchemy.url", connection_url)
+    print(
+        f"Using database connection: {db_config.host}:{db_config.port}/{db_config.database}"
+    )
 except Exception as e:
     # Fall back to the URL in alembic.ini if config fails
     print(f"Warning: Could not load DatabaseConfig: {e}")

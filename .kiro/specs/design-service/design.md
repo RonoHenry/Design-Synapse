@@ -66,26 +66,26 @@ graph LR
 class Design(Base):
     """Main design entity storing architectural designs."""
     __tablename__ = "designs"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    
+
     # Design specification (structured JSON)
     specification: Mapped[dict] = mapped_column(JSON, nullable=False)
-    
+
     # Metadata
     building_type: Mapped[str] = mapped_column(String(100), nullable=False)  # residential, commercial, industrial
     total_area: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # in square meters
     num_floors: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     materials: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
-    
+
     # AI generation metadata
     generation_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     confidence_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # 0-100
     ai_model_version: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    
+
     # Version control
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     parent_design_id: Mapped[Optional[int]] = mapped_column(
@@ -93,7 +93,7 @@ class Design(Base):
         ForeignKey("designs.id"),
         nullable=True
     )
-    
+
     # Status and compliance
     status: Mapped[str] = mapped_column(
         String(50),
@@ -101,7 +101,7 @@ class Design(Base):
         nullable=False
     )  # draft, validated, compliant, non_compliant
     is_archived: Mapped[bool] = mapped_column(Boolean, default=False)
-    
+
     # Audit fields
     created_by: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -110,7 +110,7 @@ class Design(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-    
+
     # Relationships
     validations: Mapped[List["DesignValidation"]] = relationship(
         "DesignValidation",
@@ -144,27 +144,27 @@ class Design(Base):
 class DesignValidation(Base):
     """Validation results for designs against building codes."""
     __tablename__ = "design_validations"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     design_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("designs.id", ondelete="CASCADE"),
         nullable=False
     )
-    
+
     # Validation metadata
     validation_type: Mapped[str] = mapped_column(String(100), nullable=False)  # building_code, structural, safety
     rule_set: Mapped[str] = mapped_column(String(100), nullable=False)  # e.g., "Kenya_Building_Code_2020"
-    
+
     # Results
     is_compliant: Mapped[bool] = mapped_column(Boolean, nullable=False)
     violations: Mapped[List] = mapped_column(JSON, default=list)  # List of violation objects
     warnings: Mapped[List] = mapped_column(JSON, default=list)
-    
+
     # Audit
     validated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     validated_by: Mapped[int] = mapped_column(Integer, nullable=False)
-    
+
     # Relationship
     design: Mapped["Design"] = relationship("Design", back_populates="validations")
 ```
@@ -174,32 +174,32 @@ class DesignValidation(Base):
 class DesignOptimization(Base):
     """AI-generated optimization suggestions for designs."""
     __tablename__ = "design_optimizations"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     design_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("designs.id", ondelete="CASCADE"),
         nullable=False
     )
-    
+
     # Optimization details
     optimization_type: Mapped[str] = mapped_column(String(100), nullable=False)  # cost, structural, sustainability
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    
+
     # Impact analysis
     estimated_cost_impact: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # percentage
     implementation_difficulty: Mapped[str] = mapped_column(String(50), nullable=False)  # easy, medium, hard
     priority: Mapped[str] = mapped_column(String(50), default="medium")  # low, medium, high
-    
+
     # Application status
     status: Mapped[str] = mapped_column(String(50), default="suggested")  # suggested, applied, rejected
     applied_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     applied_by: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    
+
     # Audit
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
+
     # Relationship
     design: Mapped["Design"] = relationship("Design", back_populates="optimizations")
 ```
@@ -209,27 +209,27 @@ class DesignOptimization(Base):
 class DesignFile(Base):
     """Files attached to designs (CAD, images, PDFs)."""
     __tablename__ = "design_files"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     design_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("designs.id", ondelete="CASCADE"),
         nullable=False
     )
-    
+
     # File metadata
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
     file_type: Mapped[str] = mapped_column(String(50), nullable=False)  # pdf, dwg, dxf, png, jpg, ifc
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)  # bytes
     storage_path: Mapped[str] = mapped_column(String(500), nullable=False)
-    
+
     # Optional description
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    
+
     # Audit
     uploaded_by: Mapped[int] = mapped_column(Integer, nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
+
     # Relationship
     design: Mapped["Design"] = relationship("Design", back_populates="files")
 ```
@@ -239,22 +239,22 @@ class DesignFile(Base):
 class DesignComment(Base):
     """Comments and annotations on designs."""
     __tablename__ = "design_comments"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     design_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("designs.id", ondelete="CASCADE"),
         nullable=False
     )
-    
+
     # Comment content
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    
+
     # Optional spatial positioning
     position_x: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     position_y: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     position_z: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    
+
     # Audit
     created_by: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -264,7 +264,7 @@ class DesignComment(Base):
         onupdate=datetime.utcnow
     )
     is_edited: Mapped[bool] = mapped_column(Boolean, default=False)
-    
+
     # Relationship
     design: Mapped["Design"] = relationship("Design", back_populates="comments")
 ```
@@ -276,7 +276,7 @@ class DesignComment(Base):
 class DesignGenerationRequest(BaseModel):
     """Request schema for AI design generation."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     project_id: int = Field(..., description="Project ID this design belongs to")
     name: str = Field(..., min_length=1, max_length=255)
     description: str = Field(..., description="Natural language design description")
@@ -286,7 +286,7 @@ class DesignGenerationRequest(BaseModel):
 class DesignUpdateRequest(BaseModel):
     """Request schema for updating a design."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     specification: Optional[Dict[str, Any]] = None
@@ -295,14 +295,14 @@ class DesignUpdateRequest(BaseModel):
 class ValidationRequest(BaseModel):
     """Request schema for design validation."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     validation_type: str = Field(..., description="Type of validation to perform")
     rule_set: str = Field(..., description="Building code rule set to use")
 
 class OptimizationRequest(BaseModel):
     """Request schema for design optimization."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     optimization_types: List[str] = Field(
         default=["cost", "structural", "sustainability"],
         description="Types of optimizations to generate"
@@ -314,7 +314,7 @@ class OptimizationRequest(BaseModel):
 class DesignResponse(BaseModel):
     """Response schema for design data."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: int
     project_id: int
     name: str
@@ -334,7 +334,7 @@ class DesignResponse(BaseModel):
 class ValidationResponse(BaseModel):
     """Response schema for validation results."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: int
     design_id: int
     validation_type: str
@@ -347,7 +347,7 @@ class ValidationResponse(BaseModel):
 class OptimizationResponse(BaseModel):
     """Response schema for optimization suggestions."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: int
     design_id: int
     optimization_type: str
@@ -366,11 +366,11 @@ class OptimizationResponse(BaseModel):
 ```python
 class DesignGeneratorService:
     """Service for AI-powered design generation."""
-    
+
     def __init__(self, llm_client: LLMClient, design_repo: DesignRepository):
         self.llm_client = llm_client
         self.design_repo = design_repo
-    
+
     async def generate_design(
         self,
         request: DesignGenerationRequest,
@@ -385,7 +385,7 @@ class DesignGeneratorService:
         # 6. Save to database
         # 7. Return created design
         pass
-    
+
     async def create_design_version(
         self,
         design_id: int,
@@ -400,7 +400,7 @@ class DesignGeneratorService:
 ```python
 class ValidationService:
     """Service for design validation against building codes."""
-    
+
     def __init__(
         self,
         validation_repo: ValidationRepository,
@@ -408,7 +408,7 @@ class ValidationService:
     ):
         self.validation_repo = validation_repo
         self.rule_engine = rule_engine
-    
+
     async def validate_design(
         self,
         design: Design,
@@ -431,7 +431,7 @@ class ValidationService:
 ```python
 class OptimizationService:
     """Service for AI-powered design optimization."""
-    
+
     def __init__(
         self,
         llm_client: LLMClient,
@@ -439,7 +439,7 @@ class OptimizationService:
     ):
         self.llm_client = llm_client
         self.optimization_repo = optimization_repo
-    
+
     async def generate_optimizations(
         self,
         design: Design,
@@ -453,7 +453,7 @@ class OptimizationService:
         # 5. Create DesignOptimization entities
         # 6. Save and return optimizations
         pass
-    
+
     async def apply_optimization(
         self,
         optimization_id: int,
@@ -614,7 +614,7 @@ Error responses follow the standard format:
 class DesignFactory(BaseFactory):
     class Meta:
         model = Design
-    
+
     name = factory.Faker("sentence", nb_words=3)
     project_id = 1
     building_type = "residential"
@@ -686,26 +686,26 @@ class DesignServiceConfig(BaseSettings):
     service_name: str = "design-service"
     port: int = 8004
     host: str = "0.0.0.0"
-    
+
     # Database
     database: DatabaseConfig
-    
+
     # AI/LLM
     llm: LLMConfig
-    
+
     # External Services
     user_service_url: str
     project_service_url: str
-    
+
     # File Storage
     file_storage_type: str = "local"
     file_storage_path: str = "./storage/designs"
     max_file_size_mb: int = 50
-    
+
     # Building Codes
     building_code_rules_path: str = "./config/building_codes"
     default_building_code: str = "Kenya_Building_Code_2020"
-    
+
     class Config:
         env_file = ".env"
         env_nested_delimiter = "__"
