@@ -26,9 +26,10 @@ class DesignSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="DESIGN_",
-        env_file=".env",
+        env_file=".env" if not os.getenv("TESTING") else None,
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",  # Ignore extra fields from .env
     )
 
     # Design generation limits
@@ -52,9 +53,10 @@ class JWTSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="JWT_",
-        env_file=".env",
+        env_file=".env" if not os.getenv("TESTING") else None,
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",  # Ignore extra fields from .env
     )
 
     secret_key: str = Field(..., min_length=32)
@@ -214,6 +216,13 @@ class DesignServiceConfig:
             "requests_per_minute": self.rate_limit_requests_per_minute,
             "burst": self.rate_limit_burst,
         }
+
+    def get_celery_config(self) -> dict:
+        """Get Celery configuration for task queue management."""
+        from .celery_config import CeleryConfig
+        
+        celery_config = CeleryConfig()
+        return celery_config.get_complete_celery_config()
 
 
 # Global settings instance - lazy initialization to avoid issues during testing

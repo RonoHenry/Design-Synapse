@@ -14,6 +14,7 @@ class LLMProvider(str, Enum):
     ANTHROPIC = "anthropic"
     AZURE_OPENAI = "azure_openai"
     HUGGINGFACE = "huggingface"
+    GROQ = "groq"
 
 
 class LLMConfig(BaseSettings):
@@ -23,12 +24,13 @@ class LLMConfig(BaseSettings):
         env_prefix="LLM_",
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=False
+        case_sensitive=False,
+        extra="ignore"
     )
     
     # Primary provider settings
-    primary_provider: LLMProvider = LLMProvider.OPENAI
-    fallback_providers: List[LLMProvider] = Field(default_factory=lambda: [LLMProvider.ANTHROPIC])
+    primary_provider: LLMProvider = LLMProvider.GROQ
+    fallback_providers: List[LLMProvider] = Field(default_factory=lambda: [LLMProvider.OPENAI])
     
     # OpenAI settings
     openai_api_key: Optional[str] = None
@@ -51,6 +53,12 @@ class LLMConfig(BaseSettings):
     # HuggingFace settings
     huggingface_api_key: Optional[str] = None
     huggingface_model: str = "microsoft/DialoGPT-medium"
+    
+    # Groq settings
+    groq_api_key: Optional[str] = None
+    groq_model: str = "llama3-8b-8192"
+    groq_max_tokens: int = Field(default=1000, ge=1, le=8000)
+    groq_temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     
     # Request settings
     max_retries: int = Field(default=3, ge=0, le=10)
@@ -100,6 +108,10 @@ class LLMConfig(BaseSettings):
                 raise ValueError(
                     f"LLM_HUGGINGFACE_API_KEY is required when using {provider.value} provider"
                 )
+            elif provider == LLMProvider.GROQ and not self.groq_api_key:
+                raise ValueError(
+                    f"LLM_GROQ_API_KEY is required when using {provider.value} provider"
+                )
         
         return self
     
@@ -130,6 +142,13 @@ class LLMConfig(BaseSettings):
             return {
                 "api_key": self.huggingface_api_key,
                 "model": self.huggingface_model,
+            }
+        elif provider == LLMProvider.GROQ:
+            return {
+                "api_key": self.groq_api_key,
+                "model": self.groq_model,
+                "max_tokens": self.groq_max_tokens,
+                "temperature": self.groq_temperature,
             }
         else:
             raise ValueError(f"Unknown provider: {provider}")

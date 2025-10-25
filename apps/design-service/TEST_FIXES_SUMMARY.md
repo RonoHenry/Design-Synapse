@@ -31,7 +31,7 @@ All tests in the design service are now passing successfully. The task mentioned
 
 ### Test Coverage Breakdown
 - **Models**: 95-100% coverage
-- **Repositories**: 100% coverage  
+- **Repositories**: 100% coverage
 - **Services**: 80-100% coverage
 - **API Routes**: 76-98% coverage
 - **Schemas**: 100% coverage
