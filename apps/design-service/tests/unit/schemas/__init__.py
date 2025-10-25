@@ -1,1 +1,1 @@
-"""Unit tests for schemas."""
+"""Unit tests for Pydantic schemas."""

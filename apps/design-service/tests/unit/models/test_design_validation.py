@@ -1,8 +1,8 @@
 """Unit tests for DesignValidation model."""
-import pytest
 from datetime import datetime, timezone
-from sqlalchemy.exc import IntegrityError
 
+import pytest
+from sqlalchemy.exc import IntegrityError
 from src.models.design import Design
 from src.models.design_validation import DesignValidation
 from tests.factories import DesignFactory
@@ -23,7 +23,7 @@ class TestDesignValidationModel:
             validation_type="building_code",
             rule_set="Kenya_Building_Code_2020",
             is_compliant=True,
-            validated_by=1
+            validated_by=1,
         )
         db_session.add(validation)
         db_session.commit()
@@ -51,7 +51,7 @@ class TestDesignValidationModel:
             validation_type="structural",
             rule_set="Kenya_Building_Code_2020",
             is_compliant=False,
-            validated_by=1
+            validated_by=1,
         )
         db_session.add(validation)
         db_session.commit()
@@ -74,14 +74,14 @@ class TestDesignValidationModel:
             validation_type="building_code",
             rule_set="Kenya_Building_Code_2020",
             is_compliant=True,
-            validated_by=1
+            validated_by=1,
         )
         validation2 = DesignValidation(
             design_id=design.id,
             validation_type="structural",
             rule_set="Kenya_Building_Code_2020",
             is_compliant=False,
-            validated_by=1
+            validated_by=1,
         )
         db_session.add_all([validation1, validation2])
         db_session.commit()
@@ -94,8 +94,14 @@ class TestDesignValidationModel:
         db_session.commit()
 
         # Assert - Validations should be deleted
-        assert db_session.query(DesignValidation).filter_by(id=validation1_id).first() is None
-        assert db_session.query(DesignValidation).filter_by(id=validation2_id).first() is None
+        assert (
+            db_session.query(DesignValidation).filter_by(id=validation1_id).first()
+            is None
+        )
+        assert (
+            db_session.query(DesignValidation).filter_by(id=validation2_id).first()
+            is None
+        )
 
     def test_violations_json_field_storage(self, db_session):
         """Test storing and retrieving violations as JSON."""
@@ -111,7 +117,7 @@ class TestDesignValidationModel:
                 "current_value": 4.5,
                 "required_value": 5.0,
                 "location": "front_boundary",
-                "suggestion": "Increase front setback by 0.5 meters"
+                "suggestion": "Increase front setback by 0.5 meters",
             },
             {
                 "code": "HEIGHT_VIOLATION",
@@ -119,8 +125,8 @@ class TestDesignValidationModel:
                 "rule": "Maximum building height is 12 meters",
                 "current_value": 13.5,
                 "required_value": 12.0,
-                "location": "building_height"
-            }
+                "location": "building_height",
+            },
         ]
 
         # Act
@@ -130,7 +136,7 @@ class TestDesignValidationModel:
             rule_set="Kenya_Building_Code_2020",
             is_compliant=False,
             violations=violations,
-            validated_by=1
+            validated_by=1,
         )
         db_session.add(validation)
         db_session.commit()
@@ -157,7 +163,7 @@ class TestDesignValidationModel:
                 "rule": "Recommended window area is 10% of floor area",
                 "current_value": 8.5,
                 "recommended_value": 10.0,
-                "suggestion": "Consider increasing window area for better ventilation"
+                "suggestion": "Consider increasing window area for better ventilation",
             }
         ]
 
@@ -168,7 +174,7 @@ class TestDesignValidationModel:
             rule_set="Kenya_Building_Code_2020",
             is_compliant=True,
             warnings=warnings,
-            validated_by=1
+            validated_by=1,
         )
         db_session.add(validation)
         db_session.commit()
@@ -192,7 +198,7 @@ class TestDesignValidationModel:
             validation_type="building_code",
             rule_set="Kenya_Building_Code_2020",
             is_compliant=True,
-            validated_by=1
+            validated_by=1,
         )
         db_session.add(validation)
         db_session.commit()
@@ -216,7 +222,7 @@ class TestDesignValidationModel:
             is_compliant=True,
             violations=[],
             warnings=[],
-            validated_by=1
+            validated_by=1,
         )
         db_session.add(validation)
         db_session.commit()
@@ -236,7 +242,7 @@ class TestDesignValidationModel:
             {
                 "code": "SETBACK_VIOLATION",
                 "severity": "critical",
-                "rule": "Front setback must be at least 5 meters"
+                "rule": "Front setback must be at least 5 meters",
             }
         ]
 
@@ -247,7 +253,7 @@ class TestDesignValidationModel:
             rule_set="Kenya_Building_Code_2020",
             is_compliant=False,
             violations=violations,
-            validated_by=1
+            validated_by=1,
         )
         db_session.add(validation)
         db_session.commit()
@@ -269,21 +275,21 @@ class TestDesignValidationModel:
             validation_type="building_code",
             rule_set="Kenya_Building_Code_2020",
             is_compliant=True,
-            validated_by=1
+            validated_by=1,
         )
         validation2 = DesignValidation(
             design_id=design.id,
             validation_type="structural",
             rule_set="Kenya_Building_Code_2020",
             is_compliant=False,
-            validated_by=1
+            validated_by=1,
         )
         validation3 = DesignValidation(
             design_id=design.id,
             validation_type="safety",
             rule_set="Kenya_Building_Code_2020",
             is_compliant=True,
-            validated_by=2
+            validated_by=2,
         )
         db_session.add_all([validation1, validation2, validation3])
         db_session.commit()
@@ -310,7 +316,7 @@ class TestDesignValidationModel:
                 validation_type=vtype,
                 rule_set="Kenya_Building_Code_2020",
                 is_compliant=True,
-                validated_by=1
+                validated_by=1,
             )
             db_session.add(validation)
             db_session.commit()
@@ -327,7 +333,7 @@ class TestDesignValidationModel:
         rule_sets = [
             "Kenya_Building_Code_2020",
             "Uganda_Building_Code_2019",
-            "Tanzania_Building_Code_2018"
+            "Tanzania_Building_Code_2018",
         ]
 
         # Act & Assert
@@ -337,7 +343,7 @@ class TestDesignValidationModel:
                 validation_type="building_code",
                 rule_set=rule_set,
                 is_compliant=True,
-                validated_by=1
+                validated_by=1,
             )
             db_session.add(validation)
             db_session.commit()
@@ -357,7 +363,7 @@ class TestDesignValidationModel:
             validation_type="building_code",
             rule_set="Kenya_Building_Code_2020",
             is_compliant=True,
-            validated_by=42
+            validated_by=42,
         )
         db_session.add(validation)
         db_session.commit()
@@ -380,7 +386,7 @@ class TestDesignValidationModel:
             validation_type="building_code",
             rule_set="Kenya_Building_Code_2020",
             is_compliant=True,
-            validated_by=1
+            validated_by=1,
         )
         db_session.add(validation)
         db_session.commit()
@@ -404,7 +410,7 @@ class TestDesignValidationModel:
                 validation_type="building_code",
                 rule_set="Kenya_Building_Code_2020",
                 is_compliant=True,
-                validated_by=1
+                validated_by=1,
             )
             db_session.add(validation)
             db_session.commit()
@@ -421,7 +427,7 @@ class TestDesignValidationModel:
                 design_id=design.id,
                 rule_set="Kenya_Building_Code_2020",
                 is_compliant=True,
-                validated_by=1
+                validated_by=1,
             )
             db_session.add(validation)
             db_session.commit()
@@ -438,7 +444,7 @@ class TestDesignValidationModel:
                 design_id=design.id,
                 validation_type="building_code",
                 is_compliant=True,
-                validated_by=1
+                validated_by=1,
             )
             db_session.add(validation)
             db_session.commit()
@@ -455,7 +461,7 @@ class TestDesignValidationModel:
                 design_id=design.id,
                 validation_type="building_code",
                 rule_set="Kenya_Building_Code_2020",
-                validated_by=1
+                validated_by=1,
             )
             db_session.add(validation)
             db_session.commit()
@@ -472,7 +478,7 @@ class TestDesignValidationModel:
                 design_id=design.id,
                 validation_type="building_code",
                 rule_set="Kenya_Building_Code_2020",
-                is_compliant=True
+                is_compliant=True,
             )
             db_session.add(validation)
             db_session.commit()

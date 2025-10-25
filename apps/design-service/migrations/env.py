@@ -24,21 +24,25 @@ if config.config_file_name is not None:
 from src.infrastructure.database import Base
 
 # Import all models here so they are registered with Base.metadata
-# from src.models.design import Design
-# from src.models.design_iteration import DesignIteration
+from src.models.design import Design
+from src.models.design_validation import DesignValidation
+from src.models.design_optimization import DesignOptimization
+from src.models.design_file import DesignFile
+from src.models.design_comment import DesignComment
 
 target_metadata = Base.metadata
 
 # Override the sqlalchemy.url from environment variables if available
 # This allows using the DatabaseConfig for TiDB connection
 try:
-    # Change to project root to find .env file
+    # Load .env from project root
     project_root = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..", "..", "..")
     )
-    os.chdir(project_root)
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(project_root, ".env"))
 
-    from packages.common.config.database import DatabaseConfig
+    from common.config.database import DatabaseConfig
 
     db_config = DatabaseConfig()
     connection_url = db_config.get_connection_url(async_driver=False)

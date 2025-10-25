@@ -8,6 +8,7 @@ with proper environment variable validation and clear error messages.
 from .base import BaseServiceConfig, Environment
 from .database import DatabaseConfig
 from .llm import LLMConfig, LLMProvider
+from .storage import StorageConfig
 from .vector import VectorConfig, VectorProvider, VectorMetric
 
 __all__ = [
@@ -16,6 +17,7 @@ __all__ = [
     "DatabaseConfig",
     "LLMConfig",
     "LLMProvider",
+    "StorageConfig",
     "VectorConfig",
     "VectorProvider",
     "VectorMetric",
