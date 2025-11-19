@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from ..services.llm import LLMService
+from ..interfaces.services import ILLMService
 from ..models import Resource
 
 # Mock resource and db for standalone functions
@@ -20,8 +20,10 @@ class _MockDb:
         pass
 
 @lru_cache()
-def get_llm_service() -> LLMService:
+def get_llm_service() -> ILLMService:
     """Get or create LLM service instance."""
+    # Import here to avoid circular imports
+    from ..services.llm import LLMService
     return LLMService()
 
 async def summarize_text(text: str) -> str:

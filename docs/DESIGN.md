@@ -21,11 +21,14 @@ Web App (Next.js) ←→ Mobile PWA
 ┌──────────────────────────────────────────────────────────────────────┐
 │                    TiDB Serverless Cluster                           │
 │                  (EU Central 1 - Frankfurt)                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
-│  │   user_db    │  │  project_db  │  │ knowledge_db │              │
-│  └──────────────┘  └──────────────┘  └──────────────┘              │
-│  Gateway: gateway01.eu-central-1.prod.aws.tidbcloud.com             │
-│  Port: 4000 | SSL/TLS Required | Auto-scaling | HTAP               │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌──────────────────┐│
+│  │design_synapse_user_db│  │design_synapse_project│  │design_synapse_   ││
+│  │- Users & Auth       │  │_db                  │  │knowledge_db      ││
+│  │- Roles & Permissions│  │- Projects & Tasks   │  │- Resources       ││
+│  │- User Profiles      │  │- Comments & Collab  │  │- Bookmarks       ││
+│  └─────────────────────┘  └─────────────────────┘  └──────────────────┘│
+│  Gateway: gateway01.eu-central-1.prod.aws.tidbcloud.com:4000        │
+│  SSL/TLS Required (ca.pem) | MySQL Compatible | Auto-scaling        │
 └──────────────────────────────────────────────────────────────────────┘
          ↓                 ↓                 ↓
 ┌─────────────────┬──────────────────┬────────────────┐
@@ -78,14 +81,20 @@ Web App (Next.js) ←→ Mobile PWA
 - Computer Vision for Drone Data
 
 ### 3.4 Data Storage
-- **TiDB Serverless** (MySQL-compatible)
-  - User data (design_synapse_user_db)
-  - Project data (design_synapse_project_db)
-  - Knowledge data (design_synapse_knowledge_db)
-  - Authentication and authorization
-  - Transactional data with ACID guarantees
-  - Auto-scaling based on workload
-  - Built-in high availability
+- **TiDB Serverless** (MySQL-compatible distributed SQL database)
+  - **Connection**: gateway01.eu-central-1.prod.aws.tidbcloud.com:4000
+  - **SSL/TLS**: Required for all connections (ca.pem certificate)
+  - **Service Databases**:
+    - `design_synapse_user_db` - User accounts, authentication, roles
+    - `design_synapse_project_db` - Projects, tasks, collaboration data
+    - `design_synapse_knowledge_db` - Resources, bookmarks, citations
+  - **Features**:
+    - Auto-scaling based on workload (serverless)
+    - HTAP capabilities (transactional + analytical)
+    - Built-in high availability and disaster recovery
+    - Pay-per-use pricing model
+    - MySQL compatibility for ecosystem integration
+    - Distributed architecture for global scale
 - **MongoDB** (Future consideration)
   - Complex document structures
   - Design metadata

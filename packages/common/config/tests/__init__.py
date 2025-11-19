@@ -1,1 +1,1 @@
-"""Tests for common configuration classes."""
+"""Tests for configuration management system."""

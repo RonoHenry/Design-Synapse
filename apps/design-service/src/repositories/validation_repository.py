@@ -1,6 +1,7 @@
 """Repository for DesignValidation model CRUD operations."""
 
 from typing import List, Optional
+
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
@@ -24,7 +25,7 @@ class ValidationRepository:
         Create a new design validation.
 
         Args:
-            **kwargs: DesignValidation attributes (design_id, validation_type, 
+            **kwargs: DesignValidation attributes (design_id, validation_type,
                      rule_set, is_compliant, violations, warnings, validated_by)
 
         Returns:
@@ -47,7 +48,7 @@ class ValidationRepository:
             design_id: ID of the design to get validations for
 
         Returns:
-            List of DesignValidation instances for the design, 
+            List of DesignValidation instances for the design,
             ordered by validated_at descending (newest first)
         """
         query = (

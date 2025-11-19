@@ -1,8 +1,8 @@
 """Unit tests for DesignRepository."""
-import pytest
 from datetime import datetime
-from sqlalchemy.orm import Session
 
+import pytest
+from sqlalchemy.orm import Session
 from src.models.design import Design
 from src.repositories.design_repository import DesignRepository
 from tests.factories import DesignFactory
@@ -69,7 +69,9 @@ class TestDesignRepository:
         assert design.confidence_score == 85.5
         assert design.ai_model_version == "gpt-4"
 
-    def test_get_design_by_id_found(self, repository: DesignRepository, db_session: Session):
+    def test_get_design_by_id_found(
+        self, repository: DesignRepository, db_session: Session
+    ):
         """Test getting a design by ID when it exists."""
         design = DesignFactory.create(db_session=db_session)
         db_session.commit()
@@ -207,7 +209,9 @@ class TestDesignRepository:
         self, repository: DesignRepository, db_session: Session
     ):
         """Test filtering designs by building_type."""
-        DesignFactory.create_batch(2, db_session=db_session, building_type="residential")
+        DesignFactory.create_batch(
+            2, db_session=db_session, building_type="residential"
+        )
         DesignFactory.create_batch(3, db_session=db_session, building_type="commercial")
         db_session.commit()
 

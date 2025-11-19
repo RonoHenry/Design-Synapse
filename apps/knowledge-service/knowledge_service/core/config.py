@@ -111,9 +111,13 @@ class SearchSettings(BaseSettings):
     enable_reranking: bool = Field(default=True)
     rerank_top_k: int = Field(default=20, ge=1, le=100)
     
-    # Caching settings
+    # Enhanced caching settings
     enable_search_cache: bool = Field(default=True)
     cache_ttl_minutes: int = Field(default=60, ge=1, le=1440)  # Max 24 hours
+    search_cache_max_size: int = Field(default=1000, ge=100, le=10000)
+    embedding_cache_max_size: int = Field(default=500, ge=50, le=5000)
+    enable_cache_compression: bool = Field(default=True)
+    redis_url: Optional[str] = Field(default=None)
     
     @field_validator("max_top_k")
     @classmethod
@@ -148,6 +152,13 @@ class KnowledgeServiceSettings:
         # Processing queue settings
         self.max_concurrent_processing: int = int(os.getenv("MAX_CONCURRENT_PROCESSING", "3"))
         self.processing_timeout_minutes: int = int(os.getenv("PROCESSING_TIMEOUT_MINUTES", "30"))
+        
+        # Enhanced batch processing settings
+        self.batch_job_cleanup_hours: int = int(os.getenv("BATCH_JOB_CLEANUP_HOURS", "24"))
+        self.batch_queue_check_interval_seconds: int = int(os.getenv("BATCH_QUEUE_CHECK_INTERVAL_SECONDS", "5"))
+        self.batch_progress_update_interval_seconds: int = int(os.getenv("BATCH_PROGRESS_UPDATE_INTERVAL_SECONDS", "2"))
+        self.batch_max_retry_attempts: int = int(os.getenv("BATCH_MAX_RETRY_ATTEMPTS", "3"))
+        self.batch_enable_persistence: bool = os.getenv("BATCH_ENABLE_PERSISTENCE", "true").lower() == "true"
         
         # API rate limiting
         self.rate_limit_requests_per_minute: int = int(os.getenv("RATE_LIMIT_REQUESTS_PER_MINUTE", "100"))
@@ -226,6 +237,19 @@ class KnowledgeServiceSettings:
         if self.max_content_length <= self.min_content_length:
             raise ValueError("MAX_CONTENT_LENGTH must be greater than MIN_CONTENT_LENGTH")
         
+        # Validate batch processing settings
+        if self.batch_job_cleanup_hours <= 0:
+            raise ValueError("BATCH_JOB_CLEANUP_HOURS must be positive")
+        
+        if self.batch_queue_check_interval_seconds <= 0:
+            raise ValueError("BATCH_QUEUE_CHECK_INTERVAL_SECONDS must be positive")
+        
+        if self.batch_progress_update_interval_seconds <= 0:
+            raise ValueError("BATCH_PROGRESS_UPDATE_INTERVAL_SECONDS must be positive")
+        
+        if self.batch_max_retry_attempts < 0:
+            raise ValueError("BATCH_MAX_RETRY_ATTEMPTS must be non-negative")
+        
         # Validate that required features have necessary providers
         if (self.enable_summary_generation or self.enable_key_takeaways or self.enable_auto_tagging):
             if not self.llm.primary_provider:
@@ -282,6 +306,10 @@ class KnowledgeServiceSettings:
             "rerank_top_k": self.search.rerank_top_k,
             "enable_search_cache": self.search.enable_search_cache,
             "cache_ttl_minutes": self.search.cache_ttl_minutes,
+            "search_cache_max_size": self.search.search_cache_max_size,
+            "embedding_cache_max_size": self.search.embedding_cache_max_size,
+            "enable_cache_compression": self.search.enable_cache_compression,
+            "redis_url": self.search.redis_url,
         }
     
     def get_processing_config(self) -> dict:
@@ -296,6 +324,18 @@ class KnowledgeServiceSettings:
             "max_content_length": self.max_content_length,
         }
     
+    def get_batch_processing_config(self) -> dict:
+        """Get batch processing configuration."""
+        return {
+            "cleanup_hours": self.batch_job_cleanup_hours,
+            "queue_check_interval_seconds": self.batch_queue_check_interval_seconds,
+            "progress_update_interval_seconds": self.batch_progress_update_interval_seconds,
+            "max_retry_attempts": self.batch_max_retry_attempts,
+            "enable_persistence": self.batch_enable_persistence,
+            "max_concurrent_processing": self.max_concurrent_processing,
+            "processing_timeout_minutes": self.processing_timeout_minutes,
+        }
+    
     def get_rate_limit_config(self) -> dict:
         """Get rate limiting configuration."""
         return {
@@ -306,3 +346,8 @@ class KnowledgeServiceSettings:
 
 # Global settings instance
 settings = KnowledgeServiceSettings()
+
+
+def get_config() -> KnowledgeServiceSettings:
+    """Get the global configuration instance."""
+    return settings

@@ -20,7 +20,7 @@ def mock_celery_config_env_vars(monkeypatch):
     celery_env_keys = [k for k in os.environ.keys() if k.startswith("CELERY_")]
     for key in celery_env_keys:
         monkeypatch.delenv(key, raising=False)
-    
+
     env_vars = {
         # Broker and result backend
         "CELERY_BROKER_URL": "redis://localhost:6379/0",
@@ -98,7 +98,10 @@ def test_celery_config_task_routing(mock_celery_config_env_vars):
 
     assert routing_settings["task_default_queue"] == "design_service"
     assert "src.tasks.visual_generation.*" in routing_settings["task_routes"]
-    assert routing_settings["task_routes"]["src.tasks.visual_generation.*"]["queue"] == "visual_generation"
+    assert (
+        routing_settings["task_routes"]["src.tasks.visual_generation.*"]["queue"]
+        == "visual_generation"
+    )
     assert routing_settings["task_create_missing_queues"] is True
 
 
@@ -173,7 +176,7 @@ def test_celery_config_complete_configuration(mock_celery_config_env_vars):
 def test_celery_config_validation_missing_broker_url():
     """Test that missing broker URL raises validation error."""
     from src.core.celery_config import CeleryConfig
-    
+
     # Since we now have CELERY_BROKER_URL in .env, this test should verify
     # that the config works when broker_url is available
     config = CeleryConfig()
@@ -185,52 +188,66 @@ def test_celery_config_validation_invalid_broker_url():
     """Test that invalid broker URL raises validation error."""
     with patch.dict(os.environ, {"CELERY_BROKER_URL": "invalid-url"}, clear=True):
         from src.core.celery_config import CeleryConfig
-        
+
         with pytest.raises(ValidationError) as exc_info:
             CeleryConfig()
-        
+
         assert "broker_url" in str(exc_info.value)
 
 
 def test_celery_config_validation_invalid_worker_concurrency():
     """Test that invalid worker concurrency raises validation error."""
-    with patch.dict(os.environ, {
-        "CELERY_BROKER_URL": "redis://localhost:6379/0",
-        "CELERY_WORKER_CONCURRENCY": "0"  # Invalid: must be >= 1
-    }, clear=True):
+    with patch.dict(
+        os.environ,
+        {
+            "CELERY_BROKER_URL": "redis://localhost:6379/0",
+            "CELERY_WORKER_CONCURRENCY": "0",  # Invalid: must be >= 1
+        },
+        clear=True,
+    ):
         from src.core.celery_config import CeleryConfig
-        
+
         with pytest.raises(ValidationError) as exc_info:
             CeleryConfig()
-        
+
         assert "worker_concurrency" in str(exc_info.value)
 
 
 def test_celery_config_validation_invalid_task_routes():
     """Test that invalid task routes JSON raises validation error."""
-    with patch.dict(os.environ, {
-        "CELERY_BROKER_URL": "redis://localhost:6379/0",
-        "CELERY_TASK_ROUTES": "invalid-json"  # Invalid JSON
-    }, clear=True):
+    with patch.dict(
+        os.environ,
+        {
+            "CELERY_BROKER_URL": "redis://localhost:6379/0",
+            "CELERY_TASK_ROUTES": "invalid-json",  # Invalid JSON
+        },
+        clear=True,
+    ):
         from src.core.celery_config import CeleryConfig
-        
+
         with pytest.raises(ValidationError) as exc_info:
             CeleryConfig()
-        
+
         assert "task_routes" in str(exc_info.value)
 
 
 def test_celery_config_default_values():
     """Test default values when optional environment variables are not set."""
-    with patch.dict(os.environ, {
-        "CELERY_BROKER_URL": "redis://localhost:6379/0",
-        # Only required fields provided - should use defaults for others
-    }, clear=True):
+    with patch.dict(
+        os.environ,
+        {
+            "CELERY_BROKER_URL": "redis://localhost:6379/0",
+            # Only required fields provided - should use defaults for others
+        },
+        clear=True,
+    ):
         from src.core.celery_config import CeleryConfig
-        
+
         config = CeleryConfig()
-        
-        assert config.result_backend == "redis://localhost:6379/0"  # Defaults to broker_url
+
+        assert (
+            config.result_backend == "redis://localhost:6379/0"
+        )  # Defaults to broker_url
         assert config.task_default_queue == "design_service"  # Default
         assert config.worker_concurrency == 4  # Default
         assert config.task_serializer == "json"  # Default
@@ -242,7 +259,7 @@ def test_celery_config_environment_variable_validation(mock_celery_config_env_va
     from src.core.celery_config import CeleryConfig
 
     config = CeleryConfig()
-    
+
     # Test validation method
     config.validate_configuration()  # Should not raise any exception
 
@@ -253,7 +270,7 @@ def test_celery_config_queue_names_validation(mock_celery_config_env_vars):
 
     config = CeleryConfig()
     queue_names = config.get_all_queue_names()
-    
+
     assert "design_service" in queue_names
     assert "visual_generation" in queue_names
     assert len(queue_names) >= 2

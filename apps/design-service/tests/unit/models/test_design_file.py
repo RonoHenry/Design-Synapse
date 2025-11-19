@@ -2,7 +2,6 @@
 
 import pytest
 from sqlalchemy.exc import IntegrityError
-
 from src.models.design import Design
 from src.models.design_file import DesignFile
 
@@ -18,7 +17,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -30,7 +29,7 @@ class TestDesignFileModel:
             file_type="pdf",
             file_size=1024000,  # 1MB
             storage_path="/storage/designs/1/floor_plan.pdf",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.add(design_file)
         db_session.commit()
@@ -52,7 +51,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -64,7 +63,7 @@ class TestDesignFileModel:
             file_size=5000000,
             storage_path="/storage/designs/1/elevation.dwg",
             uploaded_by=1,
-            description="Front elevation drawing"
+            description="Front elevation drawing",
         )
         db_session.add(design_file)
         db_session.commit()
@@ -78,7 +77,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -89,7 +88,7 @@ class TestDesignFileModel:
             file_type="pdf",
             file_size=1000000,
             storage_path="/storage/designs/1/document.pdf",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.add(design_file)
         db_session.commit()
@@ -103,7 +102,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -114,7 +113,7 @@ class TestDesignFileModel:
             file_type="dwg",
             file_size=2000000,
             storage_path="/storage/designs/1/drawing.dwg",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.add(design_file)
         db_session.commit()
@@ -128,7 +127,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -139,7 +138,7 @@ class TestDesignFileModel:
             file_type="dxf",
             file_size=1500000,
             storage_path="/storage/designs/1/drawing.dxf",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.add(design_file)
         db_session.commit()
@@ -153,7 +152,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -164,7 +163,7 @@ class TestDesignFileModel:
             file_type="png",
             file_size=3000000,
             storage_path="/storage/designs/1/render.png",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.add(design_file)
         db_session.commit()
@@ -178,7 +177,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -189,7 +188,7 @@ class TestDesignFileModel:
             file_type="jpg",
             file_size=2500000,
             storage_path="/storage/designs/1/photo.jpg",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.add(design_file)
         db_session.commit()
@@ -203,7 +202,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -214,7 +213,7 @@ class TestDesignFileModel:
             file_type="ifc",
             file_size=10000000,
             storage_path="/storage/designs/1/model.ifc",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.add(design_file)
         db_session.commit()
@@ -228,7 +227,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -240,7 +239,7 @@ class TestDesignFileModel:
                 file_type="txt",
                 file_size=1000,
                 storage_path="/storage/designs/1/document.txt",
-                uploaded_by=1
+                uploaded_by=1,
             )
 
     def test_file_size_validation_within_limit(self, db_session):
@@ -250,7 +249,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -262,7 +261,7 @@ class TestDesignFileModel:
             file_type="pdf",
             file_size=52428800,  # Exactly 50MB
             storage_path="/storage/designs/1/large_file.pdf",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.add(design_file)
         db_session.commit()
@@ -276,7 +275,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -288,7 +287,7 @@ class TestDesignFileModel:
                 file_type="pdf",
                 file_size=52428801,  # 1 byte over 50MB
                 storage_path="/storage/designs/1/too_large.pdf",
-                uploaded_by=1
+                uploaded_by=1,
             )
 
     def test_file_size_validation_negative_size(self, db_session):
@@ -298,7 +297,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -310,7 +309,7 @@ class TestDesignFileModel:
                 file_type="pdf",
                 file_size=-1000,
                 storage_path="/storage/designs/1/invalid.pdf",
-                uploaded_by=1
+                uploaded_by=1,
             )
 
     def test_cascade_delete_with_design(self, db_session):
@@ -321,7 +320,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -333,7 +332,7 @@ class TestDesignFileModel:
             file_type="pdf",
             file_size=1000000,
             storage_path="/storage/designs/1/file1.pdf",
-            uploaded_by=1
+            uploaded_by=1,
         )
         file2 = DesignFile(
             design_id=design.id,
@@ -341,7 +340,7 @@ class TestDesignFileModel:
             file_type="dwg",
             file_size=2000000,
             storage_path="/storage/designs/1/file2.dwg",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.add_all([file1, file2])
         db_session.commit()
@@ -364,7 +363,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -375,7 +374,7 @@ class TestDesignFileModel:
             file_type="pdf",
             file_size=1000000,
             storage_path="/storage/designs/1/test.pdf",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.add(design_file)
         db_session.commit()
@@ -397,7 +396,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -409,7 +408,7 @@ class TestDesignFileModel:
                 file_type="pdf",
                 file_size=1000000,
                 storage_path="/storage/designs/1/test.pdf",
-                uploaded_by=1
+                uploaded_by=1,
             )
             db_session.add(design_file)
             db_session.commit()
@@ -423,7 +422,7 @@ class TestDesignFileModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -434,7 +433,7 @@ class TestDesignFileModel:
             file_type="pdf",
             file_size=1000000,
             storage_path="/storage/designs/1/test.pdf",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.add(design_file)
         db_session.commit()

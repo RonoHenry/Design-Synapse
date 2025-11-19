@@ -15,7 +15,7 @@ Key Features:
 
 Usage:
     from src.core.celery_config import CeleryConfig
-    
+
     config = CeleryConfig()
     celery_settings = config.get_complete_celery_config()
 """
@@ -55,25 +55,25 @@ SUPPORTED_BROKER_SCHEMES = ["redis", "rediss"]
 class CeleryConfig(BaseSettings):
     """
     Comprehensive Celery configuration with environment-based settings.
-    
+
     This class manages all Celery configuration for the Design Service's
     visual generation task queue system, including:
-    
+
     - Broker and result backend configuration
     - Task routing for visual generation queues
     - Worker performance and concurrency settings
     - Retry policies and timeout management
     - Connection reliability and health monitoring
-    
+
     Environment Variables:
         All settings can be configured via environment variables with the
         'CELERY_' prefix. For example:
-        
+
         - CELERY_BROKER_URL: Redis broker URL
         - CELERY_TASK_DEFAULT_QUEUE: Default task queue name
         - CELERY_WORKER_CONCURRENCY: Number of worker processes
         - CELERY_TASK_ROUTES: JSON string for task routing
-        
+
     Example:
         config = CeleryConfig()
         celery_app.config_from_object(config.get_complete_celery_config())
@@ -88,37 +88,53 @@ class CeleryConfig(BaseSettings):
     )
 
     # Broker and result backend settings
-    broker_url: str = Field(..., min_length=1, description="Celery broker URL (e.g., redis://localhost:6379/0)")
-    result_backend: Optional[str] = Field(default=None, description="Result backend URL (defaults to broker_url)")
+    broker_url: str = Field(
+        ...,
+        min_length=1,
+        description="Celery broker URL (e.g., redis://localhost:6379/0)",
+    )
+    result_backend: Optional[str] = Field(
+        default=None, description="Result backend URL (defaults to broker_url)"
+    )
 
     # Task routing settings
-    task_default_queue: str = Field(default=DEFAULT_QUEUE, description="Default queue for tasks")
-    task_routes: str = Field(default="{}", description="Task routing configuration as JSON")
+    task_default_queue: str = Field(
+        default=DEFAULT_QUEUE, description="Default queue for tasks"
+    )
+    task_routes: str = Field(
+        default="{}", description="Task routing configuration as JSON"
+    )
 
     # Worker settings
     worker_concurrency: int = Field(
-        default=DEFAULT_WORKER_CONCURRENCY, 
-        ge=1, 
+        default=DEFAULT_WORKER_CONCURRENCY,
+        ge=1,
         le=100,
-        description="Number of concurrent worker processes"
+        description="Number of concurrent worker processes",
     )
     worker_prefetch_multiplier: int = Field(
-        default=DEFAULT_WORKER_PREFETCH, 
-        ge=1, 
+        default=DEFAULT_WORKER_PREFETCH,
+        ge=1,
         le=10,
-        description="Worker prefetch multiplier"
+        description="Worker prefetch multiplier",
     )
     worker_max_tasks_per_child: int = Field(
-        default=DEFAULT_WORKER_MAX_TASKS, 
-        ge=100, 
+        default=DEFAULT_WORKER_MAX_TASKS,
+        ge=100,
         le=10000,
-        description="Maximum tasks per worker child process"
+        description="Maximum tasks per worker child process",
     )
 
     # Task settings
-    task_serializer: str = Field(default=DEFAULT_SERIALIZER, description="Task serialization format")
-    result_serializer: str = Field(default=DEFAULT_SERIALIZER, description="Result serialization format")
-    accept_content: str = Field(default='["json"]', description="Accepted content types as JSON")
+    task_serializer: str = Field(
+        default=DEFAULT_SERIALIZER, description="Task serialization format"
+    )
+    result_serializer: str = Field(
+        default=DEFAULT_SERIALIZER, description="Result serialization format"
+    )
+    accept_content: str = Field(
+        default='["json"]', description="Accepted content types as JSON"
+    )
 
     # Timezone settings
     timezone: str = Field(default=DEFAULT_TIMEZONE, description="Celery timezone")
@@ -126,47 +142,53 @@ class CeleryConfig(BaseSettings):
 
     # Retry and timeout settings
     task_default_retry_delay: int = Field(
-        default=DEFAULT_RETRY_DELAY, 
-        ge=1, 
+        default=DEFAULT_RETRY_DELAY,
+        ge=1,
         le=3600,
-        description="Default retry delay in seconds"
+        description="Default retry delay in seconds",
     )
     task_max_retries: int = Field(
-        default=DEFAULT_MAX_RETRIES, 
-        ge=0, 
+        default=DEFAULT_MAX_RETRIES,
+        ge=0,
         le=10,
-        description="Maximum number of task retries"
+        description="Maximum number of task retries",
     )
     task_soft_time_limit: int = Field(
-        default=DEFAULT_SOFT_TIME_LIMIT, 
-        ge=30, 
+        default=DEFAULT_SOFT_TIME_LIMIT,
+        ge=30,
         le=3600,
-        description="Soft time limit for tasks in seconds"
+        description="Soft time limit for tasks in seconds",
     )
     task_time_limit: int = Field(
-        default=DEFAULT_TIME_LIMIT, 
-        ge=60, 
+        default=DEFAULT_TIME_LIMIT,
+        ge=60,
         le=7200,
-        description="Hard time limit for tasks in seconds"
+        description="Hard time limit for tasks in seconds",
     )
 
     # Result backend settings
     result_expires: int = Field(
-        default=DEFAULT_RESULT_EXPIRES, 
-        ge=300, 
+        default=DEFAULT_RESULT_EXPIRES,
+        ge=300,
         le=86400,
-        description="Result expiration time in seconds"
+        description="Result expiration time in seconds",
     )
-    result_persistent: bool = Field(default=True, description="Enable persistent results")
+    result_persistent: bool = Field(
+        default=True, description="Enable persistent results"
+    )
 
     # Connection settings
-    broker_connection_retry: bool = Field(default=True, description="Enable broker connection retry")
-    broker_connection_retry_on_startup: bool = Field(default=True, description="Retry connection on startup")
+    broker_connection_retry: bool = Field(
+        default=True, description="Enable broker connection retry"
+    )
+    broker_connection_retry_on_startup: bool = Field(
+        default=True, description="Retry connection on startup"
+    )
     broker_connection_max_retries: int = Field(
-        default=DEFAULT_CONNECTION_MAX_RETRIES, 
-        ge=1, 
+        default=DEFAULT_CONNECTION_MAX_RETRIES,
+        ge=1,
         le=100,
-        description="Maximum broker connection retries"
+        description="Maximum broker connection retries",
     )
 
     @field_validator("broker_url")
@@ -175,23 +197,23 @@ class CeleryConfig(BaseSettings):
         """Validate broker URL format and scheme."""
         if not v or not isinstance(v, str):
             raise ValueError("Broker URL must be a non-empty string")
-        
+
         try:
             parsed = urlparse(v)
-            
+
             if not parsed.scheme:
                 raise ValueError(f"Missing scheme in broker URL: {v}")
             if not parsed.netloc:
                 raise ValueError(f"Missing host/port in broker URL: {v}")
-            
+
             if parsed.scheme not in SUPPORTED_BROKER_SCHEMES:
                 raise ValueError(
                     f"Unsupported broker scheme '{parsed.scheme}'. "
                     f"Supported schemes: {', '.join(SUPPORTED_BROKER_SCHEMES)}"
                 )
-            
+
             return v
-            
+
         except Exception as e:
             if isinstance(e, ValueError):
                 raise
@@ -322,15 +344,15 @@ class CeleryConfig(BaseSettings):
     def get_complete_celery_config(self) -> Dict:
         """
         Get complete Celery configuration dictionary optimized for visual generation.
-        
+
         This method combines all configuration sections into a single dictionary
         that can be used directly with Celery's config_from_object() method.
-        
+
         Returns:
             Dictionary containing all Celery configuration settings
         """
         config = {}
-        
+
         # Core configuration sections
         config.update(self.get_broker_settings())
         config.update(self.get_task_routing_settings())
@@ -340,62 +362,66 @@ class CeleryConfig(BaseSettings):
         config.update(self.get_timezone_settings())
         config.update(self.get_retry_settings())
         config.update(self.get_connection_settings())
-        
+
         # Performance and monitoring optimizations
         config.update(self.get_performance_settings())
         config.update(self.get_monitoring_settings())
-        
+
         # Validate the complete configuration
         try:
             self.validate_configuration()
         except ValueError as e:
             logger.error(f"Configuration validation failed: {e}")
             raise
-        
-        logger.info(f"Generated complete Celery configuration with {len(config)} settings")
+
+        logger.info(
+            f"Generated complete Celery configuration with {len(config)} settings"
+        )
         return config
 
     def get_all_queue_names(self) -> List[str]:
         """
         Get all configured queue names.
-        
+
         Returns:
             List of unique queue names
         """
         queues = {self.task_default_queue}
-        
+
         # Extract queues from task routes
         for route_config in self.get_task_routes_dict().values():
             if isinstance(route_config, dict) and "queue" in route_config:
                 queues.add(route_config["queue"])
-        
+
         # Add default visual generation queue if not present
         if DEFAULT_VISUAL_QUEUE not in queues:
             queues.add(DEFAULT_VISUAL_QUEUE)
-        
+
         return sorted(list(queues))
 
     def get_queue_definitions(self) -> List[Dict]:
         """
         Get queue definitions for Celery configuration.
-        
+
         Returns:
             List of queue definition dictionaries
         """
         queues = []
         for queue_name in self.get_all_queue_names():
-            queues.append({
-                "name": queue_name,
-                "routing_key": queue_name,
-                "durable": True,
-                "auto_delete": False,
-            })
+            queues.append(
+                {
+                    "name": queue_name,
+                    "routing_key": queue_name,
+                    "durable": True,
+                    "auto_delete": False,
+                }
+            )
         return queues
 
     def get_performance_settings(self) -> Dict:
         """
         Get performance-optimized settings for visual generation workloads.
-        
+
         Returns:
             Dictionary containing performance settings
         """
@@ -404,16 +430,13 @@ class CeleryConfig(BaseSettings):
             "task_acks_late": True,
             "task_reject_on_worker_lost": True,
             "task_track_started": True,
-            
             # Worker optimization
             "worker_disable_rate_limits": False,
             "worker_enable_remote_control": True,
             "worker_send_task_events": True,
-            
             # Memory management
             "worker_max_memory_per_child": 200000,  # 200MB
             "worker_autoscaler": "celery.worker.autoscale:Autoscaler",
-            
             # Connection pooling
             "broker_pool_limit": DEFAULT_POOL_LIMIT,
             "broker_connection_timeout": 4.0,
@@ -424,7 +447,7 @@ class CeleryConfig(BaseSettings):
     def get_monitoring_settings(self) -> Dict:
         """
         Get monitoring and logging settings.
-        
+
         Returns:
             Dictionary containing monitoring settings
         """
@@ -441,33 +464,37 @@ class CeleryConfig(BaseSettings):
     def validate_configuration(self) -> None:
         """
         Validate the complete configuration with comprehensive checks.
-        
+
         Raises:
             ValueError: If configuration is invalid
         """
         errors = []
-        
+
         # Validate broker URL
         try:
             self.validate_broker_url(self.broker_url)
         except ValueError as e:
             errors.append(f"Broker URL validation failed: {e}")
-        
+
         # Validate time limits
         if self.task_soft_time_limit >= self.task_time_limit:
             errors.append(
                 f"task_soft_time_limit ({self.task_soft_time_limit}) must be less than "
                 f"task_time_limit ({self.task_time_limit})"
             )
-        
+
         # Validate worker settings
         if self.worker_concurrency < 1:
-            errors.append(f"worker_concurrency must be at least 1, got {self.worker_concurrency}")
-        
+            errors.append(
+                f"worker_concurrency must be at least 1, got {self.worker_concurrency}"
+            )
+
         # Validate retry settings
         if self.task_max_retries < 0:
-            errors.append(f"task_max_retries must be non-negative, got {self.task_max_retries}")
-        
+            errors.append(
+                f"task_max_retries must be non-negative, got {self.task_max_retries}"
+            )
+
         # Validate queue configuration
         try:
             task_routes = self.get_task_routes_dict()
@@ -475,7 +502,7 @@ class CeleryConfig(BaseSettings):
                 errors.append("Task routes must be a dictionary")
         except Exception as e:
             errors.append(f"Task routes validation failed: {e}")
-        
+
         # Validate result backend
         if self.result_backend:
             try:
@@ -484,16 +511,16 @@ class CeleryConfig(BaseSettings):
                     errors.append(f"Invalid result backend URL: {self.result_backend}")
             except Exception as e:
                 errors.append(f"Result backend URL validation failed: {e}")
-        
+
         if errors:
             raise ValueError(f"Configuration validation failed: {'; '.join(errors)}")
-        
+
         logger.info("Celery configuration validation successful")
 
     def get_configuration_summary(self) -> Dict:
         """
         Get a comprehensive summary of the current configuration.
-        
+
         Returns:
             Dictionary containing configuration summary with masked credentials
         """
@@ -527,14 +554,14 @@ class CeleryConfig(BaseSettings):
             "timezone": {
                 "timezone": self.timezone,
                 "enable_utc": self.enable_utc,
-            }
+            },
         }
 
     def _mask_url_credentials(self, url: str) -> str:
         """Mask credentials in URL for logging/display purposes."""
         if not url:
             return url
-        
+
         try:
             parsed = urlparse(url)
             if parsed.username or parsed.password:

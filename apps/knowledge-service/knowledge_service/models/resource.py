@@ -50,6 +50,18 @@ class Resource(Base):
     summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     key_takeaways: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
     keywords: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
+    
+    # Content analysis results
+    content_classification: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    complexity_level: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    technical_domains: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
+    readability_score: Mapped[Optional[float]] = mapped_column(nullable=True)
+    estimated_reading_time: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    language: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    quality_score: Mapped[Optional[float]] = mapped_column(nullable=True)
+    auto_tags: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
+    analysis_metadata: Mapped[Optional[Dict]] = mapped_column(JSON, nullable=True)
+    analysis_timestamp: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Storage info
     storage_path: Mapped[str] = mapped_column(String(500), nullable=False)

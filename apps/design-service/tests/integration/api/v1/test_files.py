@@ -12,10 +12,10 @@ Tests cover:
 """
 
 import io
-import pytest
-from fastapi import status
 from unittest.mock import Mock, patch
 
+import pytest
+from fastapi import status
 from src.models.design_file import DesignFile
 from tests.factories import DesignFactory, DesignFileFactory
 
@@ -23,9 +23,7 @@ from tests.factories import DesignFactory, DesignFileFactory
 class TestUploadFile:
     """Tests for POST /api/v1/designs/{id}/files endpoint."""
 
-    def test_upload_file_success(
-        self, client, db_session, auth_headers, test_user_id
-    ):
+    def test_upload_file_success(self, client, db_session, auth_headers, test_user_id):
         """Test successful PDF file upload."""
         # Create test design
         design = DesignFactory.create(
@@ -39,9 +37,7 @@ class TestUploadFile:
         files = {
             "file": ("test_design.pdf", io.BytesIO(file_content), "application/pdf")
         }
-        data = {
-            "description": "Design floor plan"
-        }
+        data = {"description": "Design floor plan"}
 
         # Make request
         response = client.post(
@@ -64,9 +60,7 @@ class TestUploadFile:
         # Verify file was saved to database
         db_session.expire_all()
         design_file = (
-            db_session.query(DesignFile)
-            .filter_by(design_id=design.id)
-            .first()
+            db_session.query(DesignFile).filter_by(design_id=design.id).first()
         )
         assert design_file is not None
         assert design_file.filename == "test_design.pdf"
@@ -79,9 +73,7 @@ class TestUploadFile:
         db_session.commit()
 
         file_content = b"DWG file content"
-        files = {
-            "file": ("design.dwg", io.BytesIO(file_content), "application/dwg")
-        }
+        files = {"file": ("design.dwg", io.BytesIO(file_content), "application/dwg")}
 
         response = client.post(
             f"/api/v1/designs/{design.id}/files",
@@ -110,9 +102,7 @@ class TestUploadFile:
         ]
 
         for filename, content_type in file_types:
-            files = {
-                "file": (filename, io.BytesIO(b"file content"), content_type)
-            }
+            files = {"file": (filename, io.BytesIO(b"file content"), content_type)}
 
             response = client.post(
                 f"/api/v1/designs/{design.id}/files",
@@ -131,9 +121,7 @@ class TestUploadFile:
         design = DesignFactory.create(project_id=1, created_by=test_user_id)
         db_session.commit()
 
-        files = {
-            "file": ("test.exe", io.BytesIO(b"executable"), "application/exe")
-        }
+        files = {"file": ("test.exe", io.BytesIO(b"executable"), "application/exe")}
 
         response = client.post(
             f"/api/v1/designs/{design.id}/files",
@@ -153,9 +141,7 @@ class TestUploadFile:
 
         # Create file larger than 50MB
         large_content = b"x" * (51 * 1024 * 1024)  # 51MB
-        files = {
-            "file": ("large.pdf", io.BytesIO(large_content), "application/pdf")
-        }
+        files = {"file": ("large.pdf", io.BytesIO(large_content), "application/pdf")}
 
         response = client.post(
             f"/api/v1/designs/{design.id}/files",
@@ -175,9 +161,7 @@ class TestUploadFile:
 
         # Create file exactly 50MB
         exact_content = b"x" * (50 * 1024 * 1024)  # 50MB
-        files = {
-            "file": ("exact.pdf", io.BytesIO(exact_content), "application/pdf")
-        }
+        files = {"file": ("exact.pdf", io.BytesIO(exact_content), "application/pdf")}
 
         response = client.post(
             f"/api/v1/designs/{design.id}/files",
@@ -189,9 +173,7 @@ class TestUploadFile:
 
     def test_upload_file_design_not_found(self, client, auth_headers):
         """Test uploading file to non-existent design returns 404."""
-        files = {
-            "file": ("test.pdf", io.BytesIO(b"content"), "application/pdf")
-        }
+        files = {"file": ("test.pdf", io.BytesIO(b"content"), "application/pdf")}
 
         response = client.post(
             "/api/v1/designs/99999/files",
@@ -208,9 +190,7 @@ class TestUploadFile:
         design = DesignFactory.create(project_id=1, created_by=test_user_id)
         db_session.commit()
 
-        files = {
-            "file": ("test.pdf", io.BytesIO(b"content"), "application/pdf")
-        }
+        files = {"file": ("test.pdf", io.BytesIO(b"content"), "application/pdf")}
 
         response = client_no_auth.post(
             f"/api/v1/designs/{design.id}/files",
@@ -227,13 +207,12 @@ class TestUploadFile:
         db_session.commit()
 
         from src.services.project_client import ProjectAccessDeniedError
+
         mock_project_client.verify_project_access.side_effect = (
             ProjectAccessDeniedError("Access denied")
         )
 
-        files = {
-            "file": ("test.pdf", io.BytesIO(b"content"), "application/pdf")
-        }
+        files = {"file": ("test.pdf", io.BytesIO(b"content"), "application/pdf")}
 
         response = client.post(
             f"/api/v1/designs/{design.id}/files",
@@ -258,13 +237,10 @@ class TestUploadFile:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-
 class TestListFiles:
     """Tests for GET /api/v1/designs/{id}/files endpoint."""
 
-    def test_list_files_success(
-        self, client, db_session, auth_headers, test_user_id
-    ):
+    def test_list_files_success(self, client, db_session, auth_headers, test_user_id):
         """Test successful file listing."""
         design = DesignFactory.create(project_id=1, created_by=test_user_id)
         files = DesignFileFactory.create_batch(
@@ -285,9 +261,7 @@ class TestListFiles:
         assert all("file_type" in f for f in data)
         assert all("file_size" in f for f in data)
 
-    def test_list_files_empty(
-        self, client, db_session, auth_headers, test_user_id
-    ):
+    def test_list_files_empty(self, client, db_session, auth_headers, test_user_id):
         """Test listing files when design has no files."""
         design = DesignFactory.create(project_id=1, created_by=test_user_id)
         db_session.commit()
@@ -309,7 +283,7 @@ class TestListFiles:
         from datetime import datetime, timedelta, timezone
 
         design = DesignFactory.create(project_id=1, created_by=test_user_id)
-        
+
         # Create files with different upload times
         file1 = DesignFileFactory.create(
             design=design,
@@ -317,21 +291,21 @@ class TestListFiles:
             uploaded_by=test_user_id,
         )
         file1.uploaded_at = datetime.now(timezone.utc) - timedelta(days=2)
-        
+
         file2 = DesignFileFactory.create(
             design=design,
             filename="recent.pdf",
             uploaded_by=test_user_id,
         )
         file2.uploaded_at = datetime.now(timezone.utc) - timedelta(days=1)
-        
+
         file3 = DesignFileFactory.create(
             design=design,
             filename="newest.pdf",
             uploaded_by=test_user_id,
         )
         file3.uploaded_at = datetime.now(timezone.utc)
-        
+
         db_session.commit()
 
         response = client.get(
@@ -375,6 +349,7 @@ class TestListFiles:
         db_session.commit()
 
         from src.services.project_client import ProjectAccessDeniedError
+
         mock_project_client.verify_project_access.side_effect = (
             ProjectAccessDeniedError("Access denied")
         )
@@ -387,18 +362,13 @@ class TestListFiles:
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
-
 class TestDeleteFile:
     """Tests for DELETE /api/v1/files/{id} endpoint."""
 
-    def test_delete_file_success(
-        self, client, db_session, auth_headers, test_user_id
-    ):
+    def test_delete_file_success(self, client, db_session, auth_headers, test_user_id):
         """Test successful file deletion."""
         design = DesignFactory.create(project_id=1, created_by=test_user_id)
-        design_file = DesignFileFactory.create(
-            design=design, uploaded_by=test_user_id
-        )
+        design_file = DesignFileFactory.create(design=design, uploaded_by=test_user_id)
         db_session.commit()
         file_id = design_file.id
 
@@ -450,9 +420,7 @@ class TestDeleteFile:
     ):
         """Test deleting file without authentication returns 401."""
         design = DesignFactory.create(project_id=1, created_by=test_user_id)
-        design_file = DesignFileFactory.create(
-            design=design, uploaded_by=test_user_id
-        )
+        design_file = DesignFileFactory.create(design=design, uploaded_by=test_user_id)
         db_session.commit()
 
         response = client_no_auth.delete(f"/api/v1/files/{design_file.id}")
@@ -464,12 +432,11 @@ class TestDeleteFile:
     ):
         """Test deleting file without project access returns 403."""
         design = DesignFactory.create(project_id=999, created_by=test_user_id)
-        design_file = DesignFileFactory.create(
-            design=design, uploaded_by=test_user_id
-        )
+        design_file = DesignFileFactory.create(design=design, uploaded_by=test_user_id)
         db_session.commit()
 
         from src.services.project_client import ProjectAccessDeniedError
+
         mock_project_client.verify_project_access.side_effect = (
             ProjectAccessDeniedError("Access denied")
         )
@@ -480,7 +447,6 @@ class TestDeleteFile:
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
-
 
 
 class TestDownloadFile:
@@ -581,14 +547,10 @@ class TestDownloadFile:
     ):
         """Test downloading file without authentication returns 401."""
         design = DesignFactory.create(project_id=1, created_by=test_user_id)
-        design_file = DesignFileFactory.create(
-            design=design, uploaded_by=test_user_id
-        )
+        design_file = DesignFileFactory.create(design=design, uploaded_by=test_user_id)
         db_session.commit()
 
-        response = client_no_auth.get(
-            f"/api/v1/files/{design_file.id}/download"
-        )
+        response = client_no_auth.get(f"/api/v1/files/{design_file.id}/download")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -597,12 +559,11 @@ class TestDownloadFile:
     ):
         """Test downloading file without project access returns 403."""
         design = DesignFactory.create(project_id=999, created_by=test_user_id)
-        design_file = DesignFileFactory.create(
-            design=design, uploaded_by=test_user_id
-        )
+        design_file = DesignFileFactory.create(design=design, uploaded_by=test_user_id)
         db_session.commit()
 
         from src.services.project_client import ProjectAccessDeniedError
+
         mock_project_client.verify_project_access.side_effect = (
             ProjectAccessDeniedError("Access denied")
         )

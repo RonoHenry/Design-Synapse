@@ -10,11 +10,11 @@ Tests cover:
 - Authentication and authorization
 """
 
-import pytest
 import time
-from fastapi import status
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
+import pytest
+from fastapi import status
 from tests.factories import DesignFactory, DesignValidationFactory
 
 
@@ -32,13 +32,13 @@ class TestExportDesignJSON:
                 "building_info": {
                     "type": "residential",
                     "total_area": 250.0,
-                    "num_floors": 2
+                    "num_floors": 2,
                 },
                 "structure": {
                     "foundation_type": "slab",
-                    "wall_material": "concrete_block"
-                }
-            }
+                    "wall_material": "concrete_block",
+                },
+            },
         )
         validation = DesignValidationFactory.create(
             design_id=design.id,
@@ -47,7 +47,7 @@ class TestExportDesignJSON:
             is_compliant=True,
             violations=[],
             warnings=[],
-            validated_by=1
+            validated_by=1,
         )
         db_session.commit()
 
@@ -61,18 +61,18 @@ class TestExportDesignJSON:
         # Assertions
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        
+
         # Verify JSON structure includes all design data
         assert "design" in data
         assert data["design"]["id"] == design.id
         assert data["design"]["name"] == "Test Design"
         assert data["design"]["specification"] == design.specification
-        
+
         # Verify metadata is included
         assert "metadata" in data
         assert data["metadata"]["format"] == "json"
         assert "exported_at" in data["metadata"]
-        
+
         # Verify validations are included
         assert "validations" in data
         assert len(data["validations"]) == 1
@@ -82,17 +82,12 @@ class TestExportDesignJSON:
         self, client, db_session, auth_headers
     ):
         """Test JSON export includes all related entities."""
-        from tests.factories import (
-            DesignOptimizationFactory,
-            DesignFileFactory,
-            DesignCommentFactory
-        )
-        
+        from tests.factories import (DesignCommentFactory, DesignFileFactory,
+                                     DesignOptimizationFactory)
+
         # Create design with all relationships
         design = DesignFactory.create(
-            project_id=1,
-            name="Complete Design",
-            created_by=1
+            project_id=1, name="Complete Design", created_by=1
         )
         DesignValidationFactory.create(design_id=design.id, validated_by=1)
         DesignOptimizationFactory.create(design_id=design.id)
@@ -108,7 +103,7 @@ class TestExportDesignJSON:
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        
+
         # Verify all relationships are included
         assert "validations" in data
         assert len(data["validations"]) >= 1
@@ -131,18 +126,15 @@ class TestExportDesignPDF:
         # Setup mock PDF generation
         mock_pdf_content = b"%PDF-1.4 mock pdf content"
         mock_generate_pdf.return_value = mock_pdf_content
-        
+
         # Create test design
         design = DesignFactory.create(
             project_id=1,
             name="Test Design",
             created_by=1,
             specification={
-                "building_info": {
-                    "type": "residential",
-                    "total_area": 250.0
-                }
-            }
+                "building_info": {"type": "residential", "total_area": 250.0}
+            },
         )
         db_session.commit()
 
@@ -159,7 +151,7 @@ class TestExportDesignPDF:
         assert "content-disposition" in response.headers
         assert "Test-Design" in response.headers["content-disposition"]
         assert response.content == mock_pdf_content
-        
+
         # Verify PDF generation was called
         mock_generate_pdf.assert_called_once()
 
@@ -169,7 +161,7 @@ class TestExportDesignPDF:
     ):
         """Test PDF export includes all design sections."""
         mock_generate_pdf.return_value = b"%PDF-1.4 mock pdf"
-        
+
         design = DesignFactory.create(
             project_id=1,
             name="Complete Design",
@@ -178,13 +170,11 @@ class TestExportDesignPDF:
                 "building_info": {"type": "residential"},
                 "structure": {"foundation_type": "slab"},
                 "spaces": [{"name": "Living Room", "area": 35.0}],
-                "materials": [{"name": "Concrete", "quantity": 100}]
-            }
+                "materials": [{"name": "Concrete", "quantity": 100}],
+            },
         )
         DesignValidationFactory.create(
-            design_id=design.id,
-            is_compliant=True,
-            validated_by=1
+            design_id=design.id, is_compliant=True, validated_by=1
         )
         db_session.commit()
 
@@ -195,7 +185,7 @@ class TestExportDesignPDF:
         )
 
         assert response.status_code == status.HTTP_200_OK
-        
+
         # Verify PDF generation received complete design data
         call_args = mock_generate_pdf.call_args
         design_data = call_args[0][0]
@@ -215,7 +205,7 @@ class TestExportDesignIFC:
         # Setup mock IFC generation
         mock_ifc_content = b"ISO-10303-21;HEADER;FILE_DESCRIPTION..."
         mock_generate_ifc.return_value = mock_ifc_content
-        
+
         # Create test design
         design = DesignFactory.create(
             project_id=1,
@@ -226,21 +216,21 @@ class TestExportDesignIFC:
                     "type": "residential",
                     "total_area": 250.0,
                     "num_floors": 2,
-                    "height": 7.5
+                    "height": 7.5,
                 },
                 "structure": {
                     "foundation_type": "slab",
-                    "wall_material": "concrete_block"
+                    "wall_material": "concrete_block",
                 },
                 "spaces": [
                     {
                         "name": "Living Room",
                         "area": 35.0,
                         "floor": 1,
-                        "dimensions": {"length": 7.0, "width": 5.0, "height": 3.0}
+                        "dimensions": {"length": 7.0, "width": 5.0, "height": 3.0},
                     }
-                ]
-            }
+                ],
+            },
         )
         db_session.commit()
 
@@ -257,7 +247,7 @@ class TestExportDesignIFC:
         assert "content-disposition" in response.headers
         assert "Test-Building.ifc" in response.headers["content-disposition"]
         assert response.content == mock_ifc_content
-        
+
         # Verify IFC generation was called
         mock_generate_ifc.assert_called_once()
 
@@ -267,7 +257,7 @@ class TestExportDesignIFC:
     ):
         """Test IFC export includes spatial and structural data."""
         mock_generate_ifc.return_value = b"ISO-10303-21;HEADER..."
-        
+
         design = DesignFactory.create(
             project_id=1,
             name="Spatial Design",
@@ -276,28 +266,28 @@ class TestExportDesignIFC:
                 "building_info": {
                     "type": "commercial",
                     "total_area": 500.0,
-                    "num_floors": 3
+                    "num_floors": 3,
                 },
                 "spaces": [
                     {
                         "name": "Office 1",
                         "area": 50.0,
                         "floor": 1,
-                        "dimensions": {"length": 10.0, "width": 5.0, "height": 3.0}
+                        "dimensions": {"length": 10.0, "width": 5.0, "height": 3.0},
                     },
                     {
                         "name": "Office 2",
                         "area": 50.0,
                         "floor": 2,
-                        "dimensions": {"length": 10.0, "width": 5.0, "height": 3.0}
-                    }
+                        "dimensions": {"length": 10.0, "width": 5.0, "height": 3.0},
+                    },
                 ],
                 "structure": {
                     "foundation_type": "pile",
                     "wall_material": "reinforced_concrete",
-                    "roof_type": "flat"
-                }
-            }
+                    "roof_type": "flat",
+                },
+            },
         )
         db_session.commit()
 
@@ -308,7 +298,7 @@ class TestExportDesignIFC:
         )
 
         assert response.status_code == status.HTTP_200_OK
-        
+
         # Verify IFC generation received spatial data
         call_args = mock_generate_ifc.call_args
         design_data = call_args[0][0]
@@ -325,11 +315,9 @@ class TestExportPerformance:
     ):
         """Test PDF export completes within 15 seconds."""
         mock_generate_pdf.return_value = b"%PDF-1.4 mock pdf"
-        
+
         design = DesignFactory.create(
-            project_id=1,
-            name="Performance Test Design",
-            created_by=1
+            project_id=1, name="Performance Test Design", created_by=1
         )
         db_session.commit()
 
@@ -351,11 +339,9 @@ class TestExportPerformance:
     ):
         """Test IFC export completes within 15 seconds."""
         mock_generate_ifc.return_value = b"ISO-10303-21;HEADER..."
-        
+
         design = DesignFactory.create(
-            project_id=1,
-            name="Performance Test Design",
-            created_by=1
+            project_id=1, name="Performance Test Design", created_by=1
         )
         db_session.commit()
 
@@ -376,9 +362,7 @@ class TestExportPerformance:
     ):
         """Test JSON export completes within 15 seconds."""
         design = DesignFactory.create(
-            project_id=1,
-            name="Performance Test Design",
-            created_by=1
+            project_id=1, name="Performance Test Design", created_by=1
         )
         db_session.commit()
 
@@ -400,11 +384,7 @@ class TestExportValidation:
 
     def test_export_unsupported_format(self, client, db_session, auth_headers):
         """Test export with unsupported format returns 400."""
-        design = DesignFactory.create(
-            project_id=1,
-            name="Test Design",
-            created_by=1
-        )
+        design = DesignFactory.create(project_id=1, name="Test Design", created_by=1)
         db_session.commit()
 
         response = client.post(
@@ -416,15 +396,14 @@ class TestExportValidation:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         data = response.json()
         assert "detail" in data
-        assert "unsupported" in data["detail"].lower() or "invalid" in data["detail"].lower()
+        assert (
+            "unsupported" in data["detail"].lower()
+            or "invalid" in data["detail"].lower()
+        )
 
     def test_export_missing_format(self, client, db_session, auth_headers):
         """Test export without format parameter."""
-        design = DesignFactory.create(
-            project_id=1,
-            name="Test Design",
-            created_by=1
-        )
+        design = DesignFactory.create(project_id=1, name="Test Design", created_by=1)
         db_session.commit()
 
         response = client.post(
@@ -436,16 +415,12 @@ class TestExportValidation:
         # Should either use default format or return validation error
         assert response.status_code in [
             status.HTTP_200_OK,
-            status.HTTP_422_UNPROCESSABLE_ENTITY
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
         ]
 
     def test_export_invalid_format_type(self, client, db_session, auth_headers):
         """Test export with invalid format type (not string)."""
-        design = DesignFactory.create(
-            project_id=1,
-            name="Test Design",
-            created_by=1
-        )
+        design = DesignFactory.create(project_id=1, name="Test Design", created_by=1)
         db_session.commit()
 
         response = client.post(
@@ -458,11 +433,7 @@ class TestExportValidation:
 
     def test_export_case_insensitive_format(self, client, db_session, auth_headers):
         """Test export accepts case-insensitive format values."""
-        design = DesignFactory.create(
-            project_id=1,
-            name="Test Design",
-            created_by=1
-        )
+        design = DesignFactory.create(project_id=1, name="Test Design", created_by=1)
         db_session.commit()
 
         # Test uppercase
@@ -480,7 +451,10 @@ class TestExportValidation:
             headers=auth_headers,
         )
         # Should work or return 200 with mocked PDF generation
-        assert response.status_code in [status.HTTP_200_OK, status.HTTP_500_INTERNAL_SERVER_ERROR]
+        assert response.status_code in [
+            status.HTTP_200_OK,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+        ]
 
 
 class TestExportAuthentication:
@@ -517,7 +491,10 @@ class TestExportAuthentication:
 
         # Setup mock to raise access denied
         from src.services.project_client import ProjectAccessDeniedError
-        mock_project_client.verify_project_access.side_effect = ProjectAccessDeniedError("Access denied")
+
+        mock_project_client.verify_project_access.side_effect = (
+            ProjectAccessDeniedError("Access denied")
+        )
 
         response = client.post(
             f"/api/v1/designs/{design.id}/export",
@@ -529,11 +506,7 @@ class TestExportAuthentication:
 
     def test_export_archived_design(self, client, db_session, auth_headers):
         """Test exporting archived design returns 404."""
-        design = DesignFactory.create(
-            project_id=1,
-            created_by=1,
-            is_archived=True
-        )
+        design = DesignFactory.create(project_id=1, created_by=1, is_archived=True)
         db_session.commit()
 
         response = client.post(
@@ -551,9 +524,7 @@ class TestExportEdgeCases:
     def test_export_design_with_no_validations(self, client, db_session, auth_headers):
         """Test exporting design that has no validations."""
         design = DesignFactory.create(
-            project_id=1,
-            name="Unvalidated Design",
-            created_by=1
+            project_id=1, name="Unvalidated Design", created_by=1
         )
         db_session.commit()
 
@@ -576,7 +547,7 @@ class TestExportEdgeCases:
             project_id=1,
             name="Minimal Design",
             created_by=1,
-            specification={"building_info": {"type": "residential"}}
+            specification={"building_info": {"type": "residential"}},
         )
         db_session.commit()
 
@@ -588,17 +559,16 @@ class TestExportEdgeCases:
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        assert data["design"]["specification"] == {"building_info": {"type": "residential"}}
+        assert data["design"]["specification"] == {
+            "building_info": {"type": "residential"}
+        }
 
     def test_export_design_with_empty_specification(
         self, client, db_session, auth_headers
     ):
         """Test exporting design with empty specification."""
         design = DesignFactory.create(
-            project_id=1,
-            name="Empty Spec Design",
-            created_by=1,
-            specification={}
+            project_id=1, name="Empty Spec Design", created_by=1, specification={}
         )
         db_session.commit()
 
@@ -618,12 +588,8 @@ class TestExportEdgeCases:
     ):
         """Test handling of PDF generation failure."""
         mock_generate_pdf.side_effect = Exception("PDF generation failed")
-        
-        design = DesignFactory.create(
-            project_id=1,
-            name="Test Design",
-            created_by=1
-        )
+
+        design = DesignFactory.create(project_id=1, name="Test Design", created_by=1)
         db_session.commit()
 
         response = client.post(
@@ -640,12 +606,8 @@ class TestExportEdgeCases:
     ):
         """Test handling of IFC generation failure."""
         mock_generate_ifc.side_effect = Exception("IFC generation failed")
-        
-        design = DesignFactory.create(
-            project_id=1,
-            name="Test Design",
-            created_by=1
-        )
+
+        design = DesignFactory.create(project_id=1, name="Test Design", created_by=1)
         db_session.commit()
 
         response = client.post(

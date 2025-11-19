@@ -2,8 +2,8 @@
 
 ## Migration Details
 
-**Migration ID:** `b6576f89ece0`  
-**Migration Name:** Initial design service schema  
+**Migration ID:** `b6576f89ece0`
+**Migration Name:** Initial design service schema
 **Date:** 2025-10-13
 
 ## Tables Created
@@ -137,13 +137,13 @@ Table for storing validation results for designs.
 
 ## Testing Results
 
-✅ Migration generated successfully  
-✅ Migration applied successfully  
-✅ All tables created with correct schema  
-✅ Indexes created correctly  
-✅ CASCADE delete constraints verified  
-✅ Migration rollback tested successfully  
-✅ Migration re-applied successfully  
+✅ Migration generated successfully
+✅ Migration applied successfully
+✅ All tables created with correct schema
+✅ Indexes created correctly
+✅ CASCADE delete constraints verified
+✅ Migration rollback tested successfully
+✅ Migration re-applied successfully
 
 ## Notes
 

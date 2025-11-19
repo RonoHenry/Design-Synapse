@@ -123,7 +123,7 @@ def test_create_design(db_session):
     )
     db_session.add(design)
     db_session.commit()
-    
+
     assert design.id is not None
 ```
 
@@ -133,13 +133,13 @@ def test_create_design(db_session):
 def test_design_with_validations(db_session):
     """Test design with validations."""
     from tests.factories import create_design_with_validations
-    
+
     design = create_design_with_validations(
         db_session,
         num_validations=2,
         name="Validated Design"
     )
-    
+
     assert len(design.validations) == 2
 ```
 
@@ -149,7 +149,7 @@ def test_design_with_validations(db_session):
 def test_design_generation(mock_llm_client):
     """Test design generation with mock LLM."""
     result = mock_llm_client.generate_design_specification()
-    
+
     assert result["confidence_score"] == 85.5
     assert "specification" in result
 ```
@@ -164,7 +164,7 @@ def test_create_design_endpoint(client, auth_headers):
         json={"name": "Test", "project_id": 1},
         headers=auth_headers
     )
-    
+
     assert response.status_code == 201
 ```
 
@@ -216,7 +216,7 @@ class DesignFactory(BaseFactory, TimestampMixin):
     class Meta:
         model = Design  # Set to actual model
         sqlalchemy_session_persistence = "commit"
-    
+
     # Fields remain the same
 ```
 

@@ -5,8 +5,9 @@ This module tests the new visual output fields added to the Design model
 for the Visualization Service enhancement.
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 from sqlalchemy.exc import IntegrityError
 from src.models.design import Design
 
@@ -28,7 +29,7 @@ class TestDesignVisualFields:
             "rendering_url": "https://cdn.example.com/rendering_123.png",
             "model_file_url": "https://cdn.example.com/model_123.step",
             "visual_generation_status": "completed",
-            "visual_generated_at": datetime.utcnow()
+            "visual_generated_at": datetime.utcnow(),
         }
 
         # Act
@@ -53,7 +54,7 @@ class TestDesignVisualFields:
             "building_type": "residential",
             "project_id": 1,
             "user_id": 1,
-            "specification": {"building_info": {"type": "house"}}
+            "specification": {"building_info": {"type": "house"}},
         }
 
         # Act
@@ -80,7 +81,7 @@ class TestDesignVisualFields:
             "project_id": 1,
             "user_id": 1,
             "specification": {"building_info": {"type": "house"}},
-            "floor_plan_url": "invalid-url"  # Invalid URL format
+            "floor_plan_url": "invalid-url",  # Invalid URL format
         }
 
         # Act & Assert
@@ -92,7 +93,7 @@ class TestDesignVisualFields:
         """Test validation of visual generation status values."""
         # Arrange
         valid_statuses = ["pending", "processing", "completed", "failed"]
-        
+
         for status in valid_statuses:
             design_data = {
                 "name": f"Test Design Status {status}",
@@ -101,7 +102,7 @@ class TestDesignVisualFields:
                 "project_id": 1,
                 "user_id": 1,
                 "specification": {"building_info": {"type": "house"}},
-                "visual_generation_status": status
+                "visual_generation_status": status,
             }
 
             # Act
@@ -121,7 +122,7 @@ class TestDesignVisualFields:
                 project_id=1,
                 user_id=1,
                 specification={"building_info": {"type": "house"}},
-                visual_generation_status="invalid_status"
+                visual_generation_status="invalid_status",
             )
 
     def test_design_model_serialization_with_visuals(self, db_session):
@@ -136,7 +137,7 @@ class TestDesignVisualFields:
             specification={"building_info": {"type": "house"}},
             floor_plan_url="https://cdn.example.com/floor_plan.png",
             rendering_url="https://cdn.example.com/rendering.png",
-            visual_generation_status="completed"
+            visual_generation_status="completed",
         )
         db_session.add(design)
         db_session.commit()
@@ -151,7 +152,7 @@ class TestDesignVisualFields:
         assert "visual_generation_status" in design_dict
         assert "visual_generated_at" in design_dict
         assert "visual_generation_error" in design_dict
-        
+
         assert design_dict["floor_plan_url"] == "https://cdn.example.com/floor_plan.png"
         assert design_dict["rendering_url"] == "https://cdn.example.com/rendering.png"
         assert design_dict["visual_generation_status"] == "completed"
@@ -166,7 +167,7 @@ class TestDesignVisualFields:
             project_id=1,
             user_id=1,
             specification={"building_info": {"type": "house"}},
-            visual_generation_status="processing"
+            visual_generation_status="processing",
         )
 
         # Act
@@ -185,11 +186,11 @@ class TestDesignVisualFields:
             building_type="residential",
             project_id=1,
             user_id=1,
-            specification={"building_info": {"type": "house"}}
+            specification={"building_info": {"type": "house"}},
         )
         db_session.add(design)
         db_session.commit()
-        
+
         original_id = design.id
 
         # Act
@@ -200,7 +201,10 @@ class TestDesignVisualFields:
 
         # Assert
         updated_design = db_session.query(Design).filter_by(id=original_id).first()
-        assert updated_design.floor_plan_url == "https://cdn.example.com/new_floor_plan.png"
+        assert (
+            updated_design.floor_plan_url
+            == "https://cdn.example.com/new_floor_plan.png"
+        )
         assert updated_design.visual_generation_status == "completed"
         assert updated_design.visual_generated_at is not None
 
@@ -217,7 +221,7 @@ class TestDesignVisualFields:
             floor_plan_url=None,
             rendering_url=None,
             model_file_url=None,
-            visual_generation_error=None
+            visual_generation_error=None,
         )
         db_session.add(design)
         db_session.commit()

@@ -17,16 +17,24 @@ class ErrorType(str, Enum):
     CONFLICT = "CONFLICT"
     RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"
     BAD_REQUEST = "BAD_REQUEST"
+    REQUEST_TIMEOUT = "REQUEST_TIMEOUT"
+    PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE"
     
     # Server errors (5xx)
     DATABASE_ERROR = "DATABASE_ERROR"
     EXTERNAL_SERVICE_ERROR = "EXTERNAL_SERVICE_ERROR"
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
+    SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
+    GATEWAY_TIMEOUT = "GATEWAY_TIMEOUT"
     
     # Service-specific errors
     LLM_SERVICE_ERROR = "LLM_SERVICE_ERROR"
     VECTOR_SEARCH_ERROR = "VECTOR_SEARCH_ERROR"
     PDF_PROCESSING_ERROR = "PDF_PROCESSING_ERROR"
+    
+    # Infrastructure errors
+    CIRCUIT_BREAKER_OPEN = "CIRCUIT_BREAKER_OPEN"
+    RETRY_EXHAUSTED = "RETRY_EXHAUSTED"
 
 
 class ErrorResponse(BaseModel):
@@ -41,6 +49,12 @@ class ErrorResponse(BaseModel):
     )
     request_id: Optional[str] = Field(
         None, description="Request ID for tracking"
+    )
+    timestamp: Optional[str] = Field(
+        None, description="Error timestamp in ISO format"
+    )
+    service: Optional[str] = Field(
+        None, description="Service that generated the error"
     )
     
     @classmethod

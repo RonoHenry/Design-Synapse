@@ -12,25 +12,18 @@ Requirements tested:
 - 7.1: Design collaboration and comments
 """
 
-import pytest
 from datetime import datetime, timezone
 from typing import List
 
-from src.api.v1.schemas.responses import (
-    DesignResponse,
-    ValidationResponse,
-    OptimizationResponse,
-    DesignFileResponse,
-    DesignCommentResponse,
-)
-from tests.factories import (
-    DesignFactory,
-    DesignValidationFactory,
-    DesignOptimizationFactory,
-    DesignFileFactory,
-    DesignCommentFactory,
-    create_design_with_validations,
-)
+import pytest
+from src.api.v1.schemas.responses import (DesignCommentResponse,
+                                          DesignFileResponse, DesignResponse,
+                                          OptimizationResponse,
+                                          ValidationResponse)
+from tests.factories import (DesignCommentFactory, DesignFactory,
+                             DesignFileFactory, DesignOptimizationFactory,
+                             DesignValidationFactory,
+                             create_design_with_validations)
 
 
 class TestDesignResponse:
@@ -50,7 +43,7 @@ class TestDesignResponse:
             confidence_score=85.5,
             version=1,
             status="draft",
-            created_by=1
+            created_by=1,
         )
         db_session.commit()
 
@@ -81,7 +74,7 @@ class TestDesignResponse:
             total_area=None,
             num_floors=None,
             materials=None,
-            confidence_score=None
+            confidence_score=None,
         )
         db_session.commit()
 
@@ -96,13 +89,8 @@ class TestDesignResponse:
     def test_design_response_specification_json(self, db_session):
         """Test DesignResponse correctly serializes specification JSON."""
         specification = {
-            "building_info": {
-                "type": "residential",
-                "total_area": 250.5
-            },
-            "structure": {
-                "foundation_type": "slab"
-            }
+            "building_info": {"type": "residential", "total_area": 250.5},
+            "structure": {"foundation_type": "slab"},
         }
         design = DesignFactory.create(specification=specification)
         db_session.commit()
@@ -116,11 +104,11 @@ class TestDesignResponse:
     def test_design_response_different_statuses(self, db_session):
         """Test DesignResponse with different status values."""
         statuses = ["draft", "validated", "compliant", "non_compliant"]
-        
+
         for status in statuses:
             design = DesignFactory.create(status=status)
             db_session.commit()
-            
+
             response = DesignResponse.model_validate(design)
             assert response.status == status
 
@@ -128,15 +116,14 @@ class TestDesignResponse:
         """Test DesignResponse with version control fields."""
         parent_design = DesignFactory.create(version=1)
         db_session.commit()
-        
+
         child_design = DesignFactory.create(
-            version=2,
-            parent_design_id=parent_design.id
+            version=2, parent_design_id=parent_design.id
         )
         db_session.commit()
 
         response = DesignResponse.model_validate(child_design)
-        
+
         assert response.version == 2
         assert response.parent_design_id == parent_design.id
 
@@ -148,7 +135,7 @@ class TestValidationResponse:
         """Test ValidationResponse serialization from DesignValidation model."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         validation = DesignValidationFactory.create(
             design=design,
             validation_type="building_code",
@@ -156,7 +143,7 @@ class TestValidationResponse:
             is_compliant=True,
             violations=[],
             warnings=[],
-            validated_by=1
+            validated_by=1,
         )
         db_session.commit()
 
@@ -175,7 +162,7 @@ class TestValidationResponse:
         """Test ValidationResponse with violations."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         violations = [
             {
                 "code": "SETBACK_VIOLATION",
@@ -184,15 +171,12 @@ class TestValidationResponse:
                 "current_value": 4.5,
                 "required_value": 5.0,
                 "location": "front_boundary",
-                "suggestion": "Increase front setback by 0.5 meters"
+                "suggestion": "Increase front setback by 0.5 meters",
             }
         ]
-        
+
         validation = DesignValidationFactory.create(
-            design=design,
-            is_compliant=False,
-            violations=violations,
-            warnings=[]
+            design=design, is_compliant=False, violations=violations, warnings=[]
         )
         db_session.commit()
 
@@ -207,20 +191,17 @@ class TestValidationResponse:
         """Test ValidationResponse with warnings only."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         warnings = [
             {
                 "code": "MATERIAL_WARNING",
                 "severity": "warning",
-                "message": "Consider using locally sourced materials"
+                "message": "Consider using locally sourced materials",
             }
         ]
-        
+
         validation = DesignValidationFactory.create(
-            design=design,
-            is_compliant=True,
-            violations=[],
-            warnings=warnings
+            design=design, is_compliant=True, violations=[], warnings=warnings
         )
         db_session.commit()
 
@@ -235,16 +216,15 @@ class TestValidationResponse:
         """Test ValidationResponse with different validation types."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         validation_types = ["building_code", "structural", "safety"]
-        
+
         for val_type in validation_types:
             validation = DesignValidationFactory.create(
-                design=design,
-                validation_type=val_type
+                design=design, validation_type=val_type
             )
             db_session.commit()
-            
+
             response = ValidationResponse.model_validate(validation)
             assert response.validation_type == val_type
 
@@ -256,7 +236,7 @@ class TestOptimizationResponse:
         """Test OptimizationResponse serialization from DesignOptimization model."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         optimization = DesignOptimizationFactory.create(
             design=design,
             optimization_type="cost",
@@ -265,7 +245,7 @@ class TestOptimizationResponse:
             estimated_cost_impact=-15.0,
             implementation_difficulty="medium",
             priority="high",
-            status="suggested"
+            status="suggested",
         )
         db_session.commit()
 
@@ -286,16 +266,15 @@ class TestOptimizationResponse:
         """Test OptimizationResponse with different optimization types."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         optimization_types = ["cost", "structural", "sustainability"]
-        
+
         for opt_type in optimization_types:
             optimization = DesignOptimizationFactory.create(
-                design=design,
-                optimization_type=opt_type
+                design=design, optimization_type=opt_type
             )
             db_session.commit()
-            
+
             response = OptimizationResponse.model_validate(optimization)
             assert response.optimization_type == opt_type
 
@@ -303,13 +282,10 @@ class TestOptimizationResponse:
         """Test OptimizationResponse with applied status."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         applied_at = datetime.now(timezone.utc)
         optimization = DesignOptimizationFactory.create(
-            design=design,
-            status="applied",
-            applied_at=applied_at,
-            applied_by=1
+            design=design, status="applied", applied_at=applied_at, applied_by=1
         )
         db_session.commit()
 
@@ -325,12 +301,9 @@ class TestOptimizationResponse:
         """Test OptimizationResponse with optional fields as None."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         optimization = DesignOptimizationFactory.create(
-            design=design,
-            estimated_cost_impact=None,
-            applied_at=None,
-            applied_by=None
+            design=design, estimated_cost_impact=None, applied_at=None, applied_by=None
         )
         db_session.commit()
 
@@ -348,7 +321,7 @@ class TestDesignFileResponse:
         """Test DesignFileResponse serialization from DesignFile model."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         design_file = DesignFileFactory.create(
             design=design,
             filename="floor_plan.pdf",
@@ -356,7 +329,7 @@ class TestDesignFileResponse:
             file_size=1024000,
             storage_path="/storage/designs/floor_plan.pdf",
             description="Main floor plan",
-            uploaded_by=1
+            uploaded_by=1,
         )
         db_session.commit()
 
@@ -376,17 +349,15 @@ class TestDesignFileResponse:
         """Test DesignFileResponse with different file types."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         file_types = ["pdf", "dwg", "dxf", "png", "jpg", "ifc"]
-        
+
         for file_type in file_types:
             design_file = DesignFileFactory.create(
-                design=design,
-                file_type=file_type,
-                filename=f"design.{file_type}"
+                design=design, file_type=file_type, filename=f"design.{file_type}"
             )
             db_session.commit()
-            
+
             response = DesignFileResponse.model_validate(design_file)
             assert response.file_type == file_type
             assert response.filename == f"design.{file_type}"
@@ -395,11 +366,8 @@ class TestDesignFileResponse:
         """Test DesignFileResponse with description as None."""
         design = DesignFactory.create()
         db_session.commit()
-        
-        design_file = DesignFileFactory.create(
-            design=design,
-            description=None
-        )
+
+        design_file = DesignFileFactory.create(design=design, description=None)
         db_session.commit()
 
         response = DesignFileResponse.model_validate(design_file)
@@ -414,12 +382,9 @@ class TestDesignCommentResponse:
         """Test DesignCommentResponse serialization from DesignComment model."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         comment = DesignCommentFactory.create(
-            design=design,
-            content="This looks great!",
-            created_by=1,
-            is_edited=False
+            design=design, content="This looks great!", created_by=1, is_edited=False
         )
         db_session.commit()
 
@@ -437,13 +402,13 @@ class TestDesignCommentResponse:
         """Test DesignCommentResponse with spatial positioning."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         comment = DesignCommentFactory.create(
             design=design,
             content="Issue here",
             position_x=10.5,
             position_y=20.3,
-            position_z=5.0
+            position_z=5.0,
         )
         db_session.commit()
 
@@ -457,12 +422,9 @@ class TestDesignCommentResponse:
         """Test DesignCommentResponse without spatial positioning."""
         design = DesignFactory.create()
         db_session.commit()
-        
+
         comment = DesignCommentFactory.create(
-            design=design,
-            position_x=None,
-            position_y=None,
-            position_z=None
+            design=design, position_x=None, position_y=None, position_z=None
         )
         db_session.commit()
 
@@ -476,11 +438,8 @@ class TestDesignCommentResponse:
         """Test DesignCommentResponse with edited flag."""
         design = DesignFactory.create()
         db_session.commit()
-        
-        comment = DesignCommentFactory.create(
-            design=design,
-            is_edited=True
-        )
+
+        comment = DesignCommentFactory.create(design=design, is_edited=True)
         db_session.commit()
 
         response = DesignCommentResponse.model_validate(comment)
@@ -499,11 +458,11 @@ class TestNestedRelationships:
 
         # Serialize design
         design_response = DesignResponse.model_validate(design)
-        
+
         # Verify design is serialized correctly
         assert design_response.id == design.id
         assert design_response.name == design.name
-        
+
         # Note: Nested relationships are not included in basic response
         # They would be loaded separately via dedicated endpoints
 
@@ -512,7 +471,7 @@ class TestNestedRelationships:
         # Create design
         design = DesignFactory.create()
         db_session.commit()
-        
+
         # Create related entities
         validation = DesignValidationFactory.create(design=design)
         optimization = DesignOptimizationFactory.create(design=design)

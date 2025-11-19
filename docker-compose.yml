@@ -18,14 +18,99 @@ version: '3.8'
 # No local database container is needed. All services connect directly to TiDB Serverless.
 
 services:
-  # Add your application services here
-  # Example:
-  # user-service:
-  #   build: ./apps/user-service
-  #   ports:
-  #     - "8001:8001"
-  #   env_file:
-  #     - .env
+  # Redis for caching (vector search and content analysis)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Pinecone alternative - using Qdrant for local vector search
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Knowledge Service
+  knowledge-service:
+    build: 
+      context: .
+      dockerfile: apps/knowledge-service/Dockerfile
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - VECTOR_PROVIDER=qdrant
+      - QDRANT_URL=http://qdrant:6333
+      - SEARCH_ENABLE_SEARCH_CACHE=true
+      - SEARCH_CACHE_TTL_MINUTES=60
+      - SEARCH_SEARCH_CACHE_MAX_SIZE=1000
+      - SEARCH_EMBEDDING_CACHE_MAX_SIZE=500
+      - SEARCH_ENABLE_CACHE_COMPRESSION=true
+    depends_on:
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    volumes:
+      - knowledge_storage:/app/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # User Service (for authentication)
+  user-service:
+    build:
+      context: .
+      dockerfile: apps/user-service/Dockerfile
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Project Service (for project management)
+  project-service:
+    build:
+      context: .
+      dockerfile: apps/project-service/Dockerfile
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
-  # Add application-specific volumes here if needed
+  redis_data:
+  qdrant_data:
+  knowledge_storage:

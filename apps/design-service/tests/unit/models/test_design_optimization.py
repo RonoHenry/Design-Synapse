@@ -1,9 +1,9 @@
 """Unit tests for DesignOptimization model."""
 
-import pytest
 from datetime import datetime, timezone
-from sqlalchemy.exc import IntegrityError
 
+import pytest
+from sqlalchemy.exc import IntegrityError
 from src.models.design import Design
 from src.models.design_optimization import DesignOptimization
 from tests.factories import DesignFactory
@@ -24,7 +24,7 @@ class TestDesignOptimizationModel:
             optimization_type="cost",
             title="Reduce material costs",
             description="Use locally sourced materials to reduce costs by 15%",
-            implementation_difficulty="medium"
+            implementation_difficulty="medium",
         )
         db_session.add(optimization)
         db_session.commit()
@@ -35,7 +35,10 @@ class TestDesignOptimizationModel:
         assert optimization.design_id == design.id
         assert optimization.optimization_type == "cost"
         assert optimization.title == "Reduce material costs"
-        assert optimization.description == "Use locally sourced materials to reduce costs by 15%"
+        assert (
+            optimization.description
+            == "Use locally sourced materials to reduce costs by 15%"
+        )
         assert optimization.implementation_difficulty == "medium"
         assert optimization.status == "suggested"  # default value
         assert optimization.priority == "medium"  # default value
@@ -54,7 +57,7 @@ class TestDesignOptimizationModel:
             optimization_type="structural",
             title="Improve structural integrity",
             description="Add reinforcement to load-bearing walls",
-            implementation_difficulty="hard"
+            implementation_difficulty="hard",
         )
         db_session.add(optimization)
         db_session.commit()
@@ -77,14 +80,14 @@ class TestDesignOptimizationModel:
             optimization_type="cost",
             title="Cost optimization",
             description="Reduce costs",
-            implementation_difficulty="easy"
+            implementation_difficulty="easy",
         )
         optimization2 = DesignOptimization(
             design_id=design.id,
             optimization_type="sustainability",
             title="Sustainability optimization",
             description="Improve sustainability",
-            implementation_difficulty="medium"
+            implementation_difficulty="medium",
         )
         db_session.add_all([optimization1, optimization2])
         db_session.commit()
@@ -112,7 +115,7 @@ class TestDesignOptimizationModel:
             title="Cost optimization",
             description="Reduce costs",
             implementation_difficulty="easy",
-            status="suggested"
+            status="suggested",
         )
         db_session.add(optimization)
         db_session.commit()
@@ -141,7 +144,7 @@ class TestDesignOptimizationModel:
             title="Structural optimization",
             description="Improve structure",
             implementation_difficulty="hard",
-            status="suggested"
+            status="suggested",
         )
         db_session.add(optimization)
         db_session.commit()
@@ -169,7 +172,7 @@ class TestDesignOptimizationModel:
             title="Material cost reduction",
             description="Switch to alternative materials",
             implementation_difficulty="medium",
-            estimated_cost_impact=-15.5  # negative means cost reduction
+            estimated_cost_impact=-15.5,  # negative means cost reduction
         )
         db_session.add(optimization)
         db_session.commit()
@@ -191,7 +194,7 @@ class TestDesignOptimizationModel:
             title="Enhanced structural support",
             description="Add additional reinforcement",
             implementation_difficulty="hard",
-            estimated_cost_impact=25.0  # positive means cost increase
+            estimated_cost_impact=25.0,  # positive means cost increase
         )
         db_session.add(optimization)
         db_session.commit()
@@ -212,7 +215,7 @@ class TestDesignOptimizationModel:
             optimization_type="cost",
             title="Simple optimization",
             description="Easy to implement",
-            implementation_difficulty="easy"
+            implementation_difficulty="easy",
         )
         db_session.add(optimization)
         db_session.commit()
@@ -233,7 +236,7 @@ class TestDesignOptimizationModel:
             optimization_type="sustainability",
             title="Medium optimization",
             description="Moderate effort required",
-            implementation_difficulty="medium"
+            implementation_difficulty="medium",
         )
         db_session.add(optimization)
         db_session.commit()
@@ -254,7 +257,7 @@ class TestDesignOptimizationModel:
             optimization_type="structural",
             title="Complex optimization",
             description="Significant effort required",
-            implementation_difficulty="hard"
+            implementation_difficulty="hard",
         )
         db_session.add(optimization)
         db_session.commit()
@@ -276,7 +279,7 @@ class TestDesignOptimizationModel:
             title="Low priority",
             description="Minor improvement",
             implementation_difficulty="easy",
-            priority="low"
+            priority="low",
         )
         opt_medium = DesignOptimization(
             design_id=design.id,
@@ -284,7 +287,7 @@ class TestDesignOptimizationModel:
             title="Medium priority",
             description="Moderate improvement",
             implementation_difficulty="medium",
-            priority="medium"
+            priority="medium",
         )
         opt_high = DesignOptimization(
             design_id=design.id,
@@ -292,7 +295,7 @@ class TestDesignOptimizationModel:
             title="High priority",
             description="Critical improvement",
             implementation_difficulty="hard",
-            priority="high"
+            priority="high",
         )
         db_session.add_all([opt_low, opt_medium, opt_high])
         db_session.commit()
@@ -314,7 +317,7 @@ class TestDesignOptimizationModel:
             optimization_type="sustainability",
             title="Environmental optimization",
             description="Improve sustainability without cost data",
-            implementation_difficulty="medium"
+            implementation_difficulty="medium",
         )
         db_session.add(optimization)
         db_session.commit()
@@ -336,7 +339,7 @@ class TestDesignOptimizationModel:
                 optimization_type="cost",
                 title=f"Cost optimization {i}",
                 description=f"Description {i}",
-                implementation_difficulty="easy"
+                implementation_difficulty="easy",
             )
             for i in range(5)
         ]
@@ -355,7 +358,7 @@ class TestDesignOptimizationModel:
                 optimization_type="cost",
                 title="Invalid optimization",
                 description="Missing design_id",
-                implementation_difficulty="easy"
+                implementation_difficulty="easy",
             )
             db_session.add(optimization)
             db_session.commit()
@@ -372,7 +375,7 @@ class TestDesignOptimizationModel:
                 design_id=design.id,
                 optimization_type="cost",
                 description="Missing title",
-                implementation_difficulty="easy"
+                implementation_difficulty="easy",
             )
             db_session.add(optimization)
             db_session.commit()
@@ -389,21 +392,21 @@ class TestDesignOptimizationModel:
             optimization_type="cost",
             title="Cost optimization",
             description="Reduce costs",
-            implementation_difficulty="easy"
+            implementation_difficulty="easy",
         )
         opt_structural = DesignOptimization(
             design_id=design.id,
             optimization_type="structural",
             title="Structural optimization",
             description="Improve structure",
-            implementation_difficulty="medium"
+            implementation_difficulty="medium",
         )
         opt_sustainability = DesignOptimization(
             design_id=design.id,
             optimization_type="sustainability",
             title="Sustainability optimization",
             description="Improve sustainability",
-            implementation_difficulty="hard"
+            implementation_difficulty="hard",
         )
         db_session.add_all([opt_cost, opt_structural, opt_sustainability])
         db_session.commit()

@@ -8,10 +8,10 @@ Tests cover:
 - Validation without design access (403)
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
 from fastapi import status
-from unittest.mock import patch, Mock
-
 from tests.factories import DesignFactory, DesignValidationFactory
 
 
@@ -42,7 +42,10 @@ class TestValidateDesign:
             with patch(
                 "src.services.validation_service.RuleEngine.validate"
             ) as mock_validate:
-                mock_load.return_value = {"name": "Kenya_Building_Code_2020", "rules": []}
+                mock_load.return_value = {
+                    "name": "Kenya_Building_Code_2020",
+                    "rules": [],
+                }
                 mock_validate.return_value = {
                     "is_compliant": True,
                     "violations": [],
@@ -107,7 +110,10 @@ class TestValidateDesign:
             with patch(
                 "src.services.validation_service.RuleEngine.validate"
             ) as mock_validate:
-                mock_load.return_value = {"name": "Kenya_Building_Code_2020", "rules": []}
+                mock_load.return_value = {
+                    "name": "Kenya_Building_Code_2020",
+                    "rules": [],
+                }
                 mock_validate.return_value = {
                     "is_compliant": False,
                     "violations": expected_violations,
@@ -163,7 +169,10 @@ class TestValidateDesign:
             with patch(
                 "src.services.validation_service.RuleEngine.validate"
             ) as mock_validate:
-                mock_load.return_value = {"name": "Kenya_Building_Code_2020", "rules": []}
+                mock_load.return_value = {
+                    "name": "Kenya_Building_Code_2020",
+                    "rules": [],
+                }
                 mock_validate.return_value = {
                     "is_compliant": True,
                     "violations": [],
@@ -235,9 +244,7 @@ class TestValidateDesign:
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "rule set" in response.json()["detail"].lower()
 
-    def test_validate_design_without_authentication(
-        self, client_no_auth, db_session
-    ):
+    def test_validate_design_without_authentication(self, client_no_auth, db_session):
         """Test validating design without authentication."""
         design = DesignFactory.create(project_id=1, created_by=1)
         db_session.commit()
@@ -338,7 +345,10 @@ class TestValidateDesign:
             with patch(
                 "src.services.validation_service.RuleEngine.validate"
             ) as mock_validate:
-                mock_load.return_value = {"name": "Kenya_Building_Code_2020", "rules": []}
+                mock_load.return_value = {
+                    "name": "Kenya_Building_Code_2020",
+                    "rules": [],
+                }
                 mock_validate.return_value = {
                     "is_compliant": True,
                     "violations": [],
@@ -441,9 +451,7 @@ class TestGetValidations:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_get_validations_without_authentication(
-        self, client_no_auth, db_session
-    ):
+    def test_get_validations_without_authentication(self, client_no_auth, db_session):
         """Test getting validations without authentication."""
         design = DesignFactory.create(project_id=1, created_by=1)
         db_session.commit()
@@ -579,7 +587,7 @@ class TestGetValidations:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert len(data) == 1
-        
+
         validation_data = data[0]
         assert "id" in validation_data
         assert "design_id" in validation_data
@@ -590,7 +598,7 @@ class TestGetValidations:
         assert "warnings" in validation_data
         assert "validated_at" in validation_data
         assert "validated_by" in validation_data
-        
+
         assert validation_data["design_id"] == design.id
         assert validation_data["is_compliant"] is False
         assert len(validation_data["violations"]) == 1

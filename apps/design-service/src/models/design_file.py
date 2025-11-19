@@ -1,11 +1,10 @@
 """DesignFile model for files attached to designs."""
 
 from datetime import datetime, timezone
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from src.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -14,20 +13,19 @@ if TYPE_CHECKING:
 
 class DesignFile(Base):
     """Files attached to designs (CAD, images, PDFs).
-    
+
     Supports common design file formats with size validation
     and CASCADE delete when parent design is removed.
     """
+
     __tablename__ = "design_files"
 
     # Primary key
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    
+
     # Foreign key to Design
     design_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("designs.id", ondelete="CASCADE"),
-        nullable=False
+        Integer, ForeignKey("designs.id", ondelete="CASCADE"), nullable=False
     )
 
     # File metadata
@@ -42,20 +40,15 @@ class DesignFile(Base):
     # Audit
     uploaded_by: Mapped[int] = mapped_column(Integer, nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        nullable=False
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
     )
 
     # Relationship
-    design: Mapped["Design"] = relationship(
-        "Design",
-        back_populates="files"
-    )
+    design: Mapped["Design"] = relationship("Design", back_populates="files")
 
     # Allowed file types
     ALLOWED_FILE_TYPES = ["pdf", "dwg", "dxf", "png", "jpg", "ifc"]
-    
+
     # Maximum file size (50MB in bytes)
     MAX_FILE_SIZE = 52428800  # 50 * 1024 * 1024
 
@@ -114,7 +107,7 @@ class DesignFile(Base):
             self.storage_path = storage_path
         if uploaded_by is not None:
             self.uploaded_by = uploaded_by
-        
+
         self.description = description
         self.uploaded_at = datetime.now(timezone.utc)
 

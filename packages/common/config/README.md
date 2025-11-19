@@ -239,3 +239,216 @@ database_url = config.database.get_connection_url()
 - `LOG_LEVEL`: DEBUG, INFO, WARNING, ERROR (default: INFO)
 - `HOST`: Service host (default: 0.0.0.0)
 - `PORT`: Service port (default: 8000)
+--
+-
+
+# Production Configuration Management System (TDD Implementation)
+
+A comprehensive, production-ready configuration management system built using Test-Driven Development (TDD).
+
+## New Features (Production System)
+
+### 🔧 Advanced Configuration Loading
+- **Multi-source configuration**: Load from JSON files, environment variables, or both
+- **Environment-specific configs**: Support for dev, staging, prod configurations
+- **Validation**: Pydantic-based validation with clear error messages
+- **Type safety**: Full type hints and IDE support
+
+### 🔐 Secrets Management
+- **Multiple providers**: Environment variables, JSON files, extensible provider system
+- **Fallback support**: Try multiple providers in order
+- **Security**: Automatic secret masking in logs and string representations
+- **Production-ready**: Secure secret handling for production deployments
+
+### 🛡️ Security Configuration
+- **SSL/TLS support**: Complete SSL configuration with validation
+- **Security headers**: Production-ready security headers middleware
+- **HSTS, CSP, X-Frame-Options**: All modern security headers supported
+- **Customizable**: Flexible configuration for different security requirements
+
+## Production Configuration Usage
+
+### Configuration Loading with Environment Overrides
+
+```python
+from packages.common.config import ConfigLoader
+
+# Load configuration from file with environment overrides
+loader = ConfigLoader()
+config = loader.load_from_file_and_env("config/config.prod.json")
+
+print(f"Database: {config.database.host}:{config.database.port}")
+print(f"API Debug: {config.api.debug}")
+```
+
+### Secrets Management
+
+```python
+from packages.common.config import SecretsManager, EnvironmentSecretsProvider, FileSecretsProvider
+
+# Set up secrets with multiple providers
+providers = [
+    EnvironmentSecretsProvider(),  # Check environment first
+    FileSecretsProvider("config/secrets.json")  # Fallback to file
+]
+secrets = SecretsManager(providers)
+
+# Get secrets safely
+db_password = secrets.get_secret("DATABASE_PASSWORD")
+api_key = secrets.get_secret("API_SECRET_KEY", mask_in_logs=True)  # Masked in logs
+```
+
+### Security Headers Middleware
+
+```python
+from fastapi import FastAPI
+from packages.common.config import SecurityHeadersConfig, SecurityHeadersMiddleware
+
+app = FastAPI()
+security_config = SecurityHeadersConfig(
+    hsts_enabled=True,
+    hsts_max_age=31536000,  # 1 year
+    content_security_policy="default-src 'self'; script-src 'self' 'unsafe-inline'"
+)
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    
+    middleware = SecurityHeadersMiddleware(security_config)
+    headers = middleware.get_security_headers()
+    
+    for name, value in headers.items():
+        response.headers[name] = value
+    
+    return response
+```
+
+## Production Configuration Schema
+
+### Main Configuration
+
+```json
+{
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "name": "app_db",
+        "user": "app_user",
+        "password": "secret"
+    },
+    "redis": {
+        "host": "localhost", 
+        "port": 6379,
+        "db": 0
+    },
+    "api": {
+        "host": "0.0.0.0",
+        "port": 8000,
+        "debug": false,
+        "secret_key": "api-secret"
+    }
+}
+```
+
+### Security Configuration
+
+```json
+{
+    "ssl": {
+        "enabled": true,
+        "cert_file": "/etc/ssl/certs/app.crt",
+        "key_file": "/etc/ssl/private/app.key",
+        "ca_file": "/etc/ssl/certs/ca.crt"
+    },
+    "headers": {
+        "hsts_enabled": true,
+        "hsts_max_age": 31536000,
+        "content_security_policy": "default-src 'self'",
+        "x_frame_options": "DENY"
+    }
+}
+```
+
+## Production Environment Variables
+
+```bash
+# Environment
+ENVIRONMENT=production
+
+# Database (required)
+DATABASE_HOST=prod-db.cluster.local
+DATABASE_PASSWORD=<secure-password>
+
+# API secrets (required)
+API_SECRET_KEY=<secure-api-key>
+
+# Optional overrides
+API_PORT=80
+REDIS_URL=redis://redis.cluster.local:6379/0
+
+# SSL certificate paths
+SSL_CERT_FILE=/etc/ssl/certs/app.crt
+SSL_KEY_FILE=/etc/ssl/private/app.key
+```
+
+## Testing the Production System
+
+The production configuration system is built using TDD with comprehensive test coverage:
+
+```bash
+# Run all production config tests
+python -m pytest packages/common/config/tests/ -v
+
+# Run specific test categories
+python -m pytest packages/common/config/tests/test_config_loader.py -v
+python -m pytest packages/common/config/tests/test_secrets_manager.py -v
+python -m pytest packages/common/config/tests/test_security_config.py -v
+python -m pytest packages/common/config/tests/test_integration.py -v
+```
+
+## Production API Reference
+
+### ConfigLoader
+
+```python
+class ConfigLoader:
+    def load_from_file(self, file_path: str) -> ConfigSchema
+    def load_from_env(self) -> ConfigSchema  
+    def load_from_file_and_env(self, file_path: str) -> ConfigSchema
+```
+
+### SecretsManager
+
+```python
+class SecretsManager:
+    def __init__(self, providers: Union[SecretsProvider, List[SecretsProvider]])
+    def get_secret(self, key: str, default: Optional[str] = None, mask_in_logs: bool = False) -> Union[str, MaskedSecret]
+```
+
+### SecurityHeadersMiddleware
+
+```python
+class SecurityHeadersMiddleware:
+    def __init__(self, config: SecurityHeadersConfig)
+    def get_security_headers(self) -> Dict[str, str]
+```
+
+## Complete Production Example
+
+See `production_example.py` for a complete example of setting up a production FastAPI application with:
+- Full configuration management
+- Secrets handling with multiple providers
+- Security headers middleware
+- SSL/TLS configuration
+- Environment-specific settings
+
+## Requirements Satisfied
+
+This production configuration system satisfies:
+
+- ✅ **4.1**: Environment-specific configuration loading
+- ✅ **4.2**: Configuration validation with clear error messages  
+- ✅ **4.3**: SSL/TLS configuration and security headers
+- ✅ **4.5**: Secrets management with secure storage
+- ✅ **6.1**: HTTPS enforcement and security headers

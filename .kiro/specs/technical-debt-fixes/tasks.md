@@ -315,6 +315,8 @@ mplementation Plan
 
 
 
+
+
   - Migrate apps/project-service/src/core/exceptions.py to use shared error handling classes
   - Replace custom APIError, ProjectNotFoundError, and ProjectAccessError with shared error classes
   - Update main.py to use register_error_handlers from common.errors

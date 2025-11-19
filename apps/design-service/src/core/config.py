@@ -220,7 +220,7 @@ class DesignServiceConfig:
     def get_celery_config(self) -> dict:
         """Get Celery configuration for task queue management."""
         from .celery_config import CeleryConfig
-        
+
         celery_config = CeleryConfig()
         return celery_config.get_complete_celery_config()
 

@@ -7,14 +7,15 @@ This module provides REST API endpoints for:
 """
 
 from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from ....infrastructure.database import get_db
 from ....repositories.design_repository import DesignRepository
 from ....repositories.validation_repository import ValidationRepository
+from ....services.project_client import ProjectAccessDeniedError, ProjectClient
 from ....services.validation_service import ValidationService
-from ....services.project_client import ProjectClient, ProjectAccessDeniedError
 from ...dependencies import CurrentUserId, get_current_user_id
 from ..schemas.requests import ValidationRequest
 from ..schemas.responses import ValidationResponse
@@ -43,7 +44,7 @@ def get_validation_service(
     """Dependency to get validation service instance."""
     validation_repository = ValidationRepository(db)
     design_repository = DesignRepository(db)
-    
+
     return ValidationService(
         validation_repo=validation_repository,
         design_repo=design_repository,
@@ -67,7 +68,7 @@ async def validate_design(
 ) -> ValidationResponse:
     """
     Validate a design against building code rules.
-    
+
     This endpoint:
     1. Verifies the design exists and is not archived
     2. Verifies user has access to the project
@@ -75,7 +76,7 @@ async def validate_design(
     4. Runs validation rules against the design
     5. Creates and stores validation results
     6. Updates design status based on validation outcome
-    
+
     Args:
         design_id: ID of the design to validate
         request: Validation request with validation_type and rule_set
@@ -83,10 +84,10 @@ async def validate_design(
         design_repository: Design repository
         validation_service: Validation service
         project_client: Project service client
-        
+
     Returns:
         Validation results with compliance status, violations, and warnings
-        
+
     Raises:
         401: If authentication fails
         403: If user doesn't have access to the project
@@ -96,13 +97,13 @@ async def validate_design(
     """
     # Get design
     design = design_repository.get_design_by_id(design_id, include_archived=False)
-    
+
     if not design:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Design with ID {design_id} not found",
         )
-    
+
     # Verify project access
     try:
         await project_client.verify_project_access(
@@ -119,7 +120,7 @@ async def validate_design(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unable to verify project access",
         )
-    
+
     # Validate design
     try:
         validation = validation_service.validate_design(
@@ -128,9 +129,9 @@ async def validate_design(
             rule_set=request.rule_set,
             user_id=user_id,
         )
-        
+
         return ValidationResponse.model_validate(validation)
-        
+
     except FileNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -163,20 +164,20 @@ async def get_validations(
 ) -> List[ValidationResponse]:
     """
     Get validation history for a design.
-    
+
     Returns all validation results for the specified design,
     ordered by validation date (newest first).
-    
+
     Args:
         design_id: ID of the design to get validations for
         user_id: Current authenticated user ID
         design_repository: Design repository
         validation_repository: Validation repository
         project_client: Project service client
-        
+
     Returns:
         List of validation results ordered by validated_at descending
-        
+
     Raises:
         401: If authentication fails
         403: If user doesn't have access to the project
@@ -184,13 +185,13 @@ async def get_validations(
     """
     # Get design
     design = design_repository.get_design_by_id(design_id, include_archived=False)
-    
+
     if not design:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Design with ID {design_id} not found",
         )
-    
+
     # Verify project access
     try:
         await project_client.verify_project_access(
@@ -207,8 +208,8 @@ async def get_validations(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unable to verify project access",
         )
-    
+
     # Get validations
     validations = validation_repository.get_validations_by_design_id(design_id)
-    
+
     return [ValidationResponse.model_validate(validation) for validation in validations]

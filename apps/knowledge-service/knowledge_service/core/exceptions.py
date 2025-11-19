@@ -1,196 +1,171 @@
-"""Knowledge Service specific exceptions and error handling.
-
-This module extends the shared error handling with knowledge service specific errors.
-"""
-
-import sys
-from pathlib import Path
-from typing import Any, Dict, Optional
-
-# Add packages to path for shared error handling
-packages_path = Path(__file__).parent.parent.parent.parent.parent / "packages"
-sys.path.insert(0, str(packages_path))
-
-from common.errors import (
-    APIError,
-    AuthenticationError,
-    AuthorizationError,
-    DatabaseError,
-    NotFoundError,
-    ValidationError,
-    ConflictError,
-    LLMServiceError,
-    VectorSearchError,
-    ExternalServiceError,
-)
-from common.errors.responses import ErrorType
+"""Custom exceptions for the Knowledge Service."""
+from typing import Optional, Dict, Any
+from packages.common.errors.base import APIError
 
 
-class PDFProcessingError(APIError):
-    """Error during PDF processing operations."""
+class KnowledgeServiceError(APIError):
+    """Base exception for Knowledge Service errors."""
+    pass
+
+
+class ResourceNotFoundError(KnowledgeServiceError):
+    """Raised when a resource is not found."""
     
-    def __init__(
-        self,
-        message: str = "PDF processing error",
-        details: Optional[Dict[str, Any]] = None,
-    ):
-        """Initialize a PDF processing error.
-        
-        Args:
-            message: Description of the error
-            details: Additional error details
-        """
+    def __init__(self, resource_id: int, message: str = None):
         super().__init__(
-            message=message,
-            error_code=ErrorType.PDF_PROCESSING_ERROR,
-            status_code=500,
-            details=details,
+            message=message or f"Resource with ID {resource_id} not found",
+            error_code="RESOURCE_NOT_FOUND",
+            status_code=404,
+            details={"resource_id": resource_id}
         )
 
 
-class ResourceNotFoundError(NotFoundError):
-    """Resource not found in knowledge service."""
+class TopicNotFoundError(KnowledgeServiceError):
+    """Raised when a topic is not found."""
     
-    def __init__(self, resource_id: str):
-        """Initialize a resource not found error.
-        
-        Args:
-            resource_id: ID of the resource that was not found
-        """
-        super().__init__("Resource", resource_id)
-
-
-class CitationNotFoundError(NotFoundError):
-    """Citation not found in knowledge service."""
-    
-    def __init__(self, citation_id: str):
-        """Initialize a citation not found error.
-        
-        Args:
-            citation_id: ID of the citation that was not found
-        """
-        super().__init__("Citation", citation_id)
-
-
-class BookmarkNotFoundError(NotFoundError):
-    """Bookmark not found in knowledge service."""
-    
-    def __init__(self, bookmark_id: str):
-        """Initialize a bookmark not found error.
-        
-        Args:
-            bookmark_id: ID of the bookmark that was not found
-        """
-        super().__init__("Bookmark", bookmark_id)
-
-
-class InvalidResourceTypeError(ValidationError):
-    """Invalid resource type provided."""
-    
-    def __init__(self, resource_type: str, valid_types: list):
-        """Initialize an invalid resource type error.
-        
-        Args:
-            resource_type: The invalid resource type provided
-            valid_types: List of valid resource types
-        """
+    def __init__(self, topic_id: int, message: str = None):
         super().__init__(
-            message=f"Invalid resource type: {resource_type}",
+            message=message or f"Topic with ID {topic_id} not found",
+            error_code="TOPIC_NOT_FOUND",
+            status_code=404,
+            details={"topic_id": topic_id}
+        )
+
+
+class BookmarkNotFoundError(KnowledgeServiceError):
+    """Raised when a bookmark is not found."""
+    
+    def __init__(self, bookmark_id: int, message: str = None):
+        super().__init__(
+            message=message or f"Bookmark with ID {bookmark_id} not found",
+            error_code="BOOKMARK_NOT_FOUND",
+            status_code=404,
+            details={"bookmark_id": bookmark_id}
+        )
+
+
+class FileProcessingError(KnowledgeServiceError):
+    """Raised when file processing fails."""
+    
+    def __init__(self, filename: str, message: str = None, details: Dict[str, Any] = None):
+        super().__init__(
+            message=message or f"Failed to process file: {filename}",
+            error_code="FILE_PROCESSING_ERROR",
+            status_code=422,
+            details={"filename": filename, **(details or {})}
+        )
+
+
+class UnsupportedFileTypeError(KnowledgeServiceError):
+    """Raised when an unsupported file type is uploaded."""
+    
+    def __init__(self, filename: str, supported_types: list = None):
+        super().__init__(
+            message=f"Unsupported file type: {filename}",
+            error_code="UNSUPPORTED_FILE_TYPE",
+            status_code=400,
             details={
-                "provided_type": resource_type,
-                "valid_types": valid_types,
-            },
+                "filename": filename,
+                "supported_types": supported_types or []
+            }
         )
 
 
-class ResourceURLValidationError(ValidationError):
-    """Resource URL validation error."""
+class FileSizeExceededError(KnowledgeServiceError):
+    """Raised when uploaded file exceeds size limit."""
     
-    def __init__(self, url: str, reason: str):
-        """Initialize a resource URL validation error.
-        
-        Args:
-            url: The invalid URL
-            reason: Reason why the URL is invalid
-        """
+    def __init__(self, filename: str, file_size: int, max_size: int):
         super().__init__(
-            message=f"Invalid resource URL: {reason}",
-            details={"url": url, "reason": reason},
+            message=f"File size exceeds limit: {filename}",
+            error_code="FILE_SIZE_EXCEEDED",
+            status_code=413,
+            details={
+                "filename": filename,
+                "file_size_bytes": file_size,
+                "max_size_bytes": max_size
+            }
         )
 
 
-class VectorIndexError(VectorSearchError):
-    """Error during vector indexing operations."""
+class VectorSearchError(KnowledgeServiceError):
+    """Raised when vector search operations fail."""
     
-    def __init__(
-        self,
-        message: str = "Vector indexing error",
-        details: Optional[Dict[str, Any]] = None,
-    ):
-        """Initialize a vector indexing error.
-        
-        Args:
-            message: Description of the error
-            details: Additional error details
-        """
-        super().__init__(message=message, details=details)
+    def __init__(self, message: str = None, details: Dict[str, Any] = None):
+        super().__init__(
+            message=message or "Vector search operation failed",
+            error_code="VECTOR_SEARCH_ERROR",
+            status_code=500,
+            details=details or {}
+        )
 
 
-class EmbeddingGenerationError(LLMServiceError):
-    """Error during embedding generation."""
+class LLMServiceError(KnowledgeServiceError):
+    """Raised when LLM service operations fail."""
     
-    def __init__(
-        self,
-        message: str = "Embedding generation error",
-        details: Optional[Dict[str, Any]] = None,
-    ):
-        """Initialize an embedding generation error.
-        
-        Args:
-            message: Description of the error
-            details: Additional error details
-        """
-        super().__init__(message=message, details=details)
+    def __init__(self, message: str = None, details: Dict[str, Any] = None):
+        super().__init__(
+            message=message or "LLM service operation failed",
+            error_code="LLM_SERVICE_ERROR",
+            status_code=500,
+            details=details or {}
+        )
 
 
-class SearchQueryError(ValidationError):
-    """Invalid search query provided."""
+class BatchProcessingError(KnowledgeServiceError):
+    """Raised when batch processing operations fail."""
     
-    def __init__(
-        self,
-        message: str = "Invalid search query",
-        details: Optional[Dict[str, Any]] = None,
-    ):
-        """Initialize a search query error.
-        
-        Args:
-            message: Description of the error
-            details: Additional error details
-        """
-        super().__init__(message=message, details=details)
+    def __init__(self, job_id: str = None, message: str = None, details: Dict[str, Any] = None):
+        super().__init__(
+            message=message or "Batch processing operation failed",
+            error_code="BATCH_PROCESSING_ERROR",
+            status_code=500,
+            details={"job_id": job_id, **(details or {})}
+        )
 
 
-# Re-export common errors for convenience
-__all__ = [
-    # Common errors
-    "APIError",
-    "AuthenticationError",
-    "AuthorizationError",
-    "DatabaseError",
-    "NotFoundError",
-    "ValidationError",
-    "ConflictError",
-    "LLMServiceError",
-    "VectorSearchError",
-    "ExternalServiceError",
-    # Knowledge service specific errors
-    "PDFProcessingError",
-    "ResourceNotFoundError",
-    "CitationNotFoundError",
-    "BookmarkNotFoundError",
-    "InvalidResourceTypeError",
-    "ResourceURLValidationError",
-    "VectorIndexError",
-    "EmbeddingGenerationError",
-    "SearchQueryError",
-]
+class ContentExtractionError(KnowledgeServiceError):
+    """Raised when content extraction fails."""
+    
+    def __init__(self, filename: str, message: str = None, details: Dict[str, Any] = None):
+        super().__init__(
+            message=message or f"Failed to extract content from: {filename}",
+            error_code="CONTENT_EXTRACTION_ERROR",
+            status_code=422,
+            details={"filename": filename, **(details or {})}
+        )
+
+
+class DuplicateResourceError(KnowledgeServiceError):
+    """Raised when attempting to create a duplicate resource."""
+    
+    def __init__(self, identifier: str, message: str = None):
+        super().__init__(
+            message=message or f"Resource already exists: {identifier}",
+            error_code="DUPLICATE_RESOURCE",
+            status_code=409,
+            details={"identifier": identifier}
+        )
+
+
+class InvalidSearchQueryError(KnowledgeServiceError):
+    """Raised when search query is invalid."""
+    
+    def __init__(self, query: str, message: str = None, details: Dict[str, Any] = None):
+        super().__init__(
+            message=message or f"Invalid search query: {query}",
+            error_code="INVALID_SEARCH_QUERY",
+            status_code=400,
+            details={"query": query, **(details or {})}
+        )
+
+
+class StorageError(KnowledgeServiceError):
+    """Raised when storage operations fail."""
+    
+    def __init__(self, operation: str, path: str = None, message: str = None):
+        super().__init__(
+            message=message or f"Storage operation failed: {operation}",
+            error_code="STORAGE_ERROR",
+            status_code=500,
+            details={"operation": operation, "path": path}
+        )

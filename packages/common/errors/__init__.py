@@ -1,8 +1,9 @@
 """Shared error handling classes and utilities for all services."""
 
 from .base import (APIError, AuthenticationError, AuthorizationError,
-                   ConflictError, DatabaseError, ExternalServiceError,
-                   LLMServiceError, NotFoundError, RateLimitError,
+                   CircuitBreakerError, ConflictError, DatabaseError, 
+                   ExternalServiceError, LLMServiceError, NotFoundError, 
+                   RateLimitError, ServiceUnavailableError, TimeoutError,
                    ValidationError, VectorSearchError)
 from .handlers import (api_error_handler, general_exception_handler,
                        register_error_handlers, sqlalchemy_error_handler,
@@ -14,13 +15,16 @@ __all__ = [
     "APIError",
     "AuthenticationError",
     "AuthorizationError",
-    "DatabaseError",
-    "NotFoundError",
-    "ValidationError",
+    "CircuitBreakerError",
     "ConflictError",
-    "RateLimitError",
+    "DatabaseError",
     "ExternalServiceError",
     "LLMServiceError",
+    "NotFoundError",
+    "RateLimitError",
+    "ServiceUnavailableError",
+    "TimeoutError",
+    "ValidationError",
     "VectorSearchError",
     # Handlers
     "api_error_handler",

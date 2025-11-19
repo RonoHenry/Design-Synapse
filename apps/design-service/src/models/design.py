@@ -8,35 +8,27 @@ This model represents the core design entity with support for:
 - Relationships with validations, optimizations, files, and comments
 """
 
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
-
-from sqlalchemy import (
-    Boolean,
-    DateTime,
-    Float,
-    ForeignKey,
-    Integer,
-    JSON,
-    String,
-    Text,
-)
 import re
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+from sqlalchemy import (JSON, Boolean, DateTime, Float, ForeignKey, Integer,
+                        String, Text)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..infrastructure.database import Base
 
 if TYPE_CHECKING:
-    from .design_validation import DesignValidation
-    from .design_optimization import DesignOptimization
-    from .design_file import DesignFile
     from .design_comment import DesignComment
+    from .design_file import DesignFile
+    from .design_optimization import DesignOptimization
+    from .design_validation import DesignValidation
 
 
 class Design(Base):
     """
     Design model representing architectural designs in the system.
-    
+
     Supports AI-generated designs, version control, validation, and optimization.
     """
 
@@ -44,10 +36,10 @@ class Design(Base):
 
     # Primary key
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    
+
     # Foreign keys
     project_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
-    
+
     # Basic information
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -69,77 +61,67 @@ class Design(Base):
     # Version control
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     parent_design_id: Mapped[Optional[int]] = mapped_column(
-        Integer,
-        ForeignKey("designs.id"),
-        nullable=True
+        Integer, ForeignKey("designs.id"), nullable=True
     )
 
     # Status and compliance
     status: Mapped[str] = mapped_column(
-        String(50),
-        default="draft",
-        nullable=False,
-        index=True
+        String(50), default="draft", nullable=False, index=True
     )
-    is_archived: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    is_archived: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
 
     # Visual output fields
     floor_plan_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     rendering_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     model_file_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     visual_generation_status: Mapped[str] = mapped_column(
-        String(50),
-        default="not_requested",
-        nullable=False,
-        index=True
+        String(50), default="not_requested", nullable=False, index=True
     )
     visual_generation_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    visual_generated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    visual_generated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
 
     # Audit fields
     created_by: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        nullable=False
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
-        nullable=False
+        nullable=False,
     )
 
     # Relationships (will be added as related models are implemented)
     validations: Mapped[List["DesignValidation"]] = relationship(
-        "DesignValidation",
-        back_populates="design",
-        cascade="all, delete-orphan"
+        "DesignValidation", back_populates="design", cascade="all, delete-orphan"
     )
     optimizations: Mapped[List["DesignOptimization"]] = relationship(
-        "DesignOptimization",
-        back_populates="design",
-        cascade="all, delete-orphan"
+        "DesignOptimization", back_populates="design", cascade="all, delete-orphan"
     )
     files: Mapped[List["DesignFile"]] = relationship(
-        "DesignFile",
-        back_populates="design",
-        cascade="all, delete-orphan"
+        "DesignFile", back_populates="design", cascade="all, delete-orphan"
     )
     comments: Mapped[List["DesignComment"]] = relationship(
-        "DesignComment",
-        back_populates="design",
-        cascade="all, delete-orphan"
+        "DesignComment", back_populates="design", cascade="all, delete-orphan"
     )
     versions: Mapped[List["Design"]] = relationship(
-        "Design",
-        backref="parent_design",
-        remote_side=[id]
+        "Design", backref="parent_design", remote_side=[id]
     )
 
     # Allowed status values
     ALLOWED_STATUSES = ["draft", "validated", "compliant", "non_compliant"]
-    ALLOWED_VISUAL_STATUSES = ["not_requested", "pending", "processing", "completed", "failed"]
+    ALLOWED_VISUAL_STATUSES = [
+        "not_requested",
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+    ]
 
     def __init__(
         self,
@@ -210,7 +192,7 @@ class Design(Base):
             raise ValueError(
                 f"Status must be one of: {', '.join(self.ALLOWED_STATUSES)}"
             )
-        
+
         # Validate visual generation status
         if visual_generation_status not in self.ALLOWED_VISUAL_STATUSES:
             raise ValueError(
@@ -235,7 +217,7 @@ class Design(Base):
             self.building_type = building_type
         if created_by is not None:
             self.created_by = created_by
-            
+
         self.description = description
         self.total_area = total_area
         self.num_floors = num_floors
@@ -247,7 +229,7 @@ class Design(Base):
         self.parent_design_id = parent_design_id
         self.status = status
         self.is_archived = is_archived
-        
+
         # Visual fields
         self.floor_plan_url = floor_plan_url
         self.rendering_url = rendering_url
@@ -255,31 +237,33 @@ class Design(Base):
         self.visual_generation_status = visual_generation_status
         self.visual_generation_error = visual_generation_error
         self.visual_generated_at = visual_generated_at
-        
+
         self.created_at = datetime.now(timezone.utc)
         self.updated_at = self.created_at
 
     def validate_visual_urls(self) -> None:
         """
         Validate URL format for visual fields.
-        
+
         Raises:
             ValueError: If any URL has invalid format
         """
         url_pattern = re.compile(
-            r'^https?://'  # http:// or https://
-            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
-            r'localhost|'  # localhost...
-            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-            r'(?::\d+)?'  # optional port
-            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-        
+            r"^https?://"  # http:// or https://
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain...
+            r"localhost|"  # localhost...
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+            r"(?::\d+)?"  # optional port
+            r"(?:/?|[/?]\S+)$",
+            re.IGNORECASE,
+        )
+
         urls_to_check = [
             ("floor_plan_url", self.floor_plan_url),
             ("rendering_url", self.rendering_url),
-            ("model_file_url", self.model_file_url)
+            ("model_file_url", self.model_file_url),
         ]
-        
+
         for field_name, url in urls_to_check:
             if url is not None and not url_pattern.match(url):
                 raise ValueError(f"Invalid URL format for {field_name}: {url}")
@@ -287,7 +271,7 @@ class Design(Base):
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert design to dictionary for serialization.
-        
+
         Returns:
             Dictionary representation of the design
         """
@@ -316,7 +300,7 @@ class Design(Base):
             "visual_generated_at": self.visual_generated_at,
             "created_by": self.created_by,
             "created_at": self.created_at,
-            "updated_at": self.updated_at
+            "updated_at": self.updated_at,
         }
 
     def __repr__(self) -> str:

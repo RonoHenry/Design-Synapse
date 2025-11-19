@@ -12,22 +12,16 @@ import os
 import shutil
 from pathlib import Path
 from typing import List
-from fastapi import (
-    APIRouter,
-    Depends,
-    File,
-    Form,
-    HTTPException,
-    UploadFile,
-    status,
-)
+
+from fastapi import (APIRouter, Depends, File, Form, HTTPException, UploadFile,
+                     status)
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from ....infrastructure.database import get_db
-from ....repositories.design_repository import DesignRepository
-from ....services.project_client import ProjectClient, ProjectAccessDeniedError
 from ....models.design_file import DesignFile
+from ....repositories.design_repository import DesignRepository
+from ....services.project_client import ProjectAccessDeniedError, ProjectClient
 from ...dependencies import CurrentUserId, get_current_user_id
 from ..schemas.responses import DesignFileResponse
 
@@ -47,50 +41,50 @@ def get_project_client() -> ProjectClient:
 def get_storage_path() -> Path:
     """Get the base storage path for design files."""
     from ....core.config import get_settings
-    
+
     # Get storage path from config or use default
     storage_path = os.getenv("FILE_STORAGE_PATH", "./storage/designs")
     path = Path(storage_path)
-    
+
     # Create directory if it doesn't exist
     path.mkdir(parents=True, exist_ok=True)
-    
+
     return path
 
 
 def validate_file_type(filename: str) -> str:
     """
     Validate and extract file type from filename.
-    
+
     Args:
         filename: Name of the file
-        
+
     Returns:
         File extension in lowercase
-        
+
     Raises:
         HTTPException: If file type is not supported
     """
     # Extract file extension
     file_ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
-    
+
     # Check if file type is allowed
     if file_ext not in DesignFile.ALLOWED_FILE_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unsupported file type. Allowed types: {', '.join(DesignFile.ALLOWED_FILE_TYPES)}",
         )
-    
+
     return file_ext
 
 
 def validate_file_size(file_size: int) -> None:
     """
     Validate file size.
-    
+
     Args:
         file_size: Size of file in bytes
-        
+
     Raises:
         HTTPException: If file size exceeds limit
     """
@@ -108,27 +102,27 @@ async def save_upload_file(
 ) -> int:
     """
     Save uploaded file to destination and return file size.
-    
+
     Args:
         upload_file: FastAPI UploadFile object
         destination: Path where file should be saved
-        
+
     Returns:
         Size of saved file in bytes
-        
+
     Raises:
         HTTPException: If file save fails
     """
     try:
         # Ensure parent directory exists
         destination.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Save file in chunks to handle large files
         file_size = 0
         with open(destination, "wb") as buffer:
             while chunk := await upload_file.read(8192):  # 8KB chunks
                 file_size += len(chunk)
-                
+
                 # Check size limit during upload
                 if file_size > DesignFile.MAX_FILE_SIZE:
                     # Clean up partial file
@@ -138,11 +132,11 @@ async def save_upload_file(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=f"File size exceeds maximum limit of 50MB",
                     )
-                
+
                 buffer.write(chunk)
-        
+
         return file_size
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -173,7 +167,7 @@ async def upload_file(
 ) -> DesignFileResponse:
     """
     Upload a file to a design.
-    
+
     Args:
         design_id: ID of the design to attach file to
         file: File to upload
@@ -183,10 +177,10 @@ async def upload_file(
         repository: Design repository
         project_client: Project service client
         storage_path: Base storage path
-        
+
     Returns:
         Created file metadata
-        
+
     Raises:
         400: If file type is unsupported or size exceeds limit
         401: If authentication fails
@@ -195,13 +189,13 @@ async def upload_file(
     """
     # Get design
     design = repository.get_design_by_id(design_id, include_archived=False)
-    
+
     if not design:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Design with ID {design_id} not found",
         )
-    
+
     # Verify project access
     try:
         await project_client.verify_project_access(
@@ -218,18 +212,19 @@ async def upload_file(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unable to verify project access",
         )
-    
+
     # Validate file type
     file_type = validate_file_type(file.filename)
-    
+
     # Generate unique filename to avoid collisions
     import uuid
+
     unique_filename = f"{uuid.uuid4()}_{file.filename}"
     file_path = storage_path / str(design_id) / unique_filename
-    
+
     # Save file and get size
     file_size = await save_upload_file(file, file_path)
-    
+
     # Create database record
     try:
         design_file = DesignFile(
@@ -241,13 +236,13 @@ async def upload_file(
             uploaded_by=user_id,
             description=description,
         )
-        
+
         db.add(design_file)
         db.commit()
         db.refresh(design_file)
-        
+
         return DesignFileResponse.model_validate(design_file)
-        
+
     except Exception as e:
         # Clean up file on database error
         file_path.unlink(missing_ok=True)
@@ -273,17 +268,17 @@ async def list_files(
 ) -> List[DesignFileResponse]:
     """
     List all files attached to a design.
-    
+
     Args:
         design_id: ID of the design
         user_id: Current authenticated user ID
         db: Database session
         repository: Design repository
         project_client: Project service client
-        
+
     Returns:
         List of file metadata
-        
+
     Raises:
         401: If authentication fails
         403: If user doesn't have access to the project
@@ -291,13 +286,13 @@ async def list_files(
     """
     # Get design
     design = repository.get_design_by_id(design_id, include_archived=False)
-    
+
     if not design:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Design with ID {design_id} not found",
         )
-    
+
     # Verify project access
     try:
         await project_client.verify_project_access(
@@ -314,12 +309,15 @@ async def list_files(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unable to verify project access",
         )
-    
+
     # Get files
-    files = db.query(DesignFile).filter(
-        DesignFile.design_id == design_id
-    ).order_by(DesignFile.uploaded_at.desc()).all()
-    
+    files = (
+        db.query(DesignFile)
+        .filter(DesignFile.design_id == design_id)
+        .order_by(DesignFile.uploaded_at.desc())
+        .all()
+    )
+
     return [DesignFileResponse.model_validate(f) for f in files]
 
 
@@ -338,14 +336,14 @@ async def delete_file(
 ) -> None:
     """
     Delete a file.
-    
+
     Args:
         file_id: ID of the file to delete
         user_id: Current authenticated user ID
         db: Database session
         repository: Design repository
         project_client: Project service client
-        
+
     Raises:
         401: If authentication fails
         403: If user doesn't have access to the project
@@ -353,22 +351,22 @@ async def delete_file(
     """
     # Get file
     design_file = db.query(DesignFile).filter(DesignFile.id == file_id).first()
-    
+
     if not design_file:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"File with ID {file_id} not found",
         )
-    
+
     # Get design to verify project access
     design = repository.get_design_by_id(design_file.design_id, include_archived=False)
-    
+
     if not design:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Design with ID {design_file.design_id} not found",
         )
-    
+
     # Verify project access
     try:
         await project_client.verify_project_access(
@@ -385,7 +383,7 @@ async def delete_file(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unable to verify project access",
         )
-    
+
     # Delete file from storage
     try:
         file_path = Path(design_file.storage_path)
@@ -394,7 +392,7 @@ async def delete_file(
     except Exception as e:
         # Log error but continue with database deletion
         print(f"Warning: Failed to delete file from storage: {e}")
-    
+
     # Delete from database
     db.delete(design_file)
     db.commit()
@@ -414,17 +412,17 @@ async def download_file(
 ):
     """
     Download a file.
-    
+
     Args:
         file_id: ID of the file to download
         user_id: Current authenticated user ID
         db: Database session
         repository: Design repository
         project_client: Project service client
-        
+
     Returns:
         File content as streaming response
-        
+
     Raises:
         401: If authentication fails
         403: If user doesn't have access to the project
@@ -432,22 +430,22 @@ async def download_file(
     """
     # Get file
     design_file = db.query(DesignFile).filter(DesignFile.id == file_id).first()
-    
+
     if not design_file:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"File with ID {file_id} not found",
         )
-    
+
     # Get design to verify project access
     design = repository.get_design_by_id(design_file.design_id, include_archived=False)
-    
+
     if not design:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Design with ID {design_file.design_id} not found",
         )
-    
+
     # Verify project access
     try:
         await project_client.verify_project_access(
@@ -464,7 +462,7 @@ async def download_file(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unable to verify project access",
         )
-    
+
     # Check if file exists in storage
     file_path = Path(design_file.storage_path)
     if not file_path.exists():
@@ -472,7 +470,7 @@ async def download_file(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="File not found in storage",
         )
-    
+
     # Determine media type based on file extension
     media_types = {
         "pdf": "application/pdf",
@@ -483,14 +481,14 @@ async def download_file(
         "ifc": "application/x-step",
     }
     media_type = media_types.get(design_file.file_type, "application/octet-stream")
-    
+
     # Return file as streaming response for large files
     def iterfile():
         """Generator to stream file in chunks."""
         with open(file_path, "rb") as f:
             while chunk := f.read(8192):  # 8KB chunks
                 yield chunk
-    
+
     return StreamingResponse(
         iterfile(),
         media_type=media_type,
