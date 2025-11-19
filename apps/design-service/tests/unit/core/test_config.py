@@ -19,10 +19,11 @@ def mock_env_vars(monkeypatch):
     """Set up mock environment variables for testing."""
     # Clear ALL existing environment variables to avoid interference
     import os
+
     env_keys_to_clear = [k for k in os.environ.keys()]
     for key in env_keys_to_clear:
         monkeypatch.delenv(key, raising=False)
-    
+
     env_vars = {
         # Database settings
         "DB_USERNAME": "test_user",
@@ -176,10 +177,12 @@ def test_design_service_config_missing_required_vars(mock_env_vars):
     # This test verifies that with all required vars set, config initializes successfully
     # The mock_env_vars fixture provides all required environment variables
     config = DesignServiceConfig()
-    
+
     # Verify config was created successfully
     assert config.service_name == "design-service"
-    assert config.jwt.secret_key == "test_secret_key_that_is_at_least_32_characters_long"
+    assert (
+        config.jwt.secret_key == "test_secret_key_that_is_at_least_32_characters_long"
+    )
 
 
 def test_design_settings_validation():

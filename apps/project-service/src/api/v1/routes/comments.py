@@ -1,12 +1,21 @@
 """Comment API routes."""
 
+import sys
+from pathlib import Path
 from typing import Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
+
+# Add packages to path for common imports
+packages_path = Path(__file__).parent.parent.parent.parent.parent.parent / "packages"
+sys.path.insert(0, str(packages_path))
+
+from common.errors.base import NotFoundError, ForbiddenError
 
 from ..schemas.comment import Comment, CommentCreate, CommentUpdate
 from ....core.auth import get_current_user, check_comment_permission
+from ....core.exceptions import ProjectNotFoundError
 from ....infrastructure.database import get_db
 from ....models import Comment as CommentModel, Project as ProjectModel
 
@@ -24,10 +33,7 @@ def create_comment(
     # Check if project exists
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
+        raise ProjectNotFoundError(project_id)
 
     # Validate parent comment if provided
     if comment_data.parent_id:
@@ -40,9 +46,10 @@ def create_comment(
             .first()
         )
         if not parent_comment:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Parent comment not found"
+            raise NotFoundError(
+                message="Parent comment not found",
+                error_code="PARENT_COMMENT_NOT_FOUND",
+                details={"parent_id": comment_data.parent_id, "project_id": project_id}
             )
 
     # Create the comment
@@ -68,10 +75,7 @@ def list_comments(
     # Check if project exists
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
+        raise ProjectNotFoundError(project_id)
 
     # Get top-level comments (no parent_id)
     comments = (
@@ -103,9 +107,10 @@ def get_comment(
         .first()
     )
     if not comment:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Comment not found"
+        raise NotFoundError(
+            message="Comment not found",
+            error_code="COMMENT_NOT_FOUND",
+            details={"comment_id": comment_id, "project_id": project_id}
         )
     return comment
 
@@ -130,18 +135,20 @@ def update_comment(
         .first()
     )
     if not comment:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Comment not found"
+        raise NotFoundError(
+            message="Comment not found",
+            error_code="COMMENT_NOT_FOUND",
+            details={"comment_id": comment_id, "project_id": project_id}
         )
     
     comment, project = comment
 
     # Check if user has permission to update the comment
     if not check_comment_permission(current_user, comment.author_id, project.owner_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to update this comment"
+        raise ForbiddenError(
+            message="You don't have permission to update this comment",
+            error_code="COMMENT_UPDATE_FORBIDDEN",
+            details={"comment_id": comment_id, "user_id": current_user["id"]}
         )
 
     # Update the comment
@@ -170,18 +177,20 @@ def delete_comment(
         .first()
     )
     if not comment:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Comment not found"
+        raise NotFoundError(
+            message="Comment not found",
+            error_code="COMMENT_NOT_FOUND",
+            details={"comment_id": comment_id, "project_id": project_id}
         )
     
     comment, project = comment
 
     # Check if user has permission to delete the comment
     if not check_comment_permission(current_user, comment.author_id, project.owner_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to delete this comment"
+        raise ForbiddenError(
+            message="You don't have permission to delete this comment",
+            error_code="COMMENT_DELETE_FORBIDDEN",
+            details={"comment_id": comment_id, "user_id": current_user["id"]}
         )
 
     db.delete(comment)

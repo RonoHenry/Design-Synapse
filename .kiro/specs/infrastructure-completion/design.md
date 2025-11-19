@@ -14,27 +14,27 @@ The infrastructure will be built using industry-standard patterns and technologi
 graph TB
     Client[Client Applications] --> LB[Load Balancer]
     LB --> Gateway[API Gateway]
-    
+
     Gateway --> Auth[Auth Middleware]
     Auth --> Router[Request Router]
-    
+
     Router --> US[User Service]
     Router --> PS[Project Service]
     Router --> DS[Design Service]
     Router --> KS[Knowledge Service]
-    
+
     Gateway --> Registry[Service Registry]
     Registry --> US
     Registry --> PS
     Registry --> DS
     Registry --> KS
-    
+
     Monitor[Monitoring Stack] --> US
     Monitor --> PS
     Monitor --> DS
     Monitor --> KS
     Monitor --> Gateway
-    
+
     Config[Config Management] --> US
     Config --> PS
     Config --> DS
@@ -51,7 +51,7 @@ sequenceDiagram
     participant A as Auth Service
     participant S as Target Service
     participant R as Service Registry
-    
+
     C->>G: HTTP Request
     G->>A: Validate JWT Token
     A->>G: Token Valid + User Context

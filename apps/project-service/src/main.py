@@ -5,9 +5,7 @@ import sys
 from pathlib import Path
 
 from fastapi import Depends, FastAPI
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.exc import SQLAlchemyError
 
 # Add packages to path for common imports
 packages_path = Path(__file__).parent.parent.parent.parent / "packages"
@@ -19,10 +17,7 @@ from .api.v1.routes.comments import router as comments_router
 from .api.v1.routes.projects import router as projects_router
 from .core.config import settings
 from .core.constants import V1_PREFIX
-from .core.exceptions import (APIError, api_error_handler,
-                              general_exception_handler,
-                              sqlalchemy_error_handler,
-                              validation_error_handler)
+from .core.exceptions import ProjectNotFoundError, ProjectAccessError
 from .core.versioning import get_api_version
 
 app = FastAPI(
@@ -40,11 +35,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register error handlers
-app.add_exception_handler(APIError, api_error_handler)
-app.add_exception_handler(RequestValidationError, validation_error_handler)
-app.add_exception_handler(SQLAlchemyError, sqlalchemy_error_handler)
-app.add_exception_handler(Exception, general_exception_handler)
+# Register shared error handlers
+from common.errors.handlers import register_error_handlers
+register_error_handlers(app)
 
 # Register routers
 app.include_router(

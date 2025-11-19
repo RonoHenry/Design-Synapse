@@ -3,8 +3,8 @@
 from .design_generator import DesignGeneratorService
 from .llm_client import LLMClient, LLMGenerationError, LLMTimeoutError
 from .optimization_service import OptimizationService
-from .project_client import ProjectClient, ProjectAccessDeniedError
-from .validation_service import ValidationService, RuleEngine
+from .project_client import ProjectAccessDeniedError, ProjectClient
+from .validation_service import RuleEngine, ValidationService
 
 __all__ = [
     "DesignGeneratorService",

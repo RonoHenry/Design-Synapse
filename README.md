@@ -36,7 +36,7 @@ designsynapse/
 - Python 3.13+
 - Node.js 18+ & npm
 - Docker & Docker Compose
-- TiDB (MySQL-compatible)
+- PostgreSQL 14+
 - Redis 7+
 
 #### Development Tools
@@ -147,92 +147,15 @@ uvicorn main:app --reload --port 8002
 ```
 
 ### Database Setup
-
-This project uses **TiDB Serverless** as the database backend. TiDB is a cloud-native, distributed SQL database that provides auto-scaling, high availability, and MySQL compatibility.
-
-#### Step 1: Create Service Databases
-
-Connect to your TiDB cluster using the MySQL client or TiDB Cloud console:
-
 ```bash
-# Using MySQL client (install via: pip install pymysql or use mysql CLI)
-mysql -h gateway01.eu-central-1.prod.aws.tidbcloud.com \
-      -P 4000 \
-      -u your_cluster_id.root \
-      -p \
-      --ssl-ca=./ca.pem \
-      --ssl-mode=VERIFY_IDENTITY
+# Setup database users and permissions
+cd scripts
+./init-databases.sh  # or init-databases.bat on Windows
 
-# Once connected, create the service databases:
-CREATE DATABASE IF NOT EXISTS design_synapse_user_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS design_synapse_project_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS design_synapse_knowledge_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-#### Step 2: Run Database Migrations
-
-Each service has its own Alembic migrations. Run them in order:
-
-```bash
-# User Service migrations
-cd apps/user-service
-alembic upgrade head
-
-# Project Service migrations
-cd ../project-service
-alembic upgrade head
-
-# Knowledge Service migrations
-cd ../knowledge-service
+# Run migrations
+cd ../apps/user-service
 alembic upgrade head
 ```
-
-#### Step 3: Verify Connection
-
-Test your TiDB connection:
-
-```bash
-# Run the connection verification script
-python test_tidb_connection.py
-
-# Or check service health endpoints after starting services:
-# User Service: http://localhost:8001/
-# Project Service: http://localhost:8002/
-# Knowledge Service: http://localhost:8003/health
-```
-
-**Note**: No local database container is required. All services connect directly to TiDB Serverless using the connection details in your `.env` file.
-
-#### Troubleshooting Common Issues
-
-**Connection Refused / Timeout**
-- Verify your TiDB cluster is active in TiDB Cloud console
-- Check that your IP address is whitelisted (TiDB Serverless allows all IPs by default)
-- Ensure firewall allows outbound connections on port 4000
-
-**SSL Certificate Errors**
-- Verify `ca.pem` file exists in project root
-- Check file permissions: `chmod 644 ca.pem`
-- Ensure `DATABASE_SSL_CA` path in `.env` is correct (relative or absolute)
-- Try downloading the certificate again if corrupted
-
-**Authentication Failed**
-- Double-check username format: `cluster_id.root` (not just `root`)
-- Verify password is correct (regenerate if needed from TiDB Cloud console)
-- Ensure no extra spaces in `.env` file values
-
-**Database Not Found**
-- Verify databases were created successfully
-- Check database names match exactly in `.env` file
-- Ensure you're connecting to the correct TiDB cluster
-
-**Migration Errors**
-- Ensure all dependencies are installed: `pip install -r requirements.txt`
-- Check that Alembic configuration points to correct database
-- Verify database user has CREATE/ALTER/DROP privileges
-- Review migration files for MySQL compatibility
-
-For more detailed troubleshooting, see [docs/TIDB_MIGRATION.md](docs/TIDB_MIGRATION.md)
 
 ### Environment Variables
 Each service requires specific environment variables. Copy the example files and update them:
@@ -307,7 +230,7 @@ Each service provides its own OpenAPI documentation:
 - **Frontend**: Next.js, TypeScript, TailwindCSS
 - **Backend**: FastAPI, SQLAlchemy, Pydantic
 - **AI/ML**: PyTorch, TensorFlow, Scikit-learn
-- **Database**: TiDB (MySQL-compatible)
+- **Database**: PostgreSQL
 - **Caching**: Redis
 - **Infrastructure**: Docker, Kubernetes (planned)
 

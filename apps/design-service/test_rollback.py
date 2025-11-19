@@ -1,7 +1,8 @@
 """Test migration rollback."""
 import os
-import sys
 import subprocess
+import sys
+
 from dotenv import load_dotenv
 
 # Save current directory
@@ -14,6 +15,7 @@ load_dotenv(os.path.join(project_root, ".env"))
 sys.path.insert(0, project_root)
 
 from sqlalchemy import create_engine, text
+
 from packages.common.config.database import DatabaseConfig
 
 # Get database connection
@@ -28,19 +30,21 @@ with engine.connect() as conn:
     result = conn.execute(text("SELECT version_num FROM alembic_version"))
     backup_versions = [row[0] for row in result.fetchall()]
     print(f"Backed up versions: {backup_versions}")
-    
+
     # Keep only design service version
-    conn.execute(text("DELETE FROM alembic_version WHERE version_num != 'b6576f89ece0'"))
+    conn.execute(
+        text("DELETE FROM alembic_version WHERE version_num != 'b6576f89ece0'")
+    )
     conn.commit()
     print("Cleared other service versions temporarily")
 
 # Now run alembic downgrade
 print("\nTesting rollback (downgrade -1)...")
 result = subprocess.run(
-    ['alembic', 'downgrade', '-1'],
+    ["alembic", "downgrade", "-1"],
     cwd=design_service_dir,
     capture_output=True,
-    text=True
+    text=True,
 )
 print(result.stdout)
 if result.stderr:
@@ -65,7 +69,7 @@ with engine.connect() as conn:
     for version in backup_versions:
         conn.execute(
             text("INSERT INTO alembic_version (version_num) VALUES (:version)"),
-            {"version": version}
+            {"version": version},
         )
     conn.commit()
     print(f"Restored versions: {backup_versions}")

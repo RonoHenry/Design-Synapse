@@ -2,6 +2,7 @@
 
 from enum import Enum
 from typing import Dict, List, Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -23,6 +24,13 @@ class SortBy(str, Enum):
     DATE = "date"
     TITLE = "title"
     TYPE = "type"
+    AUTHOR = "author"
+    FILE_SIZE = "file_size"
+
+class SortOrder(str, Enum):
+    """Enum for sort order."""
+    ASC = "asc"
+    DESC = "desc"
 
 router = APIRouter()
 
@@ -32,7 +40,18 @@ async def search_global(
     resource_type: ResourceType = Query(ResourceType.ALL, description="Filter by resource type"),
     min_score: float = Query(0.0, description="Minimum relevance score (0-1)", ge=0.0, le=1.0),
     sort_by: SortBy = Query(SortBy.RELEVANCE, description="Sort results by"),
+    sort_order: SortOrder = Query(SortOrder.DESC, description="Sort order (asc/desc)"),
     tags: List[str] = Query(None, description="Filter by tags"),
+    # Advanced filters
+    author: Optional[str] = Query(None, description="Filter by author name"),
+    source_platform: Optional[str] = Query(None, description="Filter by source platform"),
+    license_type: Optional[str] = Query(None, description="Filter by license type"),
+    date_from: Optional[datetime] = Query(None, description="Filter by publication date from (ISO format)"),
+    date_to: Optional[datetime] = Query(None, description="Filter by publication date to (ISO format)"),
+    min_file_size: Optional[int] = Query(None, description="Minimum file size in bytes", ge=0),
+    max_file_size: Optional[int] = Query(None, description="Maximum file size in bytes", ge=0),
+    has_doi: Optional[bool] = Query(None, description="Filter resources with/without DOI"),
+    keywords: List[str] = Query(None, description="Filter by keywords"),
     page: int = Query(1, description="Page number", ge=1),
     page_size: int = Query(20, description="Results per page", ge=1, le=100),
     db: Session = Depends(get_db),
@@ -46,7 +65,17 @@ async def search_global(
         resource_type=resource_type,
         min_score=min_score,
         sort_by=sort_by,
+        sort_order=sort_order,
         tags=tags,
+        author=author,
+        source_platform=source_platform,
+        license_type=license_type,
+        date_from=date_from,
+        date_to=date_to,
+        min_file_size=min_file_size,
+        max_file_size=max_file_size,
+        has_doi=has_doi,
+        keywords=keywords,
         page=page,
         page_size=page_size
     )
@@ -59,7 +88,18 @@ async def search_project_knowledge(
     resource_type: ResourceType = Query(ResourceType.ALL, description="Filter by resource type"),
     min_score: float = Query(0.0, description="Minimum relevance score (0-1)", ge=0.0, le=1.0),
     sort_by: SortBy = Query(SortBy.RELEVANCE, description="Sort results by"),
+    sort_order: SortOrder = Query(SortOrder.DESC, description="Sort order (asc/desc)"),
     tags: List[str] = Query(None, description="Filter by tags"),
+    # Advanced filters
+    author: Optional[str] = Query(None, description="Filter by author name"),
+    source_platform: Optional[str] = Query(None, description="Filter by source platform"),
+    license_type: Optional[str] = Query(None, description="Filter by license type"),
+    date_from: Optional[datetime] = Query(None, description="Filter by publication date from (ISO format)"),
+    date_to: Optional[datetime] = Query(None, description="Filter by publication date to (ISO format)"),
+    min_file_size: Optional[int] = Query(None, description="Minimum file size in bytes", ge=0),
+    max_file_size: Optional[int] = Query(None, description="Maximum file size in bytes", ge=0),
+    has_doi: Optional[bool] = Query(None, description="Filter resources with/without DOI"),
+    keywords: List[str] = Query(None, description="Filter by keywords"),
     page: int = Query(1, description="Page number", ge=1),
     page_size: int = Query(20, description="Results per page", ge=1, le=100),
     db: Session = Depends(get_db),
@@ -75,7 +115,17 @@ async def search_project_knowledge(
         resource_type=resource_type,
         min_score=min_score,
         sort_by=sort_by,
+        sort_order=sort_order,
         tags=tags,
+        author=author,
+        source_platform=source_platform,
+        license_type=license_type,
+        date_from=date_from,
+        date_to=date_to,
+        min_file_size=min_file_size,
+        max_file_size=max_file_size,
+        has_doi=has_doi,
+        keywords=keywords,
         page=page,
         page_size=page_size
     )
@@ -85,7 +135,19 @@ async def get_project_recommendations(
     project_id: int,
     resource_type: ResourceType = Query(ResourceType.ALL, description="Filter by resource type"),
     min_score: float = Query(0.3, description="Minimum relevance score (0-1)", ge=0.0, le=1.0),
+    sort_by: SortBy = Query(SortBy.RELEVANCE, description="Sort results by"),
+    sort_order: SortOrder = Query(SortOrder.DESC, description="Sort order (asc/desc)"),
     tags: List[str] = Query(None, description="Filter by tags"),
+    # Advanced filters
+    author: Optional[str] = Query(None, description="Filter by author name"),
+    source_platform: Optional[str] = Query(None, description="Filter by source platform"),
+    license_type: Optional[str] = Query(None, description="Filter by license type"),
+    date_from: Optional[datetime] = Query(None, description="Filter by publication date from (ISO format)"),
+    date_to: Optional[datetime] = Query(None, description="Filter by publication date to (ISO format)"),
+    min_file_size: Optional[int] = Query(None, description="Minimum file size in bytes", ge=0),
+    max_file_size: Optional[int] = Query(None, description="Maximum file size in bytes", ge=0),
+    has_doi: Optional[bool] = Query(None, description="Filter resources with/without DOI"),
+    keywords: List[str] = Query(None, description="Filter by keywords"),
     page: int = Query(1, description="Page number", ge=1),
     page_size: int = Query(20, description="Results per page", ge=1, le=100),
     db: Session = Depends(get_db),
@@ -98,7 +160,18 @@ async def get_project_recommendations(
         project_id=project_id,
         resource_type=resource_type,
         min_score=min_score,
+        sort_by=sort_by,
+        sort_order=sort_order,
         tags=tags,
+        author=author,
+        source_platform=source_platform,
+        license_type=license_type,
+        date_from=date_from,
+        date_to=date_to,
+        min_file_size=min_file_size,
+        max_file_size=max_file_size,
+        has_doi=has_doi,
+        keywords=keywords,
         page=page,
         page_size=page_size
     )

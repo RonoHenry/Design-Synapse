@@ -241,3 +241,85 @@ class VectorSearchError(ExternalServiceError):
             details=details,
         )
         self.error_code = ErrorType.VECTOR_SEARCH_ERROR
+
+
+class ServiceUnavailableError(APIError):
+    """Service unavailable error."""
+    
+    def __init__(
+        self,
+        service_name: str,
+        message: str = "Service temporarily unavailable",
+        retry_after: Optional[int] = None,
+    ):
+        """Initialize a service unavailable error.
+        
+        Args:
+            service_name: Name of the unavailable service
+            message: Description of the error
+            retry_after: Seconds to wait before retry
+        """
+        details = {"service": service_name}
+        if retry_after:
+            details["retry_after"] = retry_after
+        
+        super().__init__(
+            message=message,
+            error_code=ErrorType.SERVICE_UNAVAILABLE,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            details=details,
+        )
+
+
+class CircuitBreakerError(APIError):
+    """Circuit breaker open error."""
+    
+    def __init__(
+        self,
+        service_name: str,
+        message: str = "Service circuit breaker is open",
+        retry_after: Optional[int] = None,
+    ):
+        """Initialize a circuit breaker error.
+        
+        Args:
+            service_name: Name of the service with open circuit breaker
+            message: Description of the error
+            retry_after: Seconds to wait before retry
+        """
+        details = {"service": service_name}
+        if retry_after:
+            details["retry_after"] = retry_after
+        
+        super().__init__(
+            message=message,
+            error_code=ErrorType.CIRCUIT_BREAKER_OPEN,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            details=details,
+        )
+
+
+class TimeoutError(APIError):
+    """Request timeout error."""
+    
+    def __init__(
+        self,
+        message: str = "Request timeout",
+        timeout_seconds: Optional[float] = None,
+    ):
+        """Initialize a timeout error.
+        
+        Args:
+            message: Description of the timeout
+            timeout_seconds: Timeout duration that was exceeded
+        """
+        details = {}
+        if timeout_seconds:
+            details["timeout_seconds"] = timeout_seconds
+        
+        super().__init__(
+            message=message,
+            error_code=ErrorType.REQUEST_TIMEOUT,
+            status_code=status.HTTP_408_REQUEST_TIMEOUT,
+            details=details,
+        )

@@ -20,7 +20,7 @@ def mock_storage_env_vars(monkeypatch):
     storage_env_keys = [k for k in os.environ.keys() if k.startswith("STORAGE_")]
     for key in storage_env_keys:
         monkeypatch.delenv(key, raising=False)
-    
+
     env_vars = {
         # S3 settings
         "STORAGE_S3_BUCKET": "test-design-bucket",
@@ -58,7 +58,16 @@ def test_storage_config_initialization(mock_storage_env_vars):
     assert config.cdn_url == "https://cdn.example.com"
     assert config.cdn_enabled is True
     assert config.max_file_size_mb == 50
-    assert config.allowed_extensions == ["jpg", "jpeg", "png", "gif", "pdf", "dwg", "step", "ifc"]
+    assert config.allowed_extensions == [
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "pdf",
+        "dwg",
+        "step",
+        "ifc",
+    ]
 
 
 def test_storage_config_s3_client_kwargs(mock_storage_env_vars):
@@ -83,7 +92,16 @@ def test_storage_config_upload_settings(mock_storage_env_vars):
     upload_settings = config.get_upload_settings()
 
     assert upload_settings["max_file_size_bytes"] == 50 * 1024 * 1024  # 50MB in bytes
-    assert upload_settings["allowed_extensions"] == ["jpg", "jpeg", "png", "gif", "pdf", "dwg", "step", "ifc"]
+    assert upload_settings["allowed_extensions"] == [
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "pdf",
+        "dwg",
+        "step",
+        "ifc",
+    ]
     assert upload_settings["enable_compression"] is True
     assert upload_settings["compression_quality"] == 85
 
@@ -114,7 +132,10 @@ def test_storage_config_cdn_url_generation(mock_storage_env_vars):
     # Test with CDN disabled
     config.cdn_enabled = False
     s3_url = config.get_file_url("designs/123/floor_plan.jpg")
-    assert s3_url == f"https://{config.s3_bucket}.s3.{config.s3_region}.amazonaws.com/designs/123/floor_plan.jpg"
+    assert (
+        s3_url
+        == f"https://{config.s3_bucket}.s3.{config.s3_region}.amazonaws.com/designs/123/floor_plan.jpg"
+    )
 
 
 def test_storage_config_file_extension_validation(mock_storage_env_vars):
@@ -145,7 +166,9 @@ def test_storage_config_file_size_validation(mock_storage_env_vars):
     assert config.is_valid_file_size(25 * 1024 * 1024) is True  # 25MB
 
     # Invalid file sizes
-    assert config.is_valid_file_size(100 * 1024 * 1024) is False  # 100MB (exceeds 50MB limit)
+    assert (
+        config.is_valid_file_size(100 * 1024 * 1024) is False
+    )  # 100MB (exceeds 50MB limit)
     assert config.is_valid_file_size(0) is False  # Empty file
 
 
@@ -164,12 +187,15 @@ def test_storage_config_invalid_region():
     """Test validation of invalid AWS region."""
     from packages.common.config.storage import StorageConfig
 
-    with patch.dict(os.environ, {
-        "STORAGE_S3_BUCKET": "test-bucket",
-        "STORAGE_S3_REGION": "invalid-region",
-        "STORAGE_S3_ACCESS_KEY_ID": "test_key",
-        "STORAGE_S3_SECRET_ACCESS_KEY": "test_secret",
-    }):
+    with patch.dict(
+        os.environ,
+        {
+            "STORAGE_S3_BUCKET": "test-bucket",
+            "STORAGE_S3_REGION": "invalid-region",
+            "STORAGE_S3_ACCESS_KEY_ID": "test_key",
+            "STORAGE_S3_SECRET_ACCESS_KEY": "test_secret",
+        },
+    ):
         with pytest.raises(ValidationError) as exc_info:
             StorageConfig()
         assert "s3_region" in str(exc_info.value)
@@ -179,13 +205,16 @@ def test_storage_config_invalid_file_size():
     """Test validation of invalid max file size."""
     from packages.common.config.storage import StorageConfig
 
-    with patch.dict(os.environ, {
-        "STORAGE_S3_BUCKET": "test-bucket",
-        "STORAGE_S3_REGION": "us-west-2",
-        "STORAGE_S3_ACCESS_KEY_ID": "test_key",
-        "STORAGE_S3_SECRET_ACCESS_KEY": "test_secret",
-        "STORAGE_MAX_FILE_SIZE_MB": "0",  # Invalid: zero size
-    }):
+    with patch.dict(
+        os.environ,
+        {
+            "STORAGE_S3_BUCKET": "test-bucket",
+            "STORAGE_S3_REGION": "us-west-2",
+            "STORAGE_S3_ACCESS_KEY_ID": "test_key",
+            "STORAGE_S3_SECRET_ACCESS_KEY": "test_secret",
+            "STORAGE_MAX_FILE_SIZE_MB": "0",  # Invalid: zero size
+        },
+    ):
         with pytest.raises(ValidationError) as exc_info:
             StorageConfig()
         assert "max_file_size_mb" in str(exc_info.value)
@@ -195,13 +224,16 @@ def test_storage_config_invalid_lifecycle_days():
     """Test validation of invalid lifecycle days."""
     from packages.common.config.storage import StorageConfig
 
-    with patch.dict(os.environ, {
-        "STORAGE_S3_BUCKET": "test-bucket",
-        "STORAGE_S3_REGION": "us-west-2",
-        "STORAGE_S3_ACCESS_KEY_ID": "test_key",
-        "STORAGE_S3_SECRET_ACCESS_KEY": "test_secret",
-        "STORAGE_LIFECYCLE_TRANSITION_DAYS": "-1",  # Invalid: negative days
-    }):
+    with patch.dict(
+        os.environ,
+        {
+            "STORAGE_S3_BUCKET": "test-bucket",
+            "STORAGE_S3_REGION": "us-west-2",
+            "STORAGE_S3_ACCESS_KEY_ID": "test_key",
+            "STORAGE_S3_SECRET_ACCESS_KEY": "test_secret",
+            "STORAGE_LIFECYCLE_TRANSITION_DAYS": "-1",  # Invalid: negative days
+        },
+    ):
         with pytest.raises(ValidationError) as exc_info:
             StorageConfig()
         assert "lifecycle_transition_days" in str(exc_info.value)
@@ -212,10 +244,10 @@ def test_storage_config_environment_variable_validation(mock_storage_env_vars):
     from packages.common.config.storage import StorageConfig
 
     config = StorageConfig()
-    
+
     # Test validation method
     config.validate_required_settings()  # Should not raise any exception
-    
+
     # Test with missing credentials
     config.s3_access_key_id = ""
     with pytest.raises(ValueError) as exc_info:
@@ -227,15 +259,19 @@ def test_storage_config_default_values():
     """Test default values when optional environment variables are not set."""
     from packages.common.config.storage import StorageConfig
 
-    with patch.dict(os.environ, {
-        "STORAGE_S3_BUCKET": "test-bucket",
-        "STORAGE_S3_REGION": "us-west-2",
-        "STORAGE_S3_ACCESS_KEY_ID": "test_key",
-        "STORAGE_S3_SECRET_ACCESS_KEY": "test_secret",
-        # CDN and lifecycle settings not provided - should use defaults
-    }, clear=True):
+    with patch.dict(
+        os.environ,
+        {
+            "STORAGE_S3_BUCKET": "test-bucket",
+            "STORAGE_S3_REGION": "us-west-2",
+            "STORAGE_S3_ACCESS_KEY_ID": "test_key",
+            "STORAGE_S3_SECRET_ACCESS_KEY": "test_secret",
+            # CDN and lifecycle settings not provided - should use defaults
+        },
+        clear=True,
+    ):
         config = StorageConfig()
-        
+
         assert config.cdn_enabled is False  # Default
         assert config.max_file_size_mb == 100  # Default
         assert config.lifecycle_enabled is False  # Default

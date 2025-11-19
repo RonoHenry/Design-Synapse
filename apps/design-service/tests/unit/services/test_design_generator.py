@@ -1,14 +1,14 @@
 """Tests for DesignGeneratorService."""
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
+from src.api.v1.schemas.requests import DesignGenerationRequest
+from src.models.design import Design
 from src.services.design_generator import DesignGeneratorService
 from src.services.llm_client import LLMGenerationError, LLMTimeoutError
 from src.services.project_client import ProjectAccessDeniedError
-from src.api.v1.schemas.requests import DesignGenerationRequest
-from src.models.design import Design
 
 
 class TestDesignGeneratorService:
@@ -127,13 +127,13 @@ class TestDesignGeneratorService:
         """Test successful design generation with valid request."""
         # Arrange
         user_id = 123
-        
+
         # Mock project access verification
         mock_project_client.verify_project_access.return_value = True
-        
+
         # Mock LLM response
         mock_llm_client.generate_design_specification.return_value = mock_llm_response
-        
+
         # Mock design creation
         created_design = Design(
             project_id=valid_generation_request.project_id,
@@ -152,13 +152,13 @@ class TestDesignGeneratorService:
         )
         created_design.id = 1  # Set id after creation (simulates DB auto-increment)
         mock_design_repository.create_design.return_value = created_design
-        
+
         # Act
         result = await design_generator_service.generate_design(
             request=valid_generation_request,
             user_id=user_id,
         )
-        
+
         # Assert
         assert result is not None
         assert result.id == 1
@@ -170,20 +170,20 @@ class TestDesignGeneratorService:
         assert result.version == 1
         assert result.status == "draft"
         assert result.created_by == user_id
-        
+
         # Verify project access was checked
         mock_project_client.verify_project_access.assert_called_once_with(
             project_id=valid_generation_request.project_id,
             user_id=user_id,
         )
-        
+
         # Verify LLM was called
         mock_llm_client.generate_design_specification.assert_called_once_with(
             description=valid_generation_request.description,
             building_type=valid_generation_request.building_type,
             requirements=valid_generation_request.requirements,
         )
-        
+
         # Verify design was created
         mock_design_repository.create_design.assert_called_once()
         call_kwargs = mock_design_repository.create_design.call_args[1]
@@ -205,30 +205,30 @@ class TestDesignGeneratorService:
         """Test design generation fails when user doesn't have project access."""
         # Arrange
         user_id = 123
-        
+
         # Mock project access denial
         mock_project_client.verify_project_access.side_effect = ProjectAccessDeniedError(
             f"User {user_id} is not a member of project {valid_generation_request.project_id}"
         )
-        
+
         # Act & Assert
         with pytest.raises(ProjectAccessDeniedError) as exc_info:
             await design_generator_service.generate_design(
                 request=valid_generation_request,
                 user_id=user_id,
             )
-        
+
         assert f"User {user_id} is not a member" in str(exc_info.value)
-        
+
         # Verify project access was checked
         mock_project_client.verify_project_access.assert_called_once_with(
             project_id=valid_generation_request.project_id,
             user_id=user_id,
         )
-        
+
         # Verify LLM was NOT called
         mock_llm_client.generate_design_specification.assert_not_called()
-        
+
         # Verify design was NOT created
         mock_design_repository.create_design.assert_not_called()
 
@@ -245,30 +245,30 @@ class TestDesignGeneratorService:
         """Test design generation fails when LLM generation fails."""
         # Arrange
         user_id = 123
-        
+
         # Mock project access verification
         mock_project_client.verify_project_access.return_value = True
-        
+
         # Mock LLM failure
         mock_llm_client.generate_design_specification.side_effect = LLMGenerationError(
             "All LLM providers failed"
         )
-        
+
         # Act & Assert
         with pytest.raises(LLMGenerationError) as exc_info:
             await design_generator_service.generate_design(
                 request=valid_generation_request,
                 user_id=user_id,
             )
-        
+
         assert "All LLM providers failed" in str(exc_info.value)
-        
+
         # Verify project access was checked
         mock_project_client.verify_project_access.assert_called_once()
-        
+
         # Verify LLM was called
         mock_llm_client.generate_design_specification.assert_called_once()
-        
+
         # Verify design was NOT created
         mock_design_repository.create_design.assert_not_called()
 
@@ -285,30 +285,30 @@ class TestDesignGeneratorService:
         """Test design generation fails when LLM request times out."""
         # Arrange
         user_id = 123
-        
+
         # Mock project access verification
         mock_project_client.verify_project_access.return_value = True
-        
+
         # Mock LLM timeout
         mock_llm_client.generate_design_specification.side_effect = LLMTimeoutError(
             "Request timed out after 60 seconds"
         )
-        
+
         # Act & Assert
         with pytest.raises(LLMTimeoutError) as exc_info:
             await design_generator_service.generate_design(
                 request=valid_generation_request,
                 user_id=user_id,
             )
-        
+
         assert "timed out" in str(exc_info.value)
-        
+
         # Verify project access was checked
         mock_project_client.verify_project_access.assert_called_once()
-        
+
         # Verify LLM was called
         mock_llm_client.generate_design_specification.assert_called_once()
-        
+
         # Verify design was NOT created
         mock_design_repository.create_design.assert_not_called()
 
@@ -323,7 +323,7 @@ class TestDesignGeneratorService:
         # Arrange
         user_id = 123
         parent_design_id = 1
-        
+
         # Mock parent design
         parent_design = Design(
             project_id=1,
@@ -337,7 +337,7 @@ class TestDesignGeneratorService:
         )
         parent_design.id = parent_design_id  # Set id after creation
         mock_design_repository.get_design_by_id.return_value = parent_design
-        
+
         # Mock new version creation
         new_version = Design(
             project_id=parent_design.project_id,
@@ -352,21 +352,23 @@ class TestDesignGeneratorService:
         )
         new_version.id = 2  # Set id after creation
         mock_design_repository.create_design.return_value = new_version
-        
+
         # Updates to apply
         updates = {
             "name": "Updated Design",
             "description": "Updated description",
-            "specification": {"building_info": {"type": "residential", "updated": True}},
+            "specification": {
+                "building_info": {"type": "residential", "updated": True}
+            },
         }
-        
+
         # Act
         result = await design_generator_service.create_design_version(
             design_id=parent_design_id,
             updates=updates,
             user_id=user_id,
         )
-        
+
         # Assert
         assert result is not None
         assert result.id == 2
@@ -375,12 +377,12 @@ class TestDesignGeneratorService:
         assert result.name == "Updated Design"
         assert result.description == "Updated description"
         assert result.created_by == user_id
-        
+
         # Verify parent design was retrieved
         mock_design_repository.get_design_by_id.assert_called_once_with(
             parent_design_id, include_archived=False
         )
-        
+
         # Verify new version was created
         mock_design_repository.create_design.assert_called_once()
         call_kwargs = mock_design_repository.create_design.call_args[1]
@@ -400,12 +402,12 @@ class TestDesignGeneratorService:
         # Arrange
         user_id = 123
         parent_design_id = 999
-        
+
         # Mock parent design not found
         mock_design_repository.get_design_by_id.return_value = None
-        
+
         updates = {"name": "Updated Design"}
-        
+
         # Act & Assert
         with pytest.raises(ValueError) as exc_info:
             await design_generator_service.create_design_version(
@@ -413,14 +415,14 @@ class TestDesignGeneratorService:
                 updates=updates,
                 user_id=user_id,
             )
-        
+
         assert "not found" in str(exc_info.value).lower()
-        
+
         # Verify parent design lookup was attempted
         mock_design_repository.get_design_by_id.assert_called_once_with(
             parent_design_id, include_archived=False
         )
-        
+
         # Verify new version was NOT created
         mock_design_repository.create_design.assert_not_called()
 
@@ -431,19 +433,23 @@ class TestDesignGeneratorService:
         """Test confidence score calculation for complete specification."""
         # Arrange
         specification = {
-            "building_info": {"type": "residential", "total_area": 250.0, "num_floors": 2},
+            "building_info": {
+                "type": "residential",
+                "total_area": 250.0,
+                "num_floors": 2,
+            },
             "structure": {"foundation_type": "slab"},
             "spaces": [{"name": "Living Room", "area": 35.0}],
             "materials": [{"name": "Concrete Blocks", "quantity": 5000}],
             "compliance": {"building_code": "Kenya_Building_Code_2020"},
         }
         requirements = {"total_area": 250.0, "num_floors": 2}
-        
+
         # Act
         score = design_generator_service._calculate_confidence_score(
             specification, requirements
         )
-        
+
         # Assert
         assert score >= 70.0  # Base score
         assert score <= 100.0  # Max score
@@ -460,12 +466,12 @@ class TestDesignGeneratorService:
             # Missing structure, spaces, materials, compliance
         }
         requirements = {}
-        
+
         # Act
         score = design_generator_service._calculate_confidence_score(
             specification, requirements
         )
-        
+
         # Assert
         assert score >= 70.0  # Base score
         assert score < 90.0  # Should be lower due to missing sections
@@ -476,19 +482,23 @@ class TestDesignGeneratorService:
         """Test confidence score when requirements don't match."""
         # Arrange
         specification = {
-            "building_info": {"type": "residential", "total_area": 200.0, "num_floors": 1},
+            "building_info": {
+                "type": "residential",
+                "total_area": 200.0,
+                "num_floors": 1,
+            },
             "structure": {},
             "spaces": [],
             "materials": [],
             "compliance": {},
         }
         requirements = {"total_area": 250.0, "num_floors": 2}  # Different from spec
-        
+
         # Act
         score = design_generator_service._calculate_confidence_score(
             specification, requirements
         )
-        
+
         # Assert
         assert score >= 70.0  # Base score
         # Should not get requirement matching bonuses

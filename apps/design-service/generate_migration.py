@@ -1,7 +1,8 @@
 """Generate initial migration for design service."""
 import os
-import sys
 import subprocess
+import sys
+
 from dotenv import load_dotenv
 
 # Save current directory
@@ -14,6 +15,7 @@ load_dotenv(os.path.join(project_root, ".env"))
 sys.path.insert(0, project_root)
 
 from sqlalchemy import create_engine, text
+
 from packages.common.config.database import DatabaseConfig
 
 # Get database connection
@@ -28,7 +30,7 @@ with engine.connect() as conn:
     result = conn.execute(text("SELECT version_num FROM alembic_version"))
     backup_versions = [row[0] for row in result.fetchall()]
     print(f"Backed up versions: {backup_versions}")
-    
+
     # Clear alembic_version table temporarily
     conn.execute(text("DELETE FROM alembic_version"))
     conn.commit()
@@ -37,10 +39,10 @@ with engine.connect() as conn:
 # Now run alembic revision from the design-service directory
 print("\nGenerating migration...")
 result = subprocess.run(
-    ['alembic', 'revision', '--autogenerate', '-m', 'Initial design service schema'],
+    ["alembic", "revision", "--autogenerate", "-m", "Initial design service schema"],
     cwd=design_service_dir,
     capture_output=True,
-    text=True
+    text=True,
 )
 print(result.stdout)
 if result.stderr:
@@ -52,7 +54,7 @@ with engine.connect() as conn:
     for version in backup_versions:
         conn.execute(
             text("INSERT INTO alembic_version (version_num) VALUES (:version)"),
-            {"version": version}
+            {"version": version},
         )
     conn.commit()
     print(f"Restored versions: {backup_versions}")

@@ -13,8 +13,8 @@ Migrate DesignSynapse platform from PostgreSQL to TiDB Serverless for improved s
 ## Requirements
 
 ### 1. Database Driver Migration
-**ID**: TDB-1  
-**Priority**: High  
+**ID**: TDB-1
+**Priority**: High
 **Description**: Replace PostgreSQL drivers with MySQL-compatible drivers for TiDB
 
 **Acceptance Criteria**:
@@ -24,8 +24,8 @@ Migrate DesignSynapse platform from PostgreSQL to TiDB Serverless for improved s
 - SSL/TLS connection configured with CA certificate
 
 ### 2. Configuration Updates
-**ID**: TDB-2  
-**Priority**: High  
+**ID**: TDB-2
+**Priority**: High
 **Description**: Update database configuration to support TiDB connection parameters
 
 **Acceptance Criteria**:
@@ -35,8 +35,8 @@ Migrate DesignSynapse platform from PostgreSQL to TiDB Serverless for improved s
 - Support both sync and async connections with appropriate drivers
 
 ### 3. Model Compatibility
-**ID**: TDB-3  
-**Priority**: High  
+**ID**: TDB-3
+**Priority**: High
 **Description**: Ensure SQLAlchemy models are MySQL/TiDB compatible
 
 **Acceptance Criteria**:
@@ -46,8 +46,8 @@ Migrate DesignSynapse platform from PostgreSQL to TiDB Serverless for improved s
 - Ensure datetime handling is consistent
 
 ### 4. Migration Scripts
-**ID**: TDB-4  
-**Priority**: High  
+**ID**: TDB-4
+**Priority**: High
 **Description**: Regenerate Alembic migrations for MySQL/TiDB
 
 **Acceptance Criteria**:
@@ -57,8 +57,8 @@ Migrate DesignSynapse platform from PostgreSQL to TiDB Serverless for improved s
 - Verify all tables, indexes, and constraints are created correctly
 
 ### 5. Connection Testing
-**ID**: TDB-5  
-**Priority**: High  
+**ID**: TDB-5
+**Priority**: High
 **Description**: Verify connectivity and basic operations on TiDB
 
 **Acceptance Criteria**:
@@ -68,13 +68,13 @@ Migrate DesignSynapse platform from PostgreSQL to TiDB Serverless for improved s
 - Verify connection pooling works correctly
 
 ### 6. Service-Specific Databases
-**ID**: TDB-6  
-**Priority**: Medium  
+**ID**: TDB-6
+**Priority**: Medium
 **Description**: Create separate databases for each service on TiDB
 
 **Acceptance Criteria**:
 - Create design_synapse_user_db
-- Create design_synapse_project_db  
+- Create design_synapse_project_db
 - Create design_synapse_knowledge_db
 - Configure proper access controls
 
@@ -90,10 +90,10 @@ Migrate DesignSynapse platform from PostgreSQL to TiDB Serverless for improved s
 ## Risks & Mitigation
 - **Risk**: PostgreSQL-specific features may not work
   - **Mitigation**: Audit models for PostgreSQL-specific types, replace with MySQL equivalents
-  
+
 - **Risk**: Migration downtime
   - **Mitigation**: This is a new setup, no existing data to migrate
-  
+
 - **Risk**: Performance differences
   - **Mitigation**: TiDB is designed for scale, should perform better under load
 

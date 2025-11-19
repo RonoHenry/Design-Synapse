@@ -1,11 +1,11 @@
 """DesignComment model for comments and annotations on designs."""
 
 from datetime import datetime, timezone
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, Integer, Float, String, Text, DateTime, ForeignKey
+from sqlalchemy import (Boolean, DateTime, Float, ForeignKey, Integer, String,
+                        Text)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from src.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -14,20 +14,19 @@ if TYPE_CHECKING:
 
 class DesignComment(Base):
     """Comments and annotations on designs.
-    
+
     Supports general comments and spatial annotations with optional
     3D coordinates for precise positioning on design elements.
     """
+
     __tablename__ = "design_comments"
 
     # Primary key
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    
+
     # Foreign key to Design
     design_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("designs.id", ondelete="CASCADE"),
-        nullable=False
+        Integer, ForeignKey("designs.id", ondelete="CASCADE"), nullable=False
     )
 
     # Comment content
@@ -41,28 +40,20 @@ class DesignComment(Base):
     # Audit fields
     created_by: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        nullable=False
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
-        nullable=False
+        nullable=False,
     )
     is_edited: Mapped[bool] = mapped_column(
-        Boolean,
-        default=False,
-        server_default="false",
-        nullable=False
+        Boolean, default=False, server_default="false", nullable=False
     )
 
     # Relationship
-    design: Mapped["Design"] = relationship(
-        "Design",
-        back_populates="comments"
-    )
+    design: Mapped["Design"] = relationship("Design", back_populates="comments")
 
     def __init__(
         self,
@@ -101,12 +92,12 @@ class DesignComment(Base):
             self.content = content
         if created_by is not None:
             self.created_by = created_by
-        
+
         # Set optional spatial positioning
         self.position_x = position_x
         self.position_y = position_y
         self.position_z = position_z
-        
+
         # Set audit fields
         self.is_edited = is_edited
         self.created_at = datetime.now(timezone.utc)

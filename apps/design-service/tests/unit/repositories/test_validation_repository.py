@@ -1,8 +1,8 @@
 """Unit tests for ValidationRepository."""
-import pytest
 from datetime import datetime
-from sqlalchemy.orm import Session
 
+import pytest
+from sqlalchemy.orm import Session
 from src.models.design_validation import DesignValidation
 from src.repositories.validation_repository import ValidationRepository
 from tests.factories import DesignFactory, DesignValidationFactory
@@ -16,7 +16,9 @@ class TestValidationRepository:
         """Create a ValidationRepository instance."""
         return ValidationRepository(db_session)
 
-    def test_create_validation(self, repository: ValidationRepository, db_session: Session):
+    def test_create_validation(
+        self, repository: ValidationRepository, db_session: Session
+    ):
         """Test creating a validation."""
         # Create a design first
         design = DesignFactory.create(db_session=db_session)
@@ -45,7 +47,9 @@ class TestValidationRepository:
         assert validation.validated_at is not None
 
         # Verify it's in the database
-        db_validation = db_session.query(DesignValidation).filter_by(id=validation.id).first()
+        db_validation = (
+            db_session.query(DesignValidation).filter_by(id=validation.id).first()
+        )
         assert db_validation is not None
         assert db_validation.design_id == design.id
 
@@ -64,7 +68,7 @@ class TestValidationRepository:
                 "current_value": 4.5,
                 "required_value": 5.0,
                 "location": "front_boundary",
-                "suggestion": "Increase front setback by 0.5 meters"
+                "suggestion": "Increase front setback by 0.5 meters",
             }
         ]
 
@@ -96,7 +100,7 @@ class TestValidationRepository:
             {
                 "code": "MATERIAL_WARNING",
                 "severity": "warning",
-                "message": "Consider using locally sourced materials for cost efficiency"
+                "message": "Consider using locally sourced materials for cost efficiency",
             }
         ]
 
@@ -125,17 +129,12 @@ class TestValidationRepository:
 
         # Create multiple validations for the design
         DesignValidationFactory.create(
-            design_id=design.id,
-            validation_type="building_code"
+            design_id=design.id, validation_type="building_code"
         )
         DesignValidationFactory.create(
-            design_id=design.id,
-            validation_type="structural"
+            design_id=design.id, validation_type="structural"
         )
-        DesignValidationFactory.create(
-            design_id=design.id,
-            validation_type="safety"
-        )
+        DesignValidationFactory.create(design_id=design.id, validation_type="safety")
         db_session.commit()
 
         validations = repository.get_validations_by_design_id(design.id)
@@ -163,25 +162,19 @@ class TestValidationRepository:
 
         # Create validations (they will have different timestamps)
         val1 = DesignValidationFactory.create(
-            db_session=db_session,
-            design_id=design.id,
-            validation_type="building_code"
+            db_session=db_session, design_id=design.id, validation_type="building_code"
         )
         db_session.commit()
         db_session.refresh(val1)
 
         val2 = DesignValidationFactory.create(
-            db_session=db_session,
-            design_id=design.id,
-            validation_type="structural"
+            db_session=db_session, design_id=design.id, validation_type="structural"
         )
         db_session.commit()
         db_session.refresh(val2)
 
         val3 = DesignValidationFactory.create(
-            db_session=db_session,
-            design_id=design.id,
-            validation_type="safety"
+            db_session=db_session, design_id=design.id, validation_type="safety"
         )
         db_session.commit()
         db_session.refresh(val3)
@@ -203,8 +196,12 @@ class TestValidationRepository:
         db_session.commit()
 
         # Create validations for both designs
-        DesignValidationFactory.create_batch(2, db_session=db_session, design_id=design1.id)
-        DesignValidationFactory.create_batch(3, db_session=db_session, design_id=design2.id)
+        DesignValidationFactory.create_batch(
+            2, db_session=db_session, design_id=design1.id
+        )
+        DesignValidationFactory.create_batch(
+            3, db_session=db_session, design_id=design2.id
+        )
         db_session.commit()
 
         validations = repository.get_validations_by_design_id(design1.id)
@@ -221,25 +218,19 @@ class TestValidationRepository:
 
         # Create multiple validations
         val1 = DesignValidationFactory.create(
-            db_session=db_session,
-            design_id=design.id,
-            validation_type="building_code"
+            db_session=db_session, design_id=design.id, validation_type="building_code"
         )
         db_session.commit()
         db_session.refresh(val1)
 
         val2 = DesignValidationFactory.create(
-            db_session=db_session,
-            design_id=design.id,
-            validation_type="structural"
+            db_session=db_session, design_id=design.id, validation_type="structural"
         )
         db_session.commit()
         db_session.refresh(val2)
 
         val3 = DesignValidationFactory.create(
-            db_session=db_session,
-            design_id=design.id,
-            validation_type="safety"
+            db_session=db_session, design_id=design.id, validation_type="safety"
         )
         db_session.commit()
         db_session.refresh(val3)
@@ -268,8 +259,7 @@ class TestValidationRepository:
         db_session.commit()
 
         validation = DesignValidationFactory.create(
-            db_session=db_session,
-            design_id=design.id
+            db_session=db_session, design_id=design.id
         )
         db_session.commit()
 
@@ -288,15 +278,13 @@ class TestValidationRepository:
 
         # Create validations for both designs
         val1 = DesignValidationFactory.create(
-            db_session=db_session,
-            design_id=design1.id
+            db_session=db_session, design_id=design1.id
         )
         db_session.commit()
         db_session.refresh(val1)
 
         val2 = DesignValidationFactory.create(
-            db_session=db_session,
-            design_id=design2.id
+            db_session=db_session, design_id=design2.id
         )
         db_session.commit()
         db_session.refresh(val2)

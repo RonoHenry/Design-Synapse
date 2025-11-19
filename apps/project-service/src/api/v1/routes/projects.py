@@ -4,8 +4,18 @@ Project API routes.
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import sys
+from pathlib import Path
+from typing import List
+
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
+
+# Add packages to path for common imports
+packages_path = Path(__file__).parent.parent.parent.parent.parent.parent / "packages"
+sys.path.insert(0, str(packages_path))
+
+from common.errors.base import ValidationError
 
 from ..schemas.project import (
     Project,
@@ -14,6 +24,7 @@ from ..schemas.project import (
     ProjectUpdate,
 )
 from ....core.config import settings
+from ....core.exceptions import ProjectNotFoundError
 from ....infrastructure.database import get_db
 from ....models import Project as ProjectModel
 
@@ -41,10 +52,7 @@ def get_project(
     """Get a specific project by ID."""
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
+        raise ProjectNotFoundError(project_id)
     return project
 
 
@@ -73,10 +81,7 @@ def update_project(
     """Update a project."""
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
+        raise ProjectNotFoundError(project_id)
 
     for key, value in project_data.model_dump(exclude_unset=True).items():
         setattr(project, key, value)
@@ -95,10 +100,7 @@ def update_project_status(
     """Update a project's status."""
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
+        raise ProjectNotFoundError(project_id)
 
     project.status = status_data.status
     db.commit()
@@ -114,10 +116,7 @@ def delete_project(
     """Delete a project."""
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
+        raise ProjectNotFoundError(project_id)
 
     db.delete(project)
     db.commit()

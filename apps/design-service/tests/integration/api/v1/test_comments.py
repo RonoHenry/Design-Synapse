@@ -17,19 +17,21 @@ Requirements:
 - 7.6: Project membership required for commenting
 """
 
-import pytest
-from fastapi import status
 from datetime import datetime, timezone
 
+import pytest
+from fastapi import status
 from src.models.design import Design
 from src.models.design_comment import DesignComment
-from tests.factories import DesignFactory, DesignCommentFactory
+from tests.factories import DesignCommentFactory, DesignFactory
 
 
 class TestCreateComment:
     """Tests for POST /api/v1/designs/{id}/comments endpoint."""
 
-    def test_create_comment_success(self, client, db_session, mock_auth_user, mock_project_access):
+    def test_create_comment_success(
+        self, client, db_session, mock_auth_user, mock_project_access
+    ):
         """Test creating a comment on a design."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
@@ -44,7 +46,7 @@ class TestCreateComment:
         response = client.post(
             f"/api/v1/designs/{design.id}/comments",
             json=comment_data,
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
@@ -65,7 +67,9 @@ class TestCreateComment:
         assert comment is not None
         assert comment.content == comment_data["content"]
 
-    def test_create_comment_with_spatial_position(self, client, db_session, mock_auth_user, mock_project_access):
+    def test_create_comment_with_spatial_position(
+        self, client, db_session, mock_auth_user, mock_project_access
+    ):
         """Test creating a comment with spatial positioning (Requirement 7.2)."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
@@ -83,7 +87,7 @@ class TestCreateComment:
         response = client.post(
             f"/api/v1/designs/{design.id}/comments",
             json=comment_data,
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
@@ -94,7 +98,9 @@ class TestCreateComment:
         assert data["position_y"] == 20.3
         assert data["position_z"] == 5.0
 
-    def test_create_comment_design_not_found(self, client, mock_auth_user, mock_project_access):
+    def test_create_comment_design_not_found(
+        self, client, mock_auth_user, mock_project_access
+    ):
         """Test creating a comment on non-existent design returns 404."""
         # Arrange
         comment_data = {
@@ -105,13 +111,15 @@ class TestCreateComment:
         response = client.post(
             "/api/v1/designs/99999/comments",
             json=comment_data,
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_create_comment_empty_content(self, client, db_session, mock_auth_user, mock_project_access):
+    def test_create_comment_empty_content(
+        self, client, db_session, mock_auth_user, mock_project_access
+    ):
         """Test creating a comment with empty content returns 422."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
@@ -126,7 +134,7 @@ class TestCreateComment:
         response = client.post(
             f"/api/v1/designs/{design.id}/comments",
             json=comment_data,
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
@@ -145,14 +153,15 @@ class TestCreateComment:
 
         # Act
         response = client_no_auth.post(
-            f"/api/v1/designs/{design.id}/comments",
-            json=comment_data
+            f"/api/v1/designs/{design.id}/comments", json=comment_data
         )
 
         # Assert
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_create_comment_without_project_access(self, client_no_project_access, db_session):
+    def test_create_comment_without_project_access(
+        self, client_no_project_access, db_session
+    ):
         """Test creating a comment without project access returns 403 (Requirement 7.6)."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
@@ -167,7 +176,7 @@ class TestCreateComment:
         response = client_no_project_access.post(
             f"/api/v1/designs/{design.id}/comments",
             json=comment_data,
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
@@ -177,50 +186,48 @@ class TestCreateComment:
 class TestListComments:
     """Tests for GET /api/v1/designs/{id}/comments endpoint."""
 
-    def test_list_comments_success(self, client, db_session, mock_auth_user, mock_project_access):
+    def test_list_comments_success(
+        self, client, db_session, mock_auth_user, mock_project_access
+    ):
         """Test listing comments for a design (Requirement 7.3)."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
         DesignCommentFactory._meta.sqlalchemy_session = db_session
-        
+
         design = DesignFactory.create(project_id=1, created_by=1)
         db_session.commit()
 
         # Create comments with different timestamps
         comment1 = DesignCommentFactory.create(
-            design=design,
-            content="First comment",
-            created_by=1
+            design=design, content="First comment", created_by=1
         )
         comment2 = DesignCommentFactory.create(
-            design=design,
-            content="Second comment",
-            created_by=2
+            design=design, content="Second comment", created_by=2
         )
         comment3 = DesignCommentFactory.create(
-            design=design,
-            content="Third comment",
-            created_by=1
+            design=design, content="Third comment", created_by=1
         )
         db_session.commit()
 
         # Act
         response = client.get(
             f"/api/v1/designs/{design.id}/comments",
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert len(data) == 3
-        
+
         # Verify chronological order (oldest first)
         assert data[0]["id"] == comment1.id
         assert data[1]["id"] == comment2.id
         assert data[2]["id"] == comment3.id
 
-    def test_list_comments_empty(self, client, db_session, mock_auth_user, mock_project_access):
+    def test_list_comments_empty(
+        self, client, db_session, mock_auth_user, mock_project_access
+    ):
         """Test listing comments for a design with no comments."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
@@ -230,7 +237,7 @@ class TestListComments:
         # Act
         response = client.get(
             f"/api/v1/designs/{design.id}/comments",
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
@@ -238,12 +245,14 @@ class TestListComments:
         data = response.json()
         assert len(data) == 0
 
-    def test_list_comments_design_not_found(self, client, mock_auth_user, mock_project_access):
+    def test_list_comments_design_not_found(
+        self, client, mock_auth_user, mock_project_access
+    ):
         """Test listing comments for non-existent design returns 404."""
         # Act
         response = client.get(
             "/api/v1/designs/99999/comments",
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
@@ -266,17 +275,19 @@ class TestListComments:
 class TestUpdateComment:
     """Tests for PUT /api/v1/comments/{id} endpoint."""
 
-    def test_update_own_comment_success(self, client, db_session, mock_auth_user, mock_project_access):
+    def test_update_own_comment_success(
+        self, client, db_session, mock_auth_user, mock_project_access
+    ):
         """Test updating own comment (Requirement 7.4)."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
         DesignCommentFactory._meta.sqlalchemy_session = db_session
-        
+
         design = DesignFactory.create(project_id=1, created_by=1)
         comment = DesignCommentFactory.create(
             design=design,
             content="Original content",
-            created_by=1  # Same as mock_auth_user
+            created_by=1,  # Same as mock_auth_user
         )
         db_session.commit()
 
@@ -288,7 +299,7 @@ class TestUpdateComment:
         response = client.put(
             f"/api/v1/comments/{comment.id}",
             json=update_data,
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
@@ -303,12 +314,14 @@ class TestUpdateComment:
         assert comment.content == "Updated content"
         assert comment.is_edited is True
 
-    def test_update_comment_with_position(self, client, db_session, mock_auth_user, mock_project_access):
+    def test_update_comment_with_position(
+        self, client, db_session, mock_auth_user, mock_project_access
+    ):
         """Test updating comment with spatial position."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
         DesignCommentFactory._meta.sqlalchemy_session = db_session
-        
+
         design = DesignFactory.create(project_id=1, created_by=1)
         comment = DesignCommentFactory.create(
             design=design,
@@ -316,7 +329,7 @@ class TestUpdateComment:
             created_by=1,
             position_x=10.0,
             position_y=20.0,
-            position_z=5.0
+            position_z=5.0,
         )
         db_session.commit()
 
@@ -331,7 +344,7 @@ class TestUpdateComment:
         response = client.put(
             f"/api/v1/comments/{comment.id}",
             json=update_data,
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
@@ -341,17 +354,17 @@ class TestUpdateComment:
         assert data["position_y"] == 25.0
         assert data["position_z"] == 7.5
 
-    def test_update_other_user_comment_forbidden(self, client, db_session, mock_auth_user, mock_project_access):
+    def test_update_other_user_comment_forbidden(
+        self, client, db_session, mock_auth_user, mock_project_access
+    ):
         """Test updating another user's comment returns 403."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
         DesignCommentFactory._meta.sqlalchemy_session = db_session
-        
+
         design = DesignFactory.create(project_id=1, created_by=1)
         comment = DesignCommentFactory.create(
-            design=design,
-            content="Original content",
-            created_by=999  # Different user
+            design=design, content="Original content", created_by=999  # Different user
         )
         db_session.commit()
 
@@ -363,13 +376,15 @@ class TestUpdateComment:
         response = client.put(
             f"/api/v1/comments/{comment.id}",
             json=update_data,
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_update_comment_not_found(self, client, mock_auth_user, mock_project_access):
+    def test_update_comment_not_found(
+        self, client, mock_auth_user, mock_project_access
+    ):
         """Test updating non-existent comment returns 404."""
         # Arrange
         update_data = {
@@ -380,23 +395,23 @@ class TestUpdateComment:
         response = client.put(
             "/api/v1/comments/99999",
             json=update_data,
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_update_comment_empty_content(self, client, db_session, mock_auth_user, mock_project_access):
+    def test_update_comment_empty_content(
+        self, client, db_session, mock_auth_user, mock_project_access
+    ):
         """Test updating comment with empty content returns 422."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
         DesignCommentFactory._meta.sqlalchemy_session = db_session
-        
+
         design = DesignFactory.create(project_id=1, created_by=1)
         comment = DesignCommentFactory.create(
-            design=design,
-            content="Original content",
-            created_by=1
+            design=design, content="Original content", created_by=1
         )
         db_session.commit()
 
@@ -408,7 +423,7 @@ class TestUpdateComment:
         response = client.put(
             f"/api/v1/comments/{comment.id}",
             json=update_data,
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
@@ -419,12 +434,10 @@ class TestUpdateComment:
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
         DesignCommentFactory._meta.sqlalchemy_session = db_session
-        
+
         design = DesignFactory.create(project_id=1, created_by=1)
         comment = DesignCommentFactory.create(
-            design=design,
-            content="Original content",
-            created_by=1
+            design=design, content="Original content", created_by=1
         )
         db_session.commit()
 
@@ -434,8 +447,7 @@ class TestUpdateComment:
 
         # Act
         response = client_no_auth.put(
-            f"/api/v1/comments/{comment.id}",
-            json=update_data
+            f"/api/v1/comments/{comment.id}", json=update_data
         )
 
         # Assert
@@ -445,17 +457,19 @@ class TestUpdateComment:
 class TestDeleteComment:
     """Tests for DELETE /api/v1/comments/{id} endpoint."""
 
-    def test_delete_own_comment_success(self, client, db_session, mock_auth_user, mock_project_access):
+    def test_delete_own_comment_success(
+        self, client, db_session, mock_auth_user, mock_project_access
+    ):
         """Test deleting own comment (Requirement 7.5)."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
         DesignCommentFactory._meta.sqlalchemy_session = db_session
-        
+
         design = DesignFactory.create(project_id=1, created_by=1)
         comment = DesignCommentFactory.create(
             design=design,
             content="Comment to delete",
-            created_by=1  # Same as mock_auth_user
+            created_by=1,  # Same as mock_auth_user
         )
         db_session.commit()
         comment_id = comment.id
@@ -463,34 +477,38 @@ class TestDeleteComment:
         # Act
         response = client.delete(
             f"/api/v1/comments/{comment_id}",
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # Verify deleted from database
-        deleted_comment = db_session.query(DesignComment).filter_by(id=comment_id).first()
+        deleted_comment = (
+            db_session.query(DesignComment).filter_by(id=comment_id).first()
+        )
         assert deleted_comment is None
 
-    def test_delete_other_user_comment_forbidden(self, client, db_session, mock_auth_user, mock_project_access):
+    def test_delete_other_user_comment_forbidden(
+        self, client, db_session, mock_auth_user, mock_project_access
+    ):
         """Test deleting another user's comment returns 403."""
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
         DesignCommentFactory._meta.sqlalchemy_session = db_session
-        
+
         design = DesignFactory.create(project_id=1, created_by=1)
         comment = DesignCommentFactory.create(
             design=design,
             content="Someone else's comment",
-            created_by=999  # Different user
+            created_by=999,  # Different user
         )
         db_session.commit()
 
         # Act
         response = client.delete(
             f"/api/v1/comments/{comment.id}",
-            headers={"Authorization": "Bearer fake-token"}
+            headers={"Authorization": "Bearer fake-token"},
         )
 
         # Assert
@@ -500,12 +518,13 @@ class TestDeleteComment:
         db_session.refresh(comment)
         assert comment is not None
 
-    def test_delete_comment_not_found(self, client, mock_auth_user, mock_project_access):
+    def test_delete_comment_not_found(
+        self, client, mock_auth_user, mock_project_access
+    ):
         """Test deleting non-existent comment returns 404."""
         # Act
         response = client.delete(
-            "/api/v1/comments/99999",
-            headers={"Authorization": "Bearer fake-token"}
+            "/api/v1/comments/99999", headers={"Authorization": "Bearer fake-token"}
         )
 
         # Assert
@@ -516,12 +535,10 @@ class TestDeleteComment:
         # Arrange
         DesignFactory._meta.sqlalchemy_session = db_session
         DesignCommentFactory._meta.sqlalchemy_session = db_session
-        
+
         design = DesignFactory.create(project_id=1, created_by=1)
         comment = DesignCommentFactory.create(
-            design=design,
-            content="Comment to delete",
-            created_by=1
+            design=design, content="Comment to delete", created_by=1
         )
         db_session.commit()
 

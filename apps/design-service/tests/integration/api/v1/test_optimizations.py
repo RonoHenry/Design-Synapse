@@ -1,9 +1,9 @@
 """Integration tests for optimization endpoints."""
 
-import pytest
-from fastapi import status
 from unittest.mock import AsyncMock, patch
 
+import pytest
+from fastapi import status
 from src.models.design import Design
 from src.models.design_optimization import DesignOptimization
 from tests.factories import DesignFactory, DesignOptimizationFactory
@@ -72,18 +72,16 @@ class TestOptimizationEndpoints:
                 status="suggested",
             ),
         ]
-        
+
         for opt in optimizations:
             db_session.add(opt)
-        
+
         db_session.commit()
-        
+
         for opt in optimizations:
             db_session.refresh(opt)
-        
+
         return optimizations
-
-
 
     @pytest.fixture
     def mock_llm_optimizations(self):
@@ -132,23 +130,21 @@ class TestOptimizationEndpoints:
     ):
         """Test successful optimization generation."""
         # The mock_llm_client from conftest is already configured with generate_optimizations
-        
+
         # Make request
         response = client.post(
             f"/api/v1/designs/{sample_design.id}/optimize",
-            json={
-                "optimization_types": ["cost", "structural", "sustainability"]
-            },
+            json={"optimization_types": ["cost", "structural", "sustainability"]},
             headers=auth_headers,
         )
-        
+
         # Assert response
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        
+
         assert isinstance(data, list)
         assert len(data) >= 3
-        
+
         # Verify optimization structure
         for opt in data:
             assert "id" in opt
@@ -172,12 +168,10 @@ class TestOptimizationEndpoints:
         """Test optimization generation with non-existent design."""
         response = client.post(
             "/api/v1/designs/99999/optimize",
-            json={
-                "optimization_types": ["cost", "structural"]
-            },
+            json={"optimization_types": ["cost", "structural"]},
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "not found" in response.json()["detail"].lower()
 
@@ -189,24 +183,24 @@ class TestOptimizationEndpoints:
         auth_headers,
     ):
         """Test optimization generation without project access."""
-        from src.services.project_client import ProjectAccessDeniedError
         from src.api.v1.routes.optimizations import get_project_client
         from src.main import app
-        
+        from src.services.project_client import ProjectAccessDeniedError
+
         # Override the project client to raise access denied
         mock_project_client = app.dependency_overrides[get_project_client]()
-        mock_project_client.verify_project_access.side_effect = ProjectAccessDeniedError(
-            f"User does not have access to project {sample_design.project_id}"
+        mock_project_client.verify_project_access.side_effect = (
+            ProjectAccessDeniedError(
+                f"User does not have access to project {sample_design.project_id}"
+            )
         )
-        
+
         response = client.post(
             f"/api/v1/designs/{sample_design.id}/optimize",
-            json={
-                "optimization_types": ["cost"]
-            },
+            json={"optimization_types": ["cost"]},
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert "access denied" in response.json()["detail"].lower()
 
@@ -219,11 +213,9 @@ class TestOptimizationEndpoints:
         """Test optimization generation without authentication."""
         response = client_no_auth.post(
             f"/api/v1/designs/{sample_design.id}/optimize",
-            json={
-                "optimization_types": ["cost"]
-            },
+            json={"optimization_types": ["cost"]},
         )
-        
+
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     # Test: GET /api/v1/designs/{id}/optimizations
@@ -240,19 +232,19 @@ class TestOptimizationEndpoints:
             f"/api/v1/designs/{sample_design.id}/optimizations",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        
+
         assert isinstance(data, list)
         assert len(data) == 3
-        
+
         # Verify optimization data
         opt_types = [opt["optimization_type"] for opt in data]
         assert "cost" in opt_types
         assert "structural" in opt_types
         assert "sustainability" in opt_types
-        
+
         # Verify all belong to the design
         for opt in data:
             assert opt["design_id"] == sample_design.id
@@ -269,10 +261,10 @@ class TestOptimizationEndpoints:
             f"/api/v1/designs/{sample_design.id}/optimizations",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        
+
         assert isinstance(data, list)
         assert len(data) == 0
 
@@ -287,7 +279,7 @@ class TestOptimizationEndpoints:
             "/api/v1/designs/99999/optimizations",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_get_optimizations_no_project_access(
@@ -299,21 +291,23 @@ class TestOptimizationEndpoints:
         auth_headers,
     ):
         """Test retrieval of optimizations without project access."""
-        from src.services.project_client import ProjectAccessDeniedError
         from src.api.v1.routes.optimizations import get_project_client
         from src.main import app
-        
+        from src.services.project_client import ProjectAccessDeniedError
+
         # Override the project client to raise access denied
         mock_project_client = app.dependency_overrides[get_project_client]()
-        mock_project_client.verify_project_access.side_effect = ProjectAccessDeniedError(
-            f"User does not have access to project {sample_design.project_id}"
+        mock_project_client.verify_project_access.side_effect = (
+            ProjectAccessDeniedError(
+                f"User does not have access to project {sample_design.project_id}"
+            )
         )
-        
+
         response = client.get(
             f"/api/v1/designs/{sample_design.id}/optimizations",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # Test: POST /api/v1/optimizations/{id}/apply
@@ -327,21 +321,21 @@ class TestOptimizationEndpoints:
     ):
         """Test successful application of an optimization."""
         optimization = sample_optimizations[0]
-        
+
         response = client.post(
             f"/api/v1/optimizations/{optimization.id}/apply",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        
+
         # Verify new design version was created
         assert data["id"] != sample_design.id
         assert data["version"] == sample_design.version + 1
         assert data["parent_design_id"] == sample_design.id
         assert data["project_id"] == sample_design.project_id
-        
+
         # Verify optimization was applied
         db_session.refresh(optimization)
         assert optimization.status == "applied"
@@ -358,7 +352,7 @@ class TestOptimizationEndpoints:
             "/api/v1/optimizations/99999/apply",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_apply_optimization_already_applied(
@@ -383,12 +377,12 @@ class TestOptimizationEndpoints:
         db_session.add(optimization)
         db_session.commit()
         db_session.refresh(optimization)
-        
+
         response = client.post(
             f"/api/v1/optimizations/{optimization.id}/apply",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         detail = response.json()["detail"].lower()
         assert "already" in detail and "applied" in detail
@@ -402,23 +396,25 @@ class TestOptimizationEndpoints:
         auth_headers,
     ):
         """Test applying optimization without project access."""
-        from src.services.project_client import ProjectAccessDeniedError
         from src.api.v1.routes.optimizations import get_project_client
         from src.main import app
-        
+        from src.services.project_client import ProjectAccessDeniedError
+
         optimization = sample_optimizations[0]
-        
+
         # Override the project client to raise access denied
         mock_project_client = app.dependency_overrides[get_project_client]()
-        mock_project_client.verify_project_access.side_effect = ProjectAccessDeniedError(
-            f"User does not have access to project {sample_design.project_id}"
+        mock_project_client.verify_project_access.side_effect = (
+            ProjectAccessDeniedError(
+                f"User does not have access to project {sample_design.project_id}"
+            )
         )
-        
+
         response = client.post(
             f"/api/v1/optimizations/{optimization.id}/apply",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_apply_optimization_without_auth(
@@ -429,11 +425,11 @@ class TestOptimizationEndpoints:
     ):
         """Test applying optimization without authentication."""
         optimization = sample_optimizations[0]
-        
+
         response = client_no_auth.post(
             f"/api/v1/optimizations/{optimization.id}/apply",
         )
-        
+
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_generate_optimizations_with_default_types(
@@ -450,10 +446,10 @@ class TestOptimizationEndpoints:
             json={},
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        
+
         assert len(data) >= 3
 
     def test_generate_optimizations_llm_failure(
@@ -464,23 +460,21 @@ class TestOptimizationEndpoints:
         auth_headers,
     ):
         """Test optimization generation when LLM fails."""
-        from src.services.llm_client import LLMGenerationError
         from src.api.v1.routes.optimizations import get_llm_client
         from src.main import app
-        
+        from src.services.llm_client import LLMGenerationError
+
         # Override the LLM client to raise an error
         mock_llm_client = app.dependency_overrides[get_llm_client]()
         mock_llm_client.generate_optimizations = AsyncMock(
             side_effect=LLMGenerationError("All LLM providers failed")
         )
-        
+
         response = client.post(
             f"/api/v1/designs/{sample_design.id}/optimize",
-            json={
-                "optimization_types": ["cost"]
-            },
+            json={"optimization_types": ["cost"]},
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert "failed" in response.json()["detail"].lower()

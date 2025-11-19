@@ -9,14 +9,14 @@ This service orchestrates the design optimization workflow:
 """
 
 import logging
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from ..models.design import Design
 from ..models.design_optimization import DesignOptimization
 from ..repositories.design_repository import DesignRepository
 from ..repositories.optimization_repository import OptimizationRepository
-from ..services.llm_client import LLMClient, LLMGenerationError, LLMTimeoutError
-
+from ..services.llm_client import (LLMClient, LLMGenerationError,
+                                   LLMTimeoutError)
 
 logger = logging.getLogger(__name__)
 
@@ -140,9 +140,7 @@ class OptimizationService:
         Raises:
             ValueError: If optimization or design is not found
         """
-        logger.info(
-            f"Applying optimization {optimization_id} for user {user_id}"
-        )
+        logger.info(f"Applying optimization {optimization_id} for user {user_id}")
 
         # Step 1: Update optimization status to 'applied'
         logger.debug(f"Updating optimization {optimization_id} status to 'applied'")
@@ -173,9 +171,7 @@ class OptimizationService:
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        logger.debug(
-            f"Parent design found. Current version: {parent_design.version}"
-        )
+        logger.debug(f"Parent design found. Current version: {parent_design.version}")
 
         # Step 3: Create new design version with optimization applied
         # For now, we create a new version with the same specification
@@ -261,13 +257,15 @@ class OptimizationService:
         if "optimizations_applied" not in updated_spec:
             updated_spec["optimizations_applied"] = []
 
-        updated_spec["optimizations_applied"].append({
-            "optimization_id": optimization.id,
-            "optimization_type": optimization.optimization_type,
-            "title": optimization.title,
-            "description": optimization.description,
-            "estimated_cost_impact": optimization.estimated_cost_impact,
-        })
+        updated_spec["optimizations_applied"].append(
+            {
+                "optimization_id": optimization.id,
+                "optimization_type": optimization.optimization_type,
+                "title": optimization.title,
+                "description": optimization.description,
+                "estimated_cost_impact": optimization.estimated_cost_impact,
+            }
+        )
 
         # Apply specific changes based on optimization type
         # This is a simplified implementation
@@ -295,9 +293,11 @@ class OptimizationService:
                 updated_spec["sustainability"] = {}
             if "features" not in updated_spec["sustainability"]:
                 updated_spec["sustainability"]["features"] = []
-            updated_spec["sustainability"]["features"].append({
-                "title": optimization.title,
-                "description": optimization.description,
-            })
+            updated_spec["sustainability"]["features"].append(
+                {
+                    "title": optimization.title,
+                    "description": optimization.description,
+                }
+            )
 
         return updated_spec

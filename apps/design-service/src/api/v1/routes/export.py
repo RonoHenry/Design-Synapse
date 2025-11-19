@@ -8,13 +8,14 @@ in various formats (JSON, PDF, IFC).
 from datetime import datetime, timezone
 from io import BytesIO
 from typing import Any, Dict
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy.orm import Session, joinedload
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session, joinedload
 
 from ....infrastructure.database import get_db
 from ....repositories.design_repository import DesignRepository
-from ....services.project_client import ProjectClient, ProjectAccessDeniedError
+from ....services.project_client import ProjectAccessDeniedError, ProjectClient
 from ...dependencies import CurrentUserId, get_current_user_id
 
 router = APIRouter(prefix="/designs", tags=["export"])
@@ -22,6 +23,7 @@ router = APIRouter(prefix="/designs", tags=["export"])
 
 class ExportRequest(BaseModel):
     """Request schema for design export."""
+
     format: str = Field(..., description="Export format: json, pdf, or ifc")
 
 
@@ -50,31 +52,34 @@ async def export_design(
 ):
     """Export a design in the specified format."""
     export_format = request.format.lower()
-    
+
     supported_formats = ["json", "pdf", "ifc"]
     if export_format not in supported_formats:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unsupported export format '{request.format}'. Supported formats: {', '.join(supported_formats)}",
         )
-    
+
     from ....models.design import Design
-    design = db.query(Design).options(
-        joinedload(Design.validations),
-        joinedload(Design.optimizations),
-        joinedload(Design.files),
-        joinedload(Design.comments),
-    ).filter(
-        Design.id == design_id,
-        Design.is_archived == False
-    ).first()
-    
+
+    design = (
+        db.query(Design)
+        .options(
+            joinedload(Design.validations),
+            joinedload(Design.optimizations),
+            joinedload(Design.files),
+            joinedload(Design.comments),
+        )
+        .filter(Design.id == design_id, Design.is_archived == False)
+        .first()
+    )
+
     if not design:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Design with ID {design_id} not found",
         )
-    
+
     try:
         await project_client.verify_project_access(
             project_id=design.project_id,
@@ -90,7 +95,7 @@ async def export_design(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unable to verify project access",
         )
-    
+
     try:
         if export_format == "json":
             return export_as_json(design)
@@ -103,7 +108,6 @@ async def export_design(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Export failed: {str(e)}",
         )
-
 
 
 def export_as_json(design) -> Dict[str, Any]:
@@ -190,9 +194,8 @@ def export_as_json(design) -> Dict[str, Any]:
             "format": "json",
             "exported_at": datetime.now(timezone.utc).isoformat(),
             "version": "1.0",
-        }
+        },
     }
-
 
 
 def export_as_pdf(design) -> Response:
@@ -216,19 +219,17 @@ def export_as_pdf(design) -> Response:
                 "warnings": v.warnings,
             }
             for v in design.validations
-        ]
+        ],
     }
-    
+
     pdf_content = generate_pdf_document(design_dict)
-    
+
     filename = f"{design.name.replace(' ', '-')}.pdf"
-    
+
     return Response(
         content=pdf_content,
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"'
-        }
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
@@ -243,127 +244,148 @@ def export_as_ifc(design) -> Response:
         "building_type": design.building_type,
         "created_by": design.created_by,
     }
-    
+
     ifc_content = generate_ifc_file(design_dict)
-    
+
     filename = f"{design.name.replace(' ', '-')}.ifc"
-    
+
     return Response(
         content=ifc_content,
         media_type="application/x-step",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"'
-        }
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
-
 
 
 def generate_pdf_document(design: Dict[str, Any]) -> bytes:
     """
     Generate a formatted PDF document from design data.
-    
+
     This is a simplified implementation. In production, you would use
     a library like ReportLab or WeasyPrint for professional PDF generation.
-    
+
     Args:
         design: Dictionary containing design data
-    
+
     Returns:
         PDF content as bytes
     """
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
     from reportlab.lib import colors
-    
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import inch
+    from reportlab.platypus import (Paragraph, SimpleDocTemplate, Spacer,
+                                    Table, TableStyle)
+
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     story = []
     styles = getSampleStyleSheet()
-    
+
     title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
+        "CustomTitle",
+        parent=styles["Heading1"],
         fontSize=24,
-        textColor=colors.HexColor('#1a1a1a'),
+        textColor=colors.HexColor("#1a1a1a"),
         spaceAfter=30,
     )
-    
+
     heading_style = ParagraphStyle(
-        'CustomHeading',
-        parent=styles['Heading2'],
+        "CustomHeading",
+        parent=styles["Heading2"],
         fontSize=16,
-        textColor=colors.HexColor('#333333'),
+        textColor=colors.HexColor("#333333"),
         spaceAfter=12,
     )
-    
+
     story.append(Paragraph(f"Design: {design['name']}", title_style))
     story.append(Spacer(1, 0.2 * inch))
-    
-    if design.get('description'):
-        story.append(Paragraph(f"<b>Description:</b> {design['description']}", styles['Normal']))
+
+    if design.get("description"):
+        story.append(
+            Paragraph(f"<b>Description:</b> {design['description']}", styles["Normal"])
+        )
         story.append(Spacer(1, 0.2 * inch))
-    
+
     story.append(Paragraph("Design Information", heading_style))
     info_data = [
-        ["Building Type:", design.get('building_type', 'N/A')],
-        ["Total Area:", f"{design['total_area']} m²" if design.get('total_area') else "N/A"],
-        ["Number of Floors:", str(design['num_floors']) if design.get('num_floors') else "N/A"],
-        ["Status:", design.get('status', 'N/A')],
-        ["Version:", str(design.get('version', 'N/A'))],
+        ["Building Type:", design.get("building_type", "N/A")],
+        [
+            "Total Area:",
+            f"{design['total_area']} m²" if design.get("total_area") else "N/A",
+        ],
+        [
+            "Number of Floors:",
+            str(design["num_floors"]) if design.get("num_floors") else "N/A",
+        ],
+        ["Status:", design.get("status", "N/A")],
+        ["Version:", str(design.get("version", "N/A"))],
     ]
-    info_table = Table(info_data, colWidths=[2*inch, 4*inch])
-    info_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f0f0f0')),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-    ]))
+    info_table = Table(info_data, colWidths=[2 * inch, 4 * inch])
+    info_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f0f0f0")),
+                ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                ("GRID", (0, 0), (-1, -1), 1, colors.grey),
+            ]
+        )
+    )
     story.append(info_table)
     story.append(Spacer(1, 0.3 * inch))
-    
-    if design.get('specification'):
+
+    if design.get("specification"):
         story.append(Paragraph("Design Specification", heading_style))
-        spec_text = str(design['specification'])[:500]
-        story.append(Paragraph(spec_text, styles['Normal']))
+        spec_text = str(design["specification"])[:500]
+        story.append(Paragraph(spec_text, styles["Normal"]))
         story.append(Spacer(1, 0.2 * inch))
-    
-    if design.get('validations'):
+
+    if design.get("validations"):
         story.append(Paragraph("Validation Results", heading_style))
-        for validation in design['validations']:
-            status_text = "✓ Compliant" if validation['is_compliant'] else "✗ Non-Compliant"
-            story.append(Paragraph(f"<b>{validation['validation_type']}:</b> {status_text}", styles['Normal']))
+        for validation in design["validations"]:
+            status_text = (
+                "✓ Compliant" if validation["is_compliant"] else "✗ Non-Compliant"
+            )
+            story.append(
+                Paragraph(
+                    f"<b>{validation['validation_type']}:</b> {status_text}",
+                    styles["Normal"],
+                )
+            )
         story.append(Spacer(1, 0.2 * inch))
-    
+
     story.append(Spacer(1, 0.3 * inch))
     now = datetime.now(timezone.utc)
-    story.append(Paragraph(f"<i>Generated on {now.strftime('%Y-%m-%d %H:%M:%S')} UTC</i>", styles['Normal']))
-    
+    story.append(
+        Paragraph(
+            f"<i>Generated on {now.strftime('%Y-%m-%d %H:%M:%S')} UTC</i>",
+            styles["Normal"],
+        )
+    )
+
     doc.build(story)
     buffer.seek(0)
     return buffer.read()
 
 
-
 def generate_ifc_file(design: Dict[str, Any]) -> bytes:
     """
     Generate an IFC (Industry Foundation Classes) file from design data.
-    
+
     This is a simplified implementation. In production, you would use
     a library like ifcopenshell for proper IFC file generation.
-    
+
     Args:
         design: Dictionary containing design data
-    
+
     Returns:
         IFC content as bytes
     """
     import json
-    
+
     now = datetime.now(timezone.utc)
     ifc_header = f"""ISO-10303-21;
 HEADER;
@@ -374,7 +396,7 @@ ENDSEC;
 
 DATA;
 """
-    
+
     now_timestamp = int(now.timestamp())
     ifc_project = f"""#1=IFCPROJECT('{design["id"]}',#2,'Design: {design["name"]}','{design.get("description") or ""}',$,$,$,$,#3);
 #2=IFCOWNERHISTORY(#4,#5,$,.ADDED.,$,$,$,{now_timestamp});
@@ -385,33 +407,33 @@ DATA;
 #7=IFCSIUNIT(*,.AREAUNIT.,$,.SQUARE_METRE.);
 #8=IFCSIUNIT(*,.VOLUMEUNIT.,$,.CUBIC_METRE.);
 """
-    
-    building_info = design["specification"].get('building_info', {})
-    building_type = building_info.get('type', design.get("building_type", "unknown"))
-    num_floors = building_info.get('num_floors', 1)
-    
+
+    building_info = design["specification"].get("building_info", {})
+    building_type = building_info.get("type", design.get("building_type", "unknown"))
+    num_floors = building_info.get("num_floors", 1)
+
     ifc_building = f"""#10=IFCBUILDING('{design["id"]}-building',#2,'{design["name"]}','{building_type}',$,#11,$,$,.ELEMENT.,$,$,$);
 #11=IFCLOCALPLACEMENT($,#12);
 #12=IFCAXIS2PLACEMENT3D(#13,$,$);
 #13=IFCCARTESIANPOINT((0.,0.,0.));
 """
-    
+
     ifc_spaces = ""
-    spaces = design["specification"].get('spaces', [])
+    spaces = design["specification"].get("spaces", [])
     space_id = 20
     for idx, space in enumerate(spaces):
-        space_name = space.get('name', f'Space {idx+1}')
-        space_area = space.get('area', 0)
-        floor = space.get('floor', 1)
-        
+        space_name = space.get("name", f"Space {idx+1}")
+        space_area = space.get("area", 0)
+        floor = space.get("floor", 1)
+
         ifc_spaces += f"""#{space_id}=IFCSPACE('{design["id"]}-space-{idx}',#2,'{space_name}','Floor {floor}',$,#11,$,$,.ELEMENT.,{space_area},$);
 """
         space_id += 1
-    
+
     ifc_footer = """ENDSEC;
 END-ISO-10303-21;
 """
-    
+
     ifc_content = ifc_header + ifc_project + ifc_building + ifc_spaces + ifc_footer
-    
-    return ifc_content.encode('utf-8')
+
+    return ifc_content.encode("utf-8")

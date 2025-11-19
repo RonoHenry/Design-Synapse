@@ -8,10 +8,10 @@ Requirements tested:
 - 10: Visual output generation and storage
 """
 
-import pytest
-import factory
 from datetime import datetime, timezone
 
+import factory
+import pytest
 from tests.factories import DesignFactory
 
 
@@ -27,7 +27,7 @@ class TestDesignFactoryVisualFields:
             model_file_url="https://cdn.example.com/model.step",
             visual_generation_status="completed",
             visual_generation_error=None,
-            visual_generated_at=datetime.now(timezone.utc)
+            visual_generated_at=datetime.now(timezone.utc),
         )
 
         # Assert
@@ -109,20 +109,26 @@ class TestDesignFactoryVisualFields:
         # Act - build (doesn't save to DB)
         built_design = DesignFactory.build(
             floor_plan_url="https://cdn.example.com/built_floor_plan.png",
-            visual_generation_status="completed"
+            visual_generation_status="completed",
         )
-        
+
         # Act - create (saves to DB)
         created_design = DesignFactory.create(
             floor_plan_url="https://cdn.example.com/created_floor_plan.png",
-            visual_generation_status="completed"
+            visual_generation_status="completed",
         )
 
         # Assert
-        assert built_design.floor_plan_url == "https://cdn.example.com/built_floor_plan.png"
+        assert (
+            built_design.floor_plan_url
+            == "https://cdn.example.com/built_floor_plan.png"
+        )
         assert built_design.visual_generation_status == "completed"
-        
-        assert created_design.floor_plan_url == "https://cdn.example.com/created_floor_plan.png"
+
+        assert (
+            created_design.floor_plan_url
+            == "https://cdn.example.com/created_floor_plan.png"
+        )
         assert created_design.visual_generation_status == "completed"
         assert created_design.id is not None  # Should be saved to DB
 
@@ -132,15 +138,19 @@ class TestDesignFactoryVisualFields:
         designs = DesignFactory.create_batch(
             3,
             visual_generation_status="completed",
-            floor_plan_url=factory.Iterator([
-                "https://cdn.example.com/floor_plan_1.png",
-                "https://cdn.example.com/floor_plan_2.png", 
-                "https://cdn.example.com/floor_plan_3.png"
-            ])
+            floor_plan_url=factory.Iterator(
+                [
+                    "https://cdn.example.com/floor_plan_1.png",
+                    "https://cdn.example.com/floor_plan_2.png",
+                    "https://cdn.example.com/floor_plan_3.png",
+                ]
+            ),
         )
 
         # Assert
         assert len(designs) == 3
         for i, design in enumerate(designs):
             assert design.visual_generation_status == "completed"
-            assert design.floor_plan_url == f"https://cdn.example.com/floor_plan_{i+1}.png"
+            assert (
+                design.floor_plan_url == f"https://cdn.example.com/floor_plan_{i+1}.png"
+            )

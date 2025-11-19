@@ -2,7 +2,6 @@
 
 import pytest
 from sqlalchemy.exc import IntegrityError
-
 from src.models.design import Design
 from src.models.design_comment import DesignComment
 
@@ -18,16 +17,14 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         # Create design comment
         comment = DesignComment(
-            design_id=design.id,
-            content="This design looks great!",
-            created_by=1
+            design_id=design.id, content="This design looks great!", created_by=1
         )
         db_session.add(comment)
         db_session.commit()
@@ -48,7 +45,7 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -60,7 +57,7 @@ class TestDesignCommentModel:
             created_by=1,
             position_x=10.5,
             position_y=20.3,
-            position_z=5.0
+            position_z=5.0,
         )
         db_session.add(comment)
         db_session.commit()
@@ -76,15 +73,13 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         comment = DesignComment(
-            design_id=design.id,
-            content="General comment",
-            created_by=1
+            design_id=design.id, content="General comment", created_by=1
         )
         db_session.add(comment)
         db_session.commit()
@@ -100,7 +95,7 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
@@ -111,7 +106,7 @@ class TestDesignCommentModel:
             content="2D annotation",
             created_by=1,
             position_x=15.0,
-            position_y=25.0
+            position_y=25.0,
         )
         db_session.add(comment)
         db_session.commit()
@@ -127,15 +122,13 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         comment = DesignComment(
-            design_id=design.id,
-            content="Original comment",
-            created_by=1
+            design_id=design.id, content="Original comment", created_by=1
         )
         db_session.add(comment)
         db_session.commit()
@@ -149,15 +142,13 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         comment = DesignComment(
-            design_id=design.id,
-            content="Original comment",
-            created_by=1
+            design_id=design.id, content="Original comment", created_by=1
         )
         db_session.add(comment)
         db_session.commit()
@@ -177,15 +168,13 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         comment = DesignComment(
-            design_id=design.id,
-            content="Original comment",
-            created_by=1
+            design_id=design.id, content="Original comment", created_by=1
         )
         db_session.add(comment)
         db_session.commit()
@@ -194,6 +183,7 @@ class TestDesignCommentModel:
 
         # Update the comment
         import time
+
         time.sleep(0.01)  # Small delay to ensure timestamp difference
         comment.content = "Updated comment"
         db_session.commit()
@@ -209,21 +199,17 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         # Create multiple comments
         comment1 = DesignComment(
-            design_id=design.id,
-            content="First comment",
-            created_by=1
+            design_id=design.id, content="First comment", created_by=1
         )
         comment2 = DesignComment(
-            design_id=design.id,
-            content="Second comment",
-            created_by=2
+            design_id=design.id, content="Second comment", created_by=2
         )
         db_session.add_all([comment1, comment2])
         db_session.commit()
@@ -246,15 +232,13 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         comment = DesignComment(
-            design_id=design.id,
-            content="Test comment",
-            created_by=1
+            design_id=design.id, content="Test comment", created_by=1
         )
         db_session.add(comment)
         db_session.commit()
@@ -276,18 +260,14 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         # Create multiple comments
         comments = [
-            DesignComment(
-                design_id=design.id,
-                content=f"Comment {i}",
-                created_by=1
-            )
+            DesignComment(design_id=design.id, content=f"Comment {i}", created_by=1)
             for i in range(5)
         ]
         db_session.add_all(comments)
@@ -304,25 +284,19 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         comment1 = DesignComment(
-            design_id=design.id,
-            content="Comment by user 1",
-            created_by=1
+            design_id=design.id, content="Comment by user 1", created_by=1
         )
         comment2 = DesignComment(
-            design_id=design.id,
-            content="Comment by user 2",
-            created_by=2
+            design_id=design.id, content="Comment by user 2", created_by=2
         )
         comment3 = DesignComment(
-            design_id=design.id,
-            content="Comment by user 3",
-            created_by=3
+            design_id=design.id, content="Comment by user 3", created_by=3
         )
         db_session.add_all([comment1, comment2, comment3])
         db_session.commit()
@@ -334,10 +308,7 @@ class TestDesignCommentModel:
     def test_missing_required_field_design_id(self, db_session):
         """Test that missing design_id raises IntegrityError."""
         with pytest.raises(IntegrityError):
-            comment = DesignComment(
-                content="Comment without design",
-                created_by=1
-            )
+            comment = DesignComment(content="Comment without design", created_by=1)
             db_session.add(comment)
             db_session.commit()
 
@@ -350,16 +321,13 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         with pytest.raises(IntegrityError):
-            comment = DesignComment(
-                design_id=design.id,
-                created_by=1
-            )
+            comment = DesignComment(design_id=design.id, created_by=1)
             db_session.add(comment)
             db_session.commit()
 
@@ -372,15 +340,14 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         with pytest.raises(IntegrityError):
             comment = DesignComment(
-                design_id=design.id,
-                content="Comment without creator"
+                design_id=design.id, content="Comment without creator"
             )
             db_session.add(comment)
             db_session.commit()
@@ -394,17 +361,13 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         with pytest.raises(ValueError, match="Comment content cannot be empty"):
-            DesignComment(
-                design_id=design.id,
-                content="",
-                created_by=1
-            )
+            DesignComment(design_id=design.id, content="", created_by=1)
 
     def test_whitespace_only_content_validation(self, db_session):
         """Test that whitespace-only content raises ValueError."""
@@ -413,17 +376,13 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         with pytest.raises(ValueError, match="Comment content cannot be empty"):
-            DesignComment(
-                design_id=design.id,
-                content="   ",
-                created_by=1
-            )
+            DesignComment(design_id=design.id, content="   ", created_by=1)
 
     def test_repr_method(self, db_session):
         """Test the __repr__ method of DesignComment."""
@@ -432,15 +391,13 @@ class TestDesignCommentModel:
             name="Test Design",
             specification={"building_info": {}},
             building_type="residential",
-            created_by=1
+            created_by=1,
         )
         db_session.add(design)
         db_session.commit()
 
         comment = DesignComment(
-            design_id=design.id,
-            content="Test comment",
-            created_by=1
+            design_id=design.id, content="Test comment", created_by=1
         )
         db_session.add(comment)
         db_session.commit()

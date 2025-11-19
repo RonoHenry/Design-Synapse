@@ -156,7 +156,7 @@ def test_search_resources(client: TestClient, test_resource, auth_headers):
 def test_create_bookmark(client: TestClient, test_resource, auth_headers):
     """Test creating a bookmark."""
     response = client.post(
-        "/api/v1/resources/bookmarks",
+        "/api/v1/bookmarks/",
         json={
             "resource_id": test_resource.id,
             "notes": "Important resource"
@@ -232,3 +232,214 @@ def test_create_resource_unauthorized(client: TestClient, test_topic):
         }
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_upload_pdf_file_creates_resource(client: TestClient, auth_headers):
+    """Test uploading a PDF file creates a resource.
+    
+    This test should fail - endpoint doesn't exist yet.
+    Following TDD RED phase - write failing test first.
+    """
+    # Create a mock PDF file for testing
+    pdf_content = b"%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n"
+    
+    response = client.post(
+        "/api/v1/resources/upload",
+        files={"file": ("test.pdf", pdf_content, "application/pdf")},
+        data={
+            "title": "Uploaded PDF Document",
+            "description": "Test PDF upload functionality"
+        },
+        headers=auth_headers
+    )
+    
+    # This should fail because the endpoint doesn't exist yet
+    # Currently returns 404 - endpoint not found
+    assert response.status_code == status.HTTP_201_CREATED
+    data = response.json()
+    assert data["title"] == "Uploaded PDF Document"
+    assert data["content_type"] == "pdf"
+    assert data["file_size"] > 0
+    assert "storage_path" in data
+    assert "id" in data
+
+def 
+test_upload_text_file_creates_resource(client: TestClient, auth_headers):
+    """Test uploading a text file creates a resource with content extraction."""
+    # Create a mock text file for testing
+    text_content = "This is a test document.\n\nIt contains multiple paragraphs.\n\nThis should be extracted properly."
+    
+    response = client.post(
+        "/api/v1/resources/upload",
+        files={"file": ("test.txt", text_content.encode('utf-8'), "text/plain")},
+        data={
+            "title": "Uploaded Text Document",
+            "description": "Test text upload functionality"
+        },
+        headers=auth_headers
+    )
+    
+    assert response.status_code == status.HTTP_201_CREATED
+    data = response.json()
+    assert data["title"] == "Uploaded Text Document"
+    assert data["content_type"] == "text"
+    assert data["file_size"] > 0
+    assert "storage_path" in data
+    assert "id" in data
+
+
+def test_upload_markdown_file_creates_resource(client: TestClient, auth_headers):
+    """Test uploading a markdown file creates a resource with content extraction."""
+    # Create a mock markdown file for testing
+    markdown_content = """# Test Document
+
+This is a test markdown document.
+
+## Section 1
+
+It contains multiple sections.
+
+## Section 2
+
+This should be extracted properly with markdown formatting preserved.
+"""
+    
+    response = client.post(
+        "/api/v1/resources/upload",
+        files={"file": ("test.md", markdown_content.encode('utf-8'), "text/markdown")},
+        data={
+            "title": "Uploaded Markdown Document",
+            "description": "Test markdown upload functionality"
+        },
+        headers=auth_headers
+    )
+    
+    assert response.status_code == status.HTTP_201_CREATED
+    data = response.json()
+    assert data["title"] == "Uploaded Markdown Document"
+    assert data["content_type"] == "text"
+    assert data["file_size"] > 0
+    assert "storage_path" in data
+    assert "id" in data
+
+
+def test_upload_html_file_creates_resource(client: TestClient, auth_headers):
+    """Test uploading an HTML file creates a resource with content extraction."""
+    # Create a mock HTML file for testing
+    html_content = """<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Document</title>
+    <meta name="description" content="A test HTML document">
+</head>
+<body>
+    <h1>Main Title</h1>
+    <p>This is a paragraph with some content.</p>
+    <h2>Subtitle</h2>
+    <p>Another paragraph with more content.</p>
+    <script>console.log('This should be removed');</script>
+</body>
+</html>"""
+    
+    response = client.post(
+        "/api/v1/resources/upload",
+        files={"file": ("test.html", html_content.encode('utf-8'), "text/html")},
+        data={
+            "title": "Uploaded HTML Document",
+            "description": "Test HTML upload functionality"
+        },
+        headers=auth_headers
+    )
+    
+    assert response.status_code == status.HTTP_201_CREATED
+    data = response.json()
+    assert data["title"] == "Uploaded HTML Document"
+    assert data["content_type"] == "html"
+    assert data["file_size"] > 0
+    assert "storage_path" in data
+    assert "id" in data
+
+
+def test_upload_unsupported_file_type_fails(client: TestClient, auth_headers):
+    """Test uploading an unsupported file type fails with appropriate error."""
+    # Create a mock unsupported file for testing
+    unsupported_content = b"This is an unsupported file type"
+    
+    response = client.post(
+        "/api/v1/resources/upload",
+        files={"file": ("test.xyz", unsupported_content, "application/octet-stream")},
+        data={
+            "title": "Unsupported File",
+            "description": "This should fail"
+        },
+        headers=auth_headers
+    )
+    
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    data = response.json()
+    assert "Unsupported file type" in data["detail"]
+
+
+def test_preview_file_content(client: TestClient, auth_headers):
+    """Test previewing file content without storing the file."""
+    # Create a test text file for preview
+    text_content = "This is a test document for preview functionality.\n\nIt contains multiple paragraphs.\n\nThis should be previewed properly."
+    
+    response = client.post(
+        "/api/v1/resources/preview",
+        files={"file": ("test.txt", text_content.encode('utf-8'), "text/plain")},
+        params={"max_length": 100},
+        headers=auth_headers
+    )
+    
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["filename"] == "test.txt"
+    assert data["file_extension"] == ".txt"
+    assert data["file_size"] > 0
+    assert data["text_length"] > 0
+    assert "preview_text" in data
+    assert "metadata" in data
+    assert len(data["preview_text"]) <= 100  # Should be truncated to max_length
+
+
+def test_validate_file_endpoint(client: TestClient, auth_headers):
+    """Test file validation endpoint."""
+    # Create a test text file for validation
+    text_content = "This is a test document for validation."
+    
+    response = client.post(
+        "/api/v1/resources/validate",
+        files={"file": ("test.txt", text_content.encode('utf-8'), "text/plain")},
+        headers=auth_headers
+    )
+    
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["filename"] == "test.txt"
+    assert data["file_extension"] == ".txt"
+    assert data["is_supported"] == True
+    assert data["content_type"] == "text"
+    assert data["is_valid_size"] == True
+    assert data["is_valid"] == True
+    assert len(data["errors"]) == 0
+
+
+def test_get_upload_config(client: TestClient, auth_headers):
+    """Test getting upload configuration."""
+    response = client.get("/api/v1/resources/upload/config", headers=auth_headers)
+    
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert "max_file_size_mb" in data
+    assert "max_batch_size" in data
+    assert "supported_types" in data
+    assert "supported_extensions" in data
+    assert "processing_config" in data
+    
+    # Check that new file types are supported
+    supported_extensions = data["supported_extensions"]
+    assert ".txt" in supported_extensions
+    assert ".md" in supported_extensions
+    assert ".html" in supported_extensions
+    assert ".htm" in supported_extensions

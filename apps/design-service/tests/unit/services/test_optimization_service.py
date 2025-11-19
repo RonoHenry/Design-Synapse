@@ -1,14 +1,14 @@
 """Tests for OptimizationService."""
 
-import pytest
-from unittest.mock import Mock, AsyncMock
-from datetime import datetime, timezone
 import time
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, Mock
 
-from src.services.optimization_service import OptimizationService
-from src.services.llm_client import LLMGenerationError, LLMTimeoutError
+import pytest
 from src.models.design import Design
 from src.models.design_optimization import DesignOptimization
+from src.services.llm_client import LLMGenerationError, LLMTimeoutError
+from src.services.optimization_service import OptimizationService
 
 
 class TestOptimizationService:
@@ -150,10 +150,10 @@ class TestOptimizationService:
         """Test that generate_optimizations returns at least 3 suggestions."""
         # Arrange
         optimization_types = ["cost", "structural", "sustainability"]
-        
+
         # Mock LLM response
         mock_llm_client.generate_optimizations.return_value = mock_llm_optimizations
-        
+
         # Mock optimization creation
         created_optimizations = []
         for i, opt_data in enumerate(mock_llm_optimizations["optimizations"]):
@@ -169,32 +169,34 @@ class TestOptimizationService:
             )
             opt.id = i + 1
             created_optimizations.append(opt)
-        
-        mock_optimization_repository.create_optimization.side_effect = created_optimizations
-        
+
+        mock_optimization_repository.create_optimization.side_effect = (
+            created_optimizations
+        )
+
         # Act
         result = await optimization_service.generate_optimizations(
             design=sample_design,
             optimization_types=optimization_types,
         )
-        
+
         # Assert
         assert result is not None
         assert len(result) >= 3
         assert len(result) == 3
-        
+
         # Verify all optimization types are present
         opt_types = [opt.optimization_type for opt in result]
         assert "cost" in opt_types
         assert "structural" in opt_types
         assert "sustainability" in opt_types
-        
+
         # Verify LLM was called
         mock_llm_client.generate_optimizations.assert_called_once_with(
             design_specification=sample_design.specification,
             optimization_types=optimization_types,
         )
-        
+
         # Verify optimizations were created
         assert mock_optimization_repository.create_optimization.call_count == 3
 
@@ -210,7 +212,7 @@ class TestOptimizationService:
         """Test generate_optimizations when no optimizations are found."""
         # Arrange
         optimization_types = ["cost", "structural", "sustainability"]
-        
+
         # Mock LLM response with empty optimizations
         mock_llm_client.generate_optimizations.return_value = {
             "optimizations": [],
@@ -220,20 +222,20 @@ class TestOptimizationService:
                 "total_tokens": 350,
             },
         }
-        
+
         # Act
         result = await optimization_service.generate_optimizations(
             design=sample_design,
             optimization_types=optimization_types,
         )
-        
+
         # Assert
         assert result is not None
         assert len(result) == 0
-        
+
         # Verify LLM was called
         mock_llm_client.generate_optimizations.assert_called_once()
-        
+
         # Verify no optimizations were created
         mock_optimization_repository.create_optimization.assert_not_called()
 
@@ -250,7 +252,7 @@ class TestOptimizationService:
         # Arrange
         user_id = 123
         optimization_id = 1
-        
+
         # Mock optimization
         optimization = DesignOptimization(
             design_id=sample_design.id,
@@ -264,11 +266,13 @@ class TestOptimizationService:
         )
         optimization.id = optimization_id
         optimization.design = sample_design
-        
+
         # Mock repository responses
-        mock_optimization_repository.update_optimization_status.return_value = optimization
+        mock_optimization_repository.update_optimization_status.return_value = (
+            optimization
+        )
         mock_design_repository.get_design_by_id.return_value = sample_design
-        
+
         # Mock new design version creation
         new_design = Design(
             project_id=sample_design.project_id,
@@ -283,27 +287,27 @@ class TestOptimizationService:
         )
         new_design.id = 2
         mock_design_repository.create_design.return_value = new_design
-        
+
         # Act
         result = await optimization_service.apply_optimization(
             optimization_id=optimization_id,
             user_id=user_id,
         )
-        
+
         # Assert
         assert result is not None
         assert result.id == 2
         assert result.version == 2
         assert result.parent_design_id == sample_design.id
         assert result.created_by == user_id
-        
+
         # Verify optimization status was updated to 'applied'
         mock_optimization_repository.update_optimization_status.assert_called_once_with(
             optimization_id=optimization_id,
             status="applied",
             user_id=user_id,
         )
-        
+
         # Verify new design version was created
         mock_design_repository.create_design.assert_called_once()
         call_kwargs = mock_design_repository.create_design.call_args[1]
@@ -324,10 +328,10 @@ class TestOptimizationService:
         """Test that optimization generation completes within 20 seconds."""
         # Arrange
         optimization_types = ["cost", "structural", "sustainability"]
-        
+
         # Mock LLM response
         mock_llm_client.generate_optimizations.return_value = mock_llm_optimizations
-        
+
         # Mock optimization creation
         created_optimizations = []
         for i, opt_data in enumerate(mock_llm_optimizations["optimizations"]):
@@ -343,9 +347,11 @@ class TestOptimizationService:
             )
             opt.id = i + 1
             created_optimizations.append(opt)
-        
-        mock_optimization_repository.create_optimization.side_effect = created_optimizations
-        
+
+        mock_optimization_repository.create_optimization.side_effect = (
+            created_optimizations
+        )
+
         # Act
         start_time = time.time()
         result = await optimization_service.generate_optimizations(
@@ -353,10 +359,12 @@ class TestOptimizationService:
             optimization_types=optimization_types,
         )
         end_time = time.time()
-        
+
         # Assert
         elapsed_time = end_time - start_time
-        assert elapsed_time < 20.0, f"Optimization took {elapsed_time:.2f} seconds, should be < 20 seconds"
+        assert (
+            elapsed_time < 20.0
+        ), f"Optimization took {elapsed_time:.2f} seconds, should be < 20 seconds"
         assert result is not None
         assert len(result) >= 3
 
@@ -372,24 +380,24 @@ class TestOptimizationService:
         """Test generate_optimizations fails when LLM generation fails."""
         # Arrange
         optimization_types = ["cost", "structural", "sustainability"]
-        
+
         # Mock LLM failure
         mock_llm_client.generate_optimizations.side_effect = LLMGenerationError(
             "All LLM providers failed"
         )
-        
+
         # Act & Assert
         with pytest.raises(LLMGenerationError) as exc_info:
             await optimization_service.generate_optimizations(
                 design=sample_design,
                 optimization_types=optimization_types,
             )
-        
+
         assert "All LLM providers failed" in str(exc_info.value)
-        
+
         # Verify LLM was called
         mock_llm_client.generate_optimizations.assert_called_once()
-        
+
         # Verify no optimizations were created
         mock_optimization_repository.create_optimization.assert_not_called()
 
@@ -405,24 +413,24 @@ class TestOptimizationService:
         """Test generate_optimizations fails when LLM request times out."""
         # Arrange
         optimization_types = ["cost", "structural", "sustainability"]
-        
+
         # Mock LLM timeout
         mock_llm_client.generate_optimizations.side_effect = LLMTimeoutError(
             "Request timed out after 60 seconds"
         )
-        
+
         # Act & Assert
         with pytest.raises(LLMTimeoutError) as exc_info:
             await optimization_service.generate_optimizations(
                 design=sample_design,
                 optimization_types=optimization_types,
             )
-        
+
         assert "timed out" in str(exc_info.value)
-        
+
         # Verify LLM was called
         mock_llm_client.generate_optimizations.assert_called_once()
-        
+
         # Verify no optimizations were created
         mock_optimization_repository.create_optimization.assert_not_called()
 
@@ -437,19 +445,19 @@ class TestOptimizationService:
         # Arrange
         user_id = 123
         optimization_id = 999
-        
+
         # Mock optimization not found
         mock_optimization_repository.update_optimization_status.return_value = None
-        
+
         # Act & Assert
         with pytest.raises(ValueError) as exc_info:
             await optimization_service.apply_optimization(
                 optimization_id=optimization_id,
                 user_id=user_id,
             )
-        
+
         assert "not found" in str(exc_info.value).lower()
-        
+
         # Verify optimization status update was attempted
         mock_optimization_repository.update_optimization_status.assert_called_once()
 
@@ -465,7 +473,7 @@ class TestOptimizationService:
         # Arrange
         user_id = 123
         optimization_id = 1
-        
+
         # Mock optimization
         optimization = DesignOptimization(
             design_id=999,  # Non-existent design
@@ -478,19 +486,21 @@ class TestOptimizationService:
             status="suggested",
         )
         optimization.id = optimization_id
-        
-        mock_optimization_repository.update_optimization_status.return_value = optimization
-        
+
+        mock_optimization_repository.update_optimization_status.return_value = (
+            optimization
+        )
+
         # Mock design not found
         mock_design_repository.get_design_by_id.return_value = None
-        
+
         # Act & Assert
         with pytest.raises(ValueError) as exc_info:
             await optimization_service.apply_optimization(
                 optimization_id=optimization_id,
                 user_id=user_id,
             )
-        
+
         assert "design" in str(exc_info.value).lower()
         assert "not found" in str(exc_info.value).lower()
 
@@ -506,7 +516,7 @@ class TestOptimizationService:
         """Test generate_optimizations with specific optimization types."""
         # Arrange
         optimization_types = ["cost"]  # Only cost optimizations
-        
+
         # Mock LLM response with only cost optimizations
         mock_llm_client.generate_optimizations.return_value = {
             "optimizations": [
@@ -533,10 +543,12 @@ class TestOptimizationService:
                 "total_tokens": 500,
             },
         }
-        
+
         # Mock optimization creation
         created_optimizations = []
-        for i, opt_data in enumerate(mock_llm_client.generate_optimizations.return_value["optimizations"]):
+        for i, opt_data in enumerate(
+            mock_llm_client.generate_optimizations.return_value["optimizations"]
+        ):
             opt = DesignOptimization(
                 design_id=sample_design.id,
                 optimization_type=opt_data["optimization_type"],
@@ -549,23 +561,25 @@ class TestOptimizationService:
             )
             opt.id = i + 1
             created_optimizations.append(opt)
-        
-        mock_optimization_repository.create_optimization.side_effect = created_optimizations
-        
+
+        mock_optimization_repository.create_optimization.side_effect = (
+            created_optimizations
+        )
+
         # Act
         result = await optimization_service.generate_optimizations(
             design=sample_design,
             optimization_types=optimization_types,
         )
-        
+
         # Assert
         assert result is not None
         assert len(result) == 2
-        
+
         # Verify all are cost optimizations
         for opt in result:
             assert opt.optimization_type == "cost"
-        
+
         # Verify LLM was called with correct types
         mock_llm_client.generate_optimizations.assert_called_once_with(
             design_specification=sample_design.specification,

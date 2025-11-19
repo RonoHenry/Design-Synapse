@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 from typing import List, Optional
+
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
@@ -41,7 +42,9 @@ class OptimizationRepository:
         self.db.refresh(optimization)
         return optimization
 
-    def get_optimizations_by_design_id(self, design_id: int) -> List[DesignOptimization]:
+    def get_optimizations_by_design_id(
+        self, design_id: int
+    ) -> List[DesignOptimization]:
         """
         Get all optimizations for a specific design.
 
@@ -61,10 +64,7 @@ class OptimizationRepository:
         return query.all()
 
     def update_optimization_status(
-        self,
-        optimization_id: int,
-        status: str,
-        user_id: Optional[int] = None
+        self, optimization_id: int, status: str, user_id: Optional[int] = None
     ) -> Optional[DesignOptimization]:
         """
         Update the status of an optimization.
@@ -80,9 +80,11 @@ class OptimizationRepository:
         Returns:
             Updated DesignOptimization instance if found, None otherwise
         """
-        optimization = self.db.query(DesignOptimization).filter(
-            DesignOptimization.id == optimization_id
-        ).first()
+        optimization = (
+            self.db.query(DesignOptimization)
+            .filter(DesignOptimization.id == optimization_id)
+            .first()
+        )
 
         if optimization is None:
             return None

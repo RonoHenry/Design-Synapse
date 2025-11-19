@@ -8,18 +8,31 @@ with S3 integration, CDN support, and lifecycle policies.
 import os
 from typing import Dict, List, Optional
 
+from botocore.config import Config
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from botocore.config import Config
-
 
 # AWS regions supported for S3
 SUPPORTED_AWS_REGIONS = [
-    "us-east-1", "us-east-2", "us-west-1", "us-west-2",
-    "eu-west-1", "eu-west-2", "eu-west-3", "eu-central-1", "eu-north-1",
-    "ap-southeast-1", "ap-southeast-2", "ap-northeast-1", "ap-northeast-2", 
-    "ap-south-1", "ap-east-1", "ca-central-1", "sa-east-1", "af-south-1",
-    "me-south-1"
+    "us-east-1",
+    "us-east-2",
+    "us-west-1",
+    "us-west-2",
+    "eu-west-1",
+    "eu-west-2",
+    "eu-west-3",
+    "eu-central-1",
+    "eu-north-1",
+    "ap-southeast-1",
+    "ap-southeast-2",
+    "ap-northeast-1",
+    "ap-northeast-2",
+    "ap-south-1",
+    "ap-east-1",
+    "ca-central-1",
+    "sa-east-1",
+    "af-south-1",
+    "me-south-1",
 ]
 
 # Default file extensions allowed for upload
@@ -38,13 +51,13 @@ DEFAULT_MULTIPART_ABORT_DAYS = 7
 class StorageConfig(BaseSettings):
     """
     Storage configuration with S3 integration and CDN support.
-    
+
     This class manages configuration for file storage operations including:
     - S3 bucket and authentication settings
     - CDN integration for performance optimization
     - File upload restrictions and validation
     - Lifecycle policies for cost optimization
-    
+
     Environment variables are prefixed with 'STORAGE_' (e.g., STORAGE_S3_BUCKET).
     """
 
@@ -68,15 +81,15 @@ class StorageConfig(BaseSettings):
 
     # Upload settings
     max_file_size_mb: int = Field(
-        default=100, 
-        ge=MIN_FILE_SIZE_MB, 
+        default=100,
+        ge=MIN_FILE_SIZE_MB,
         le=MAX_FILE_SIZE_MB,
-        description="Maximum file size allowed for upload in MB"
+        description="Maximum file size allowed for upload in MB",
     )
     allowed_extensions_str: str = Field(
-        default=DEFAULT_ALLOWED_EXTENSIONS, 
+        default=DEFAULT_ALLOWED_EXTENSIONS,
         alias="allowed_extensions",
-        description="Comma-separated list of allowed file extensions"
+        description="Comma-separated list of allowed file extensions",
     )
 
     @property
@@ -86,18 +99,17 @@ class StorageConfig(BaseSettings):
 
     # Lifecycle settings
     lifecycle_enabled: bool = Field(
-        default=False,
-        description="Enable S3 lifecycle policies for cost optimization"
+        default=False, description="Enable S3 lifecycle policies for cost optimization"
     )
     lifecycle_transition_days: int = Field(
-        default=DEFAULT_TRANSITION_DAYS, 
+        default=DEFAULT_TRANSITION_DAYS,
         ge=1,
-        description="Days after which files transition to Infrequent Access storage"
+        description="Days after which files transition to Infrequent Access storage",
     )
     lifecycle_expiration_days: int = Field(
-        default=DEFAULT_EXPIRATION_DAYS, 
+        default=DEFAULT_EXPIRATION_DAYS,
         ge=1,
-        description="Days after which files are automatically deleted"
+        description="Days after which files are automatically deleted",
     )
 
     @field_validator("s3_region")
@@ -162,13 +174,15 @@ class StorageConfig(BaseSettings):
         if self.cdn_enabled and self.cdn_url:
             return f"{self.cdn_url.rstrip('/')}/{file_key}"
         else:
-            return f"https://{self.s3_bucket}.s3.{self.s3_region}.amazonaws.com/{file_key}"
+            return (
+                f"https://{self.s3_bucket}.s3.{self.s3_region}.amazonaws.com/{file_key}"
+            )
 
     def is_allowed_extension(self, filename: str) -> bool:
         """Check if file extension is allowed."""
         if "." not in filename:
             return False
-        
+
         extension = filename.rsplit(".", 1)[1].lower()
         return extension in self.allowed_extensions
 
@@ -176,20 +190,20 @@ class StorageConfig(BaseSettings):
         """Check if file size is within limits."""
         if file_size_bytes <= 0:
             return False
-        
+
         max_bytes = self.max_file_size_mb * 1024 * 1024
         return file_size_bytes <= max_bytes
 
     def get_s3_lifecycle_policy(self) -> Optional[Dict]:
         """
         Generate S3 lifecycle policy configuration.
-        
+
         Returns:
             Dict containing lifecycle policy rules if enabled, None otherwise.
         """
         if not self.lifecycle_enabled:
             return None
-            
+
         return {
             "Rules": [
                 {
@@ -199,15 +213,13 @@ class StorageConfig(BaseSettings):
                     "Transitions": [
                         {
                             "Days": self.lifecycle_transition_days,
-                            "StorageClass": "STANDARD_IA"
+                            "StorageClass": "STANDARD_IA",
                         }
                     ],
-                    "Expiration": {
-                        "Days": self.lifecycle_expiration_days
-                    },
+                    "Expiration": {"Days": self.lifecycle_expiration_days},
                     "AbortIncompleteMultipartUpload": {
                         "DaysAfterInitiation": DEFAULT_MULTIPART_ABORT_DAYS
-                    }
+                    },
                 }
             ]
         }
@@ -216,15 +228,18 @@ class StorageConfig(BaseSettings):
         """Validate that required settings are present and valid."""
         if not self.s3_access_key_id or not self.s3_secret_access_key:
             raise ValueError("S3 credentials (access key and secret key) are required")
-        
+
         if not self.s3_bucket:
             raise ValueError("S3 bucket name is required")
-        
+
         if not self.s3_region:
             raise ValueError("S3 region is required")
-            
+
         # Validate lifecycle settings consistency
-        if self.lifecycle_enabled and self.lifecycle_transition_days >= self.lifecycle_expiration_days:
+        if (
+            self.lifecycle_enabled
+            and self.lifecycle_transition_days >= self.lifecycle_expiration_days
+        ):
             raise ValueError(
                 "lifecycle_transition_days must be less than lifecycle_expiration_days"
             )

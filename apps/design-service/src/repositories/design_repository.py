@@ -1,6 +1,7 @@
 """Repository for Design model CRUD operations."""
 
 from typing import List, Optional
+
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 

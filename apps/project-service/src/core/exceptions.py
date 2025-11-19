@@ -1,74 +1,36 @@
-"""Custom exception classes and handlers."""
+"""Custom exception classes and handlers for Project Service."""
 
-from fastapi import Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from sqlalchemy.exc import SQLAlchemyError
+import sys
+from pathlib import Path
 
+# Add packages to path for common imports
+packages_path = Path(__file__).parent.parent.parent.parent.parent / "packages"
+sys.path.insert(0, str(packages_path))
 
-class APIError(Exception):
-    """Base class for API errors."""
-
-    def __init__(self, status_code: int, message: str):
-        """Initialize API error."""
-        self.status_code = status_code
-        self.message = message
-        super().__init__(message)
+from common.errors.base import APIError, NotFoundError, ForbiddenError
+from common.errors.handlers import register_error_handlers
 
 
-class ProjectNotFoundError(APIError):
+class ProjectNotFoundError(NotFoundError):
     """Raised when a project is not found."""
 
     def __init__(self, project_id: int):
         """Initialize project not found error."""
         super().__init__(
-            status_code=404,
-            message=f"Project with ID {project_id} not found"
+            message=f"Project with ID {project_id} not found",
+            error_code="PROJECT_NOT_FOUND",
+            details={"project_id": project_id}
         )
 
 
-class ProjectAccessError(APIError):
+class ProjectAccessError(ForbiddenError):
     """Raised when a user doesn't have access to a project."""
 
-    def __init__(self):
+    def __init__(self, project_id: int = None):
         """Initialize project access error."""
+        details = {"project_id": project_id} if project_id else {}
         super().__init__(
-            status_code=403,
-            message="You don't have access to this project"
+            message="You don't have access to this project",
+            error_code="PROJECT_ACCESS_DENIED",
+            details=details
         )
-
-
-async def api_error_handler(request: Request, exc: APIError) -> JSONResponse:
-    """Handle API errors."""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
-
-
-async def validation_error_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
-    """Handle validation errors."""
-    return JSONResponse(
-        status_code=422,
-        content={"detail": exc.errors()}
-    )
-
-
-async def sqlalchemy_error_handler(
-    request: Request, exc: SQLAlchemyError
-) -> JSONResponse:
-    """Handle database errors."""
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Database error occurred"}
-    )
-
-
-async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Handle general exceptions."""
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "An unexpected error occurred"}
-    )

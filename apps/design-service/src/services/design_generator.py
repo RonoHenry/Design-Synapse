@@ -9,14 +9,14 @@ This service orchestrates the design generation workflow:
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
+from ..api.v1.schemas.requests import DesignGenerationRequest
 from ..models.design import Design
 from ..repositories.design_repository import DesignRepository
-from ..services.llm_client import LLMClient, LLMGenerationError, LLMTimeoutError
-from ..services.project_client import ProjectClient, ProjectAccessDeniedError
-from ..api.v1.schemas.requests import DesignGenerationRequest
-
+from ..services.llm_client import (LLMClient, LLMGenerationError,
+                                   LLMTimeoutError)
+from ..services.project_client import ProjectAccessDeniedError, ProjectClient
 
 logger = logging.getLogger(__name__)
 
@@ -160,9 +160,7 @@ class DesignGeneratorService:
         Raises:
             ValueError: If parent design is not found
         """
-        logger.info(
-            f"Creating new version of design {design_id} for user {user_id}"
-        )
+        logger.info(f"Creating new version of design {design_id} for user {user_id}")
 
         # Step 1: Retrieve parent design
         parent_design = self.design_repository.get_design_by_id(
@@ -174,9 +172,7 @@ class DesignGeneratorService:
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        logger.debug(
-            f"Parent design found. Current version: {parent_design.version}"
-        )
+        logger.debug(f"Parent design found. Current version: {parent_design.version}")
 
         # Step 2: Prepare new version data
         # Start with parent design data
