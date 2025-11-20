@@ -1,0 +1,37 @@
+Generic single-database configuration for Alembic migrations.
+
+This directory contains database migration scripts for the Vendor Service.
+
+## Usage
+
+Generate a new migration:
+```bash
+cd apps/vendor-service
+alembic revision --autogenerate -m "description of changes"
+```
+
+Apply migrations:
+```bash
+cd apps/vendor-service
+alembic upgrade head
+```
+
+Downgrade migrations:
+```bash
+cd apps/vendor-service
+alembic downgrade -1
+```
+
+View migration history:
+```bash
+cd apps/vendor-service
+alembic history
+```
+
+## TiDB Compatibility
+
+These migrations are designed to work with TiDB (MySQL-compatible).
+Avoid PostgreSQL-specific features like:
+- ARRAY types
+- JSON operators (use JSON functions instead)
+- PostgreSQL-specific indexes
