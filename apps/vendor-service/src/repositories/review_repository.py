@@ -58,7 +58,7 @@ class ReviewRepository:
         """Get all verified purchase reviews."""
         return (
             self.session.query(Review)
-            .filter(Review.verified_purchase is True)
+            .filter(Review.verified_purchase == True)
             .order_by(desc(Review.created_at))
             .all()
         )
