@@ -190,15 +190,15 @@ Each task includes property-based tests for critical business logic and unit tes
   - Test API endpoints manually if needed
   - Ask the user if questions arise
 
-- [ ] 8. Compliance checking service
-  - [ ] 8.1 Implement ComplianceService
+- [x] 8. Compliance checking service
+  - [x] 8.1 Implement ComplianceService
     - Implement check_compliance method that queries Knowledge Service
     - Implement validate_against_code method for code validation logic
     - Implement get_check_results method
     - Implement generate_compliance_report method
     - _Requirements: 2.1, 2.2, 2.3, 2.7, 9.3_
 
-  - [ ] 8.2 Write property tests for ComplianceService
+  - [x] 8.2 Write property tests for ComplianceService
     - **Property 7: Compliance check initiation**
     - **Property 8: Violation reference completeness**
     - **Property 9: Compliance report completeness**
@@ -206,68 +206,68 @@ Each task includes property-based tests for critical business logic and unit tes
     - **Property 11: Compliance success marking**
     - **Validates: Requirements 2.1, 2.2, 2.3, 2.6, 2.7**
 
-  - [ ] 8.3 Write unit tests for compliance validation logic
+  - [x] 8.3 Write unit tests for compliance validation logic
     - Test specific code violations (egress width, occupancy limits)
     - Test multiple code standards
     - Test jurisdiction-specific codes
     - _Requirements: 2.2, 2.4_
 
-- [ ] 9. Structural analysis service
-  - [ ] 9.1 Implement StructuralAnalysisService
+- [x] 9. Structural analysis service
+  - [x] 9.1 Implement StructuralAnalysisService
     - Implement analyze_structure method
     - Implement calculate_loads method (dead, live, wind, seismic)
     - Implement identify_issues method
     - _Requirements: 3.1, 3.2, 3.4_
 
-  - [ ] 9.2 Write property tests for StructuralAnalysisService
+  - [x] 9.2 Write property tests for StructuralAnalysisService
     - **Property 12: Structural load calculation completeness**
     - **Property 13: Structural issue flagging**
     - **Property 14: Audit trail completeness**
     - **Validates: Requirements 3.2, 3.4, 3.6**
 
-  - [ ] 9.3 Write unit tests for load calculations
+  - [x] 9.3 Write unit tests for load calculations
     - Test dead load calculations for different materials
     - Test live load calculations for different occupancies
     - Test wind load calculations for different exposures
     - Test seismic load calculations for different zones
     - _Requirements: 3.2_
 
-- [ ] 10. Material specification service
-  - [ ] 10.1 Implement MaterialService
+- [x] 10. Material specification service
+  - [x] 10.1 Implement MaterialService
     - Implement add_material method with validation
     - Implement search_materials method with Vendor Service integration
     - Implement get_vendor_info, update_material_pricing methods
     - _Requirements: 4.1, 4.2, 4.3, 4.5_
 
-  - [ ] 10.2 Write property tests for MaterialService
+  - [x] 10.2 Write property tests for MaterialService
     - **Property 15: Material validation**
     - **Property 16: Material search result completeness**
     - **Property 17: Material-element relationship preservation**
     - **Property 18: Material change tracking**
     - **Validates: Requirements 4.1, 4.3, 4.4, 4.5**
 
-  - [ ] 10.3 Write unit tests for material validation
+  - [x] 10.3 Write unit tests for material validation
     - Test missing required properties
     - Test invalid material categories
     - Test vendor service integration failures
     - _Requirements: 4.1, 4.2_
 
-- [ ] 11. Space planning service
-  - [ ] 11.1 Implement SpacePlanningService
+- [x] 11. Space planning service
+  - [x] 11.1 Implement SpacePlanningService
     - Implement plan_spaces method with layout recommendations
     - Implement calculate_metrics method (area efficiency, circulation, density)
     - Implement optimize_layout method
     - Implement validate_circulation method
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-  - [ ] 11.2 Write property tests for SpacePlanningService
+  - [x] 11.2 Write property tests for SpacePlanningService
     - **Property 19: Space planning metric completeness**
     - **Property 20: Space requirement validation**
     - **Property 21: Circulation path validation**
     - **Property 22: Space program document completeness**
     - **Validates: Requirements 5.2, 5.4, 5.5, 5.6**
 
-  - [ ] 11.3 Write unit tests for space planning algorithms
+  - [x] 11.3 Write unit tests for space planning algorithms
     - Test layout recommendations for different building types
     - Test metric calculations with edge cases
     - Test circulation validation with complex layouts
