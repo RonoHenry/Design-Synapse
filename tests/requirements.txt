@@ -1,0 +1,40 @@
+# Integration test dependencies
+# These are the dependencies needed to run workspace-level integration tests
+
+# Core testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-timeout>=2.1.0
+pytest-xdist>=3.3.0
+
+# HTTP client for service communication
+httpx>=0.24.0
+
+# Database testing
+sqlalchemy>=2.0.25
+psycopg2-binary>=2.9.0
+
+# Container management for test databases and services
+testcontainers>=3.7.0
+docker>=6.1.0
+
+# Test data factories
+factory-boy>=3.3.0
+faker>=19.0.0
+
+# Async utilities
+asyncio-mqtt>=0.13.0
+
+# Configuration and environment
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+
+# Utilities
+uuid>=1.30
+python-dateutil>=2.8.0
+
+# Development and debugging
+ipdb>=0.13.0
+rich>=13.0.0

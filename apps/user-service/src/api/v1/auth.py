@@ -1,17 +1,23 @@
 """API endpoints for user authentication and token management."""
 
+import sys
+from pathlib import Path
+
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError
 from sqlalchemy.orm import Session
 
 from .schemas.auth import Token, TokenRefresh, TokenResponse
-from ...core.exceptions import AuthenticationError
-from ...core.security import (
-    create_access_token,
-    create_refresh_token,
-    verify_refresh_token,
-)
+
+# Add packages to path for common imports
+packages_path = Path(__file__).parent.parent.parent.parent.parent.parent / "packages"
+sys.path.insert(0, str(packages_path))
+
+from common.errors.base import AuthenticationError
+
+from ...core.security import (create_access_token, create_refresh_token,
+                              verify_refresh_token)
 from ...infrastructure.database import get_db
 from ...models import User
 

@@ -2,10 +2,13 @@
 
 from datetime import datetime
 from typing import List, Optional
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.core.pagination import (PaginatedResponse, PaginationHelper,
+                                 PaginationParams)
 from src.models.design import Design
 from src.models.design_version import DesignVersion
 from src.repositories.base_repository import BaseRepository
@@ -296,5 +299,50 @@ class DesignRepository(BaseRepository[Design]):
                 )
             )
             return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            raise e
+
+    async def list_designs(
+        self,
+        params: PaginationParams,
+        project_id: Optional[UUID] = None,
+        include_deleted: bool = False,
+        include_total: bool = False,
+    ) -> PaginatedResponse:
+        """
+        List designs with cursor-based pagination.
+
+        Args:
+            params: Pagination parameters (cursor, limit, sort)
+            project_id: Optional project ID to filter by
+            include_deleted: Whether to include soft-deleted designs
+            include_total: Whether to include total count
+
+        Returns:
+            Paginated response with Design instances
+
+        Raises:
+            SQLAlchemyError: If database operation fails
+        """
+        try:
+            # Build base query
+            query = select(Design)
+
+            # Apply filters
+            if project_id is not None:
+                query = query.where(Design.project_id == str(project_id))
+
+            if not include_deleted:
+                query = query.where(Design.is_deleted == False)
+
+            # Use pagination helper
+            pagination_helper = PaginationHelper(
+                session=self.session, model=Design, default_sort_field="created_at"
+            )
+
+            return await pagination_helper.paginate(
+                query=query, params=params, include_total=include_total
+            )
+
         except SQLAlchemyError as e:
             raise e

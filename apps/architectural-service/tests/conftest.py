@@ -3,6 +3,7 @@
 import asyncio
 from typing import AsyncGenerator, Generator
 
+import httpx
 import pytest
 # Then import all models to register them with Base.metadata
 import src.models  # noqa: F401
@@ -94,7 +95,9 @@ async def client(test_session: AsyncSession) -> AsyncGenerator[AsyncClient, None
 
     app.dependency_overrides[get_db] = override_get_db
 
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
     app.dependency_overrides.clear()
@@ -106,3 +109,41 @@ def sample_uuid():
     from uuid import uuid4
 
     return uuid4()
+
+
+@pytest.fixture
+def db_session(test_session):
+    """Alias for test_session to match property test expectations."""
+    return test_session
+
+
+@pytest.fixture
+def design_repository_factory():
+    """Factory for creating DesignRepository instances."""
+    from src.repositories.design_repository import DesignRepository
+
+    def _create_repository(session):
+        return DesignRepository(session)
+
+    return _create_repository
+
+
+@pytest.fixture
+def mock_project_client():
+    """Mock ProjectServiceClient for testing."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    from src.infrastructure.project_service_client import ProjectValidation
+
+    mock_client = AsyncMock()
+
+    # Mock validate_project to always return valid
+    validation = ProjectValidation(
+        exists=True, user_has_access=True, project_status="active"
+    )
+    mock_client.validate_project.return_value = validation
+
+    # Mock log_activity to succeed
+    mock_client.log_activity.return_value = None
+
+    return mock_client

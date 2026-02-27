@@ -117,7 +117,8 @@ class DrawingService:
             else data.drawing_type
         )
 
-        drawing = Drawing(
+        # Save drawing
+        drawing = await self.drawing_repository.create(
             id=drawing_id,
             design_id=str(design_id),
             design_version=design.current_version,
@@ -131,9 +132,6 @@ class DrawingService:
             created_by=str(user_id),
             created_at=datetime.utcnow(),
         )
-
-        # Save drawing
-        drawing = await self.drawing_repository.create(drawing)
 
         logger.info(
             f"Uploaded drawing {drawing.id} for design {design_id} "

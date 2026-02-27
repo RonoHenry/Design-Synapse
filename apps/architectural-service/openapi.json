@@ -1,0 +1,5047 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Architectural Service API",
+    "description": "\n## Architectural Service API\n\nThe Architectural Service provides comprehensive architectural design management, \nbuilding code compliance checking, structural analysis, and material specification capabilities.\n\n### Features\n\n* **Design Management**: Create, update, and version architectural design documents\n* **Building Code Compliance**: Automated compliance checking against IBC, IRC, and local codes\n* **Structural Analysis**: Load calculations and structural integrity validation\n* **Material Specifications**: Material management with vendor integration\n* **Space Planning**: Layout optimization and space utilization analysis\n* **Accessibility Compliance**: ADA and ANSI A117.1 compliance checking\n* **Energy Analysis**: Building envelope performance and energy efficiency analysis\n* **Real-time Collaboration**: Multi-user design collaboration with conflict resolution\n\n### Authentication\n\nAll endpoints require JWT authentication. Include the token in the Authorization header:\n\n```\nAuthorization: Bearer <your-jwt-token>\n```\n\n### Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n    \"error\": {\n        \"code\": \"ERROR_CODE\",\n        \"message\": \"Human-readable error message\",\n        \"details\": {},\n        \"timestamp\": \"2024-01-15T10:30:00Z\",\n        \"request_id\": \"uuid\"\n    }\n}\n```\n\n### Pagination\n\nList endpoints use cursor-based pagination for efficient navigation:\n\n* Use `limit` parameter to control page size (1-100, default: 20)\n* Use `cursor` from response to fetch next page\n* Use `sort_field` and `sort_direction` to control ordering\n\n### Versioning\n\nDesign documents use automatic versioning:\n\n* New designs start at version 1.0\n* Updates increment version number automatically\n* All versions are preserved for audit trail\n* Retrieve specific versions using version parameter\n\n### Rate Limiting\n\nAPI requests are rate-limited per user:\n\n* Standard tier: 100 requests per minute\n* Premium tier: 1000 requests per minute\n\nRate limit information is included in response headers.\n    ",
+    "contact": {
+      "name": "DesignSynapse Support",
+      "url": "https://designsynapse.com/support",
+      "email": "support@designsynapse.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://designsynapse.com/license"
+    },
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Root",
+        "description": "Root endpoint.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs": {
+      "post": {
+        "tags": [
+          "designs"
+        ],
+        "summary": "Create a new design document",
+        "description": "Create a new architectural design document with version 1.0",
+        "operationId": "create_design_api_v1_designs_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDesignRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Design document created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignResponse"
+                },
+                "example": {
+                  "id": "550e8400-e29b-41d4-a716-446655440000",
+                  "project_id": "660e8400-e29b-41d4-a716-446655440000",
+                  "name": "Downtown Office Building",
+                  "building_type": "commercial",
+                  "current_version": "1.0",
+                  "version_number": 1,
+                  "status": "draft",
+                  "created_by": "770e8400-e29b-41d4-a716-446655440000",
+                  "created_at": "2024-01-15T10:30:00Z",
+                  "updated_at": "2024-01-15T10:30:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Input validation failed",
+                    "details": {
+                      "validation_errors": [
+                        {
+                          "field": "name",
+                          "message": "Field required",
+                          "type": "missing"
+                        }
+                      ]
+                    },
+                    "timestamp": "2024-01-15T10:30:00Z",
+                    "request_id": "abc123"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "UNAUTHORIZED",
+                    "message": "Authentication required",
+                    "details": {},
+                    "timestamp": "2024-01-15T10:30:00Z",
+                    "request_id": "abc123"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Project not found",
+                    "details": {
+                      "project_id": "660e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "timestamp": "2024-01-15T10:30:00Z",
+                    "request_id": "abc123"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "An unexpected error occurred",
+                    "details": {},
+                    "timestamp": "2024-01-15T10:30:00Z",
+                    "request_id": "abc123"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "designs"
+        ],
+        "summary": "List design documents",
+        "description": "List design documents with cursor-based pagination",
+        "operationId": "list_designs_api_v1_designs_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by project ID",
+              "title": "Project Id"
+            },
+            "description": "Filter by project ID"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Number of items per page",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Number of items per page"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Cursor for pagination",
+              "title": "Cursor"
+            },
+            "description": "Cursor for pagination"
+          },
+          {
+            "name": "sort_field",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Field to sort by (defaults to created_at)",
+              "title": "Sort Field"
+            },
+            "description": "Field to sort by (defaults to created_at)"
+          },
+          {
+            "name": "sort_direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(asc|desc)$",
+              "description": "Sort direction (asc or desc)",
+              "default": "desc",
+              "title": "Sort Direction"
+            },
+            "description": "Sort direction (asc or desc)"
+          },
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include soft-deleted designs",
+              "default": false,
+              "title": "Include Deleted"
+            },
+            "description": "Include soft-deleted designs"
+          },
+          {
+            "name": "include_total",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include total count in response",
+              "default": false,
+              "title": "Include Total"
+            },
+            "description": "Include total count in response"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of design documents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignListResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "550e8400-e29b-41d4-a716-446655440000",
+                      "project_id": "660e8400-e29b-41d4-a716-446655440000",
+                      "name": "Downtown Office Building",
+                      "building_type": "commercial",
+                      "current_version": "2.0",
+                      "version_number": 2,
+                      "status": "draft",
+                      "created_by": "770e8400-e29b-41d4-a716-446655440000",
+                      "created_at": "2024-01-15T10:30:00Z",
+                      "updated_at": "2024-01-16T14:20:00Z"
+                    }
+                  ],
+                  "has_next": true,
+                  "next_cursor": "eyJpZCI6IjU1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwMCJ9",
+                  "total_count": 42,
+                  "page_info": {
+                    "limit": 20,
+                    "sort_field": "created_at",
+                    "sort_direction": "desc"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs/{design_id}": {
+      "get": {
+        "tags": [
+          "designs"
+        ],
+        "summary": "Get a design document",
+        "description": "Retrieve a design document with detailed information",
+        "operationId": "get_design_api_v1_designs__design_id__get",
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Specific version to retrieve (e.g., '1.0', '2.0')",
+              "title": "Version"
+            },
+            "description": "Specific version to retrieve (e.g., '1.0', '2.0')"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Design document details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignDetailResponse"
+                },
+                "example": {
+                  "id": "550e8400-e29b-41d4-a716-446655440000",
+                  "project_id": "660e8400-e29b-41d4-a716-446655440000",
+                  "name": "Downtown Office Building",
+                  "description": "Modern 10-story office building",
+                  "building_type": "commercial",
+                  "location": {
+                    "address": "123 Main St",
+                    "city": "Seattle",
+                    "state": "WA"
+                  },
+                  "current_version": "2.0",
+                  "version_number": 2,
+                  "status": "draft",
+                  "metadata": {},
+                  "is_deleted": false,
+                  "drawing_count": 5,
+                  "material_count": 12,
+                  "compliance_check_count": 2,
+                  "created_by": "770e8400-e29b-41d4-a716-446655440000",
+                  "created_at": "2024-01-15T10:30:00Z",
+                  "updated_at": "2024-01-16T14:20:00Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Design not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "designs"
+        ],
+        "summary": "Update a design document",
+        "description": "Update a design document and create a new version",
+        "operationId": "update_design_api_v1_designs__design_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDesignRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Design updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignResponse"
+                },
+                "example": {
+                  "id": "550e8400-e29b-41d4-a716-446655440000",
+                  "project_id": "660e8400-e29b-41d4-a716-446655440000",
+                  "name": "Downtown Office Building - Updated",
+                  "building_type": "commercial",
+                  "current_version": "2.0",
+                  "version_number": 2,
+                  "status": "draft",
+                  "created_by": "770e8400-e29b-41d4-a716-446655440000",
+                  "created_at": "2024-01-15T10:30:00Z",
+                  "updated_at": "2024-01-16T14:20:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "404": {
+            "description": "Design not found"
+          },
+          "409": {
+            "description": "Version conflict - design was modified by another user"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "designs"
+        ],
+        "summary": "Soft delete a design document",
+        "description": "Soft delete a design document (preserves data for audit)",
+        "operationId": "delete_design_api_v1_designs__design_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Design deleted successfully"
+          },
+          "404": {
+            "description": "Design not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs/{design_id}/versions": {
+      "get": {
+        "tags": [
+          "designs"
+        ],
+        "summary": "List design versions",
+        "description": "List all versions of a design document",
+        "operationId": "list_design_versions_api_v1_designs__design_id__versions_get",
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of design versions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DesignVersionResponse"
+                  },
+                  "title": "Response List Design Versions Api V1 Designs  Design Id  Versions Get"
+                },
+                "example": [
+                  {
+                    "id": "880e8400-e29b-41d4-a716-446655440000",
+                    "design_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "version": "1.0",
+                    "version_number": 1,
+                    "change_summary": "Initial version",
+                    "created_by": "770e8400-e29b-41d4-a716-446655440000",
+                    "created_at": "2024-01-15T10:30:00Z"
+                  },
+                  {
+                    "id": "990e8400-e29b-41d4-a716-446655440000",
+                    "design_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "version": "2.0",
+                    "version_number": 2,
+                    "change_summary": "Updated floor plan layout",
+                    "created_by": "770e8400-e29b-41d4-a716-446655440000",
+                    "created_at": "2024-01-16T14:20:00Z"
+                  }
+                ]
+              }
+            }
+          },
+          "404": {
+            "description": "Design not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs/{design_id}/versions/{version}": {
+      "get": {
+        "tags": [
+          "designs"
+        ],
+        "summary": "Get specific design version",
+        "description": "Retrieve a specific version of a design document with full data",
+        "operationId": "get_design_version_api_v1_designs__design_id__versions__version__get",
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Design version details with complete snapshot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignVersionDetailResponse"
+                },
+                "example": {
+                  "id": "880e8400-e29b-41d4-a716-446655440000",
+                  "design_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "version": "1.0",
+                  "version_number": 1,
+                  "change_summary": "Initial version",
+                  "design_data": {
+                    "name": "Downtown Office Building",
+                    "building_type": "commercial",
+                    "location": {
+                      "address": "123 Main St"
+                    }
+                  },
+                  "created_by": "770e8400-e29b-41d4-a716-446655440000",
+                  "created_at": "2024-01-15T10:30:00Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Design or version not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs/{design_id}/drawings": {
+      "post": {
+        "tags": [
+          "drawings"
+        ],
+        "summary": "Upload a drawing",
+        "description": "Upload an architectural drawing file to a design document",
+        "operationId": "upload_drawing_api_v1_designs__design_id__drawings_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_drawing_api_v1_designs__design_id__drawings_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrawingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "drawings"
+        ],
+        "summary": "List drawings for a design",
+        "description": "List all drawings associated with a design document",
+        "operationId": "list_drawings_api_v1_designs__design_id__drawings_get",
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          },
+          {
+            "name": "drawing_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DrawingType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by drawing type",
+              "title": "Drawing Type"
+            },
+            "description": "Filter by drawing type"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrawingListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/drawings/{drawing_id}": {
+      "get": {
+        "tags": [
+          "drawings"
+        ],
+        "summary": "Get a drawing",
+        "description": "Retrieve a specific drawing with detailed information",
+        "operationId": "get_drawing_api_v1_drawings__drawing_id__get",
+        "parameters": [
+          {
+            "name": "drawing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Drawing Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrawingDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "drawings"
+        ],
+        "summary": "Delete a drawing",
+        "description": "Delete a drawing and its associated file",
+        "operationId": "delete_drawing_api_v1_drawings__drawing_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "drawing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Drawing Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs/{design_id}/collaboration/join": {
+      "post": {
+        "tags": [
+          "collaboration"
+        ],
+        "summary": "Join Collaboration Session",
+        "description": "Join or create a collaboration session for a design.\n\nArgs:\n    design_id: The design document ID\n    request: Join session request data\n    \nReturns:\n    CollaborationSessionResponse: Session information including WebSocket URL\n    \nRaises:\n    HTTPException: If design not found or other errors",
+        "operationId": "join_collaboration_session_api_v1_designs__design_id__collaboration_join_post",
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollaborationSessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/collaboration/{session_id}/users": {
+      "get": {
+        "tags": [
+          "collaboration"
+        ],
+        "summary": "Get Session Users",
+        "description": "Get list of active users in a collaboration session.\n\nArgs:\n    session_id: Collaboration session ID\n    \nReturns:\n    List of active users with their information",
+        "operationId": "get_session_users_api_v1_collaboration__session_id__users_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/summary": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Get Project Summary",
+        "description": "Get project summary with design count, compliance status, and completion percentage.\n\nArgs:\n    project_id: Project ID to get summary for\n    design_service: Design service dependency\n\nReturns:\n    Project summary with design statistics\n\nRaises:\n    404: If project not found\n    500: If calculation fails",
+        "operationId": "get_project_summary_api_v1_projects__project_id__summary_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Project Summary Api V1 Projects  Project Id  Summary Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/archive": {
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Cascade Archive Project Designs",
+        "description": "Archive all designs when a project is archived.\n\nThis endpoint should be called by the Project Service when a project\nis archived to cascade the archive operation to all associated designs.\n\nArgs:\n    project_id: Project ID that was archived\n    user_id: User ID who initiated the archive\n    design_service: Design service dependency\n\nReturns:\n    Archive operation results\n\nRaises:\n    404: If project not found\n    500: If archive operation fails",
+        "operationId": "cascade_archive_project_designs_api_v1_projects__project_id__archive_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cascade Archive Project Designs Api V1 Projects  Project Id  Archive Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs/{design_id}/compliance-checks": {
+      "post": {
+        "tags": [
+          "compliance"
+        ],
+        "summary": "Request compliance check",
+        "description": "Request a building code compliance check for a design",
+        "operationId": "request_compliance_check_api_v1_designs__design_id__compliance_checks_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplianceCheckRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceCheckResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "compliance"
+        ],
+        "summary": "List compliance checks",
+        "description": "List all compliance checks for a design",
+        "operationId": "list_compliance_checks_api_v1_designs__design_id__compliance_checks_get",
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ComplianceCheckResponse"
+                  },
+                  "title": "Response List Compliance Checks Api V1 Designs  Design Id  Compliance Checks Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compliance-checks/{check_id}": {
+      "get": {
+        "tags": [
+          "compliance"
+        ],
+        "summary": "Get compliance check results",
+        "description": "Retrieve compliance check results and status",
+        "operationId": "get_compliance_check_api_v1_compliance_checks__check_id__get",
+        "parameters": [
+          {
+            "name": "check_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Check Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceCheckResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs/{design_id}/structural-analysis": {
+      "post": {
+        "tags": [
+          "structural-analysis"
+        ],
+        "summary": "Request structural analysis",
+        "description": "Request structural analysis for a design",
+        "operationId": "request_structural_analysis_api_v1_designs__design_id__structural_analysis_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StructuralAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StructuralAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/structural-analysis/{analysis_id}": {
+      "get": {
+        "tags": [
+          "structural-analysis"
+        ],
+        "summary": "Get structural analysis results",
+        "description": "Retrieve structural analysis results and status",
+        "operationId": "get_structural_analysis_api_v1_structural_analysis__analysis_id__get",
+        "parameters": [
+          {
+            "name": "analysis_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Analysis Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StructuralAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs/{design_id}/materials": {
+      "post": {
+        "tags": [
+          "materials"
+        ],
+        "summary": "Add material specification",
+        "description": "Add a material specification to a design",
+        "operationId": "add_material_specification_api_v1_designs__design_id__materials_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialSpecificationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialSpecificationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "materials"
+        ],
+        "summary": "List material specifications",
+        "description": "List all material specifications for a design",
+        "operationId": "list_material_specifications_api_v1_designs__design_id__materials_get",
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filter by material category",
+              "title": "Category"
+            },
+            "description": "Filter by material category"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialSpecificationResponse"
+                  },
+                  "title": "Response List Material Specifications Api V1 Designs  Design Id  Materials Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/materials/search": {
+      "get": {
+        "tags": [
+          "materials"
+        ],
+        "summary": "Search materials",
+        "description": "Search for materials across all designs with vendor information",
+        "operationId": "search_materials_api_v1_materials_search_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Search query for materials",
+              "title": "Query"
+            },
+            "description": "Search query for materials"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filter by material category",
+              "title": "Category"
+            },
+            "description": "Filter by material category"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "description": "Maximum number of results",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialSpecificationResponse"
+                  },
+                  "title": "Response Search Materials Api V1 Materials Search Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs/{design_id}/space-planning": {
+      "post": {
+        "tags": [
+          "space-planning"
+        ],
+        "summary": "Request space planning",
+        "description": "Request space planning analysis for a design",
+        "operationId": "request_space_planning_api_v1_designs__design_id__space_planning_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpacePlanningRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpacePlanningResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/space-planning/{planning_id}": {
+      "get": {
+        "tags": [
+          "space-planning"
+        ],
+        "summary": "Get space planning results",
+        "description": "Get space planning analysis results",
+        "operationId": "get_space_planning_results_api_v1_space_planning__planning_id__get",
+        "parameters": [
+          {
+            "name": "planning_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Planning Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpacePlanningResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs/{design_id}/accessibility-checks": {
+      "post": {
+        "tags": [
+          "accessibility"
+        ],
+        "summary": "Request accessibility check",
+        "description": "Request accessibility compliance check for a design",
+        "operationId": "request_accessibility_check_api_v1_designs__design_id__accessibility_checks_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessibilityCheckRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessibilityCheckResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accessibility-checks/{check_id}": {
+      "get": {
+        "tags": [
+          "accessibility"
+        ],
+        "summary": "Get accessibility check results",
+        "description": "Get accessibility compliance check results",
+        "operationId": "get_accessibility_check_results_api_v1_accessibility_checks__check_id__get",
+        "parameters": [
+          {
+            "name": "check_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Check Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessibilityCheckResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/designs/{design_id}/energy-analysis": {
+      "post": {
+        "tags": [
+          "energy-analysis"
+        ],
+        "summary": "Request energy analysis",
+        "description": "Request energy efficiency analysis for a design",
+        "operationId": "request_energy_analysis_api_v1_designs__design_id__energy_analysis_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnergyAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergyAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/energy-analysis/{analysis_id}": {
+      "get": {
+        "tags": [
+          "energy-analysis"
+        ],
+        "summary": "Get energy analysis results",
+        "description": "Get energy efficiency analysis results",
+        "operationId": "get_energy_analysis_results_api_v1_energy_analysis__analysis_id__get",
+        "parameters": [
+          {
+            "name": "analysis_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Analysis Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergyAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "description": "Comprehensive health check endpoint.\n\nChecks:\n- Database connectivity\n- Redis connectivity\n- External service availability (Design, Knowledge, Project, Vendor services)\n\nReturns:\n    Health status with details for each component",
+        "operationId": "health_check_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health/live": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness Check",
+        "description": "Liveness probe endpoint.\n\nSimple check to verify the service is running.\nUsed by orchestrators (Kubernetes, Docker Swarm) to determine if the service should be restarted.\n\nReturns:\n    Simple status indicating the service is alive",
+        "operationId": "liveness_check_api_v1_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health/ready": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Readiness Check",
+        "description": "Readiness probe endpoint.\n\nChecks if the service is ready to accept traffic.\nVerifies critical dependencies (database and Redis) are available.\nUsed by orchestrators to determine if traffic should be routed to this instance.\n\nReturns:\n    Readiness status with critical component checks",
+        "operationId": "readiness_check_api_v1_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Get Metrics",
+        "description": "Get service metrics.\n\nReturns comprehensive metrics including:\n- Request latency percentiles (p50, p95, p99)\n- Error rates by endpoint\n- External service call metrics\n- Cache hit/miss rates\n- Service uptime\n\nReturns:\n    Metrics summary with performance data",
+        "operationId": "get_metrics_api_v1_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics/endpoints/{endpoint}": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Get Endpoint Metrics",
+        "description": "Get metrics for a specific endpoint.\n\nArgs:\n    endpoint: Endpoint path (e.g., /api/v1/designs)\n\nReturns:\n    Endpoint-specific metrics",
+        "operationId": "get_endpoint_metrics_api_v1_metrics_endpoints__endpoint__get",
+        "parameters": [
+          {
+            "name": "endpoint",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Endpoint"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics/services/{service_name}": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Get Service Metrics",
+        "description": "Get metrics for a specific external service.\n\nArgs:\n    service_name: Service name (e.g., Design Service, Knowledge Service)\n\nReturns:\n    Service-specific metrics",
+        "operationId": "get_service_metrics_api_v1_metrics_services__service_name__get",
+        "parameters": [
+          {
+            "name": "service_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccessibilityCheckRequest": {
+        "properties": {
+          "standards": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Standards",
+            "description": "Accessibility standards (e.g., 'ADA', 'ANSI-A117.1')"
+          },
+          "check_areas": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Check Areas",
+            "description": "Specific areas to check"
+          }
+        },
+        "type": "object",
+        "required": [
+          "standards"
+        ],
+        "title": "AccessibilityCheckRequest",
+        "description": "Request schema for accessibility check.",
+        "example": {
+          "check_areas": [
+            "entrances",
+            "restrooms",
+            "corridors"
+          ],
+          "standards": [
+            "ADA",
+            "ANSI-A117.1"
+          ]
+        }
+      },
+      "AccessibilityCheckResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Accessibility check ID"
+          },
+          "design_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Design Id",
+            "description": "Associated design ID"
+          },
+          "design_version": {
+            "type": "string",
+            "title": "Design Version",
+            "description": "Design version checked"
+          },
+          "standards": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Standards",
+            "description": "Standards checked"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus",
+            "description": "Check status"
+          },
+          "passed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passed",
+            "description": "Whether all checks passed"
+          },
+          "violations": {
+            "items": {
+              "$ref": "#/components/schemas/AccessibilityViolation"
+            },
+            "type": "array",
+            "title": "Violations",
+            "description": "Violations found"
+          },
+          "accessible_routes": {
+            "items": {
+              "$ref": "#/components/schemas/RouteValidation"
+            },
+            "type": "array",
+            "title": "Accessible Routes",
+            "description": "Accessible route validations"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At",
+            "description": "Check start time"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "Check completion time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "design_id",
+          "design_version",
+          "standards",
+          "status",
+          "started_at"
+        ],
+        "title": "AccessibilityCheckResponse",
+        "description": "Response schema for accessibility check."
+      },
+      "AccessibilityViolation": {
+        "properties": {
+          "standard_section": {
+            "type": "string",
+            "title": "Standard Section",
+            "description": "Standard section reference"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location",
+            "description": "Location of violation"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Violation description"
+          },
+          "required_value": {
+            "type": "string",
+            "title": "Required Value",
+            "description": "Required value per standard"
+          },
+          "actual_value": {
+            "type": "string",
+            "title": "Actual Value",
+            "description": "Actual value in design"
+          },
+          "remediation": {
+            "type": "string",
+            "title": "Remediation",
+            "description": "Remediation guidance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "standard_section",
+          "location",
+          "description",
+          "required_value",
+          "actual_value",
+          "remediation"
+        ],
+        "title": "AccessibilityViolation",
+        "description": "Accessibility violation detail."
+      },
+      "AnalysisType": {
+        "type": "string",
+        "enum": [
+          "static",
+          "dynamic",
+          "seismic",
+          "wind",
+          "thermal",
+          "modal"
+        ],
+        "title": "AnalysisType",
+        "description": "Types of structural analysis."
+      },
+      "Body_upload_drawing_api_v1_designs__design_id__drawings_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File",
+            "description": "Drawing file to upload"
+          },
+          "drawing_type": {
+            "$ref": "#/components/schemas/DrawingType",
+            "description": "Type of architectural drawing"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale",
+            "description": "Drawing scale"
+          },
+          "sheet_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sheet Number",
+            "description": "Sheet number"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Additional metadata as JSON string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "drawing_type"
+        ],
+        "title": "Body_upload_drawing_api_v1_designs__design_id__drawings_post"
+      },
+      "BuildingParameters": {
+        "properties": {
+          "total_area": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Total Area",
+            "description": "Total building area in square feet"
+          },
+          "number_of_floors": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Number Of Floors",
+            "description": "Number of floors"
+          },
+          "occupancy_type": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Occupancy Type",
+            "description": "Occupancy type"
+          },
+          "hvac_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hvac System",
+            "description": "HVAC system type"
+          },
+          "envelope_properties": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Envelope Properties",
+            "description": "Building envelope properties"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_area",
+          "number_of_floors",
+          "occupancy_type"
+        ],
+        "title": "BuildingParameters",
+        "description": "Building parameters for energy analysis."
+      },
+      "BuildingType": {
+        "type": "string",
+        "enum": [
+          "residential",
+          "commercial",
+          "industrial",
+          "institutional",
+          "mixed_use",
+          "agricultural"
+        ],
+        "title": "BuildingType",
+        "description": "Building type classification."
+      },
+      "CheckStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "in_progress",
+          "completed",
+          "failed"
+        ],
+        "title": "CheckStatus",
+        "description": "Status for analysis and check operations."
+      },
+      "CollaborationSessionResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Collaboration session ID"
+          },
+          "design_id": {
+            "type": "string",
+            "title": "Design Id",
+            "description": "Associated design ID"
+          },
+          "active_users": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Active Users",
+            "description": "List of active users"
+          },
+          "websocket_url": {
+            "type": "string",
+            "title": "Websocket Url",
+            "description": "WebSocket URL for real-time collaboration"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "Whether the session is active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "design_id",
+          "websocket_url",
+          "is_active"
+        ],
+        "title": "CollaborationSessionResponse",
+        "description": "Response schema for collaboration session."
+      },
+      "ComplianceCheckRequest": {
+        "properties": {
+          "code_standards": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Code Standards",
+            "description": "Building code standards to check against (e.g., 'IBC-2021', 'ADA')"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction",
+            "description": "Local jurisdiction for code requirements"
+          },
+          "check_types": {
+            "items": {
+              "$ref": "#/components/schemas/ComplianceCheckType"
+            },
+            "type": "array",
+            "title": "Check Types",
+            "description": "Types of compliance checks to perform"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code_standards"
+        ],
+        "title": "ComplianceCheckRequest",
+        "description": "Request schema for compliance check.",
+        "example": {
+          "check_types": [
+            "building_code",
+            "accessibility"
+          ],
+          "code_standards": [
+            "IBC-2021",
+            "ADA"
+          ],
+          "jurisdiction": "City and County of San Francisco"
+        }
+      },
+      "ComplianceCheckResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Compliance check ID"
+          },
+          "design_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Design Id",
+            "description": "Associated design ID"
+          },
+          "design_version": {
+            "type": "string",
+            "title": "Design Version",
+            "description": "Design version checked"
+          },
+          "code_standards": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Code Standards",
+            "description": "Code standards checked"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction",
+            "description": "Jurisdiction"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus",
+            "description": "Check status"
+          },
+          "passed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passed",
+            "description": "Whether all checks passed"
+          },
+          "violations": {
+            "items": {
+              "$ref": "#/components/schemas/ViolationDetail"
+            },
+            "type": "array",
+            "title": "Violations",
+            "description": "List of violations found"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/WarningDetail"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "description": "List of warnings"
+          },
+          "recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommendations",
+            "description": "General recommendations"
+          },
+          "report_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Url",
+            "description": "URL to detailed compliance report"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At",
+            "description": "Check start time"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "Check completion time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "design_id",
+          "design_version",
+          "code_standards",
+          "status",
+          "started_at"
+        ],
+        "title": "ComplianceCheckResponse",
+        "description": "Response schema for compliance check."
+      },
+      "ComplianceCheckType": {
+        "type": "string",
+        "enum": [
+          "building_code",
+          "zoning",
+          "accessibility",
+          "energy",
+          "fire_safety",
+          "structural",
+          "plumbing",
+          "electrical",
+          "mechanical"
+        ],
+        "title": "ComplianceCheckType",
+        "description": "Types of compliance checks."
+      },
+      "CreateDesignRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id",
+            "description": "ID of the project this design belongs to"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Design document name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Design description"
+          },
+          "building_type": {
+            "$ref": "#/components/schemas/BuildingType",
+            "description": "Type of building"
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationData",
+            "description": "Location information"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "description": "Additional metadata and custom fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "name",
+          "building_type",
+          "location"
+        ],
+        "title": "CreateDesignRequest",
+        "description": "Request schema for creating a new design document.",
+        "example": {
+          "building_type": "commercial",
+          "description": "10-story commercial office building with ground floor retail",
+          "location": {
+            "address": "123 Main Street",
+            "city": "San Francisco",
+            "country": "United States",
+            "jurisdiction": "City and County of San Francisco",
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "postal_code": "94102",
+            "state": "California"
+          },
+          "metadata": {
+            "floors": 10,
+            "parking_spaces": 50,
+            "total_area_sqft": 150000
+          },
+          "name": "Downtown Office Building",
+          "project_id": "550e8400-e29b-41d4-a716-446655440000"
+        }
+      },
+      "DesignDetailResponse": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique design identifier"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id",
+            "description": "Associated project ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Design document name"
+          },
+          "building_type": {
+            "$ref": "#/components/schemas/BuildingType",
+            "description": "Type of building"
+          },
+          "current_version": {
+            "type": "string",
+            "title": "Current Version",
+            "description": "Current version string (e.g., '1.0', '2.0')"
+          },
+          "version_number": {
+            "type": "integer",
+            "title": "Version Number",
+            "description": "Numeric version for optimistic locking"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DesignStatus",
+            "description": "Design status"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By",
+            "description": "User ID who created the design"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Design description"
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationData",
+            "description": "Location information"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "description": "Additional metadata and custom fields"
+          },
+          "is_deleted": {
+            "type": "boolean",
+            "title": "Is Deleted",
+            "description": "Soft delete flag"
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted At",
+            "description": "Soft delete timestamp"
+          },
+          "drawing_count": {
+            "type": "integer",
+            "title": "Drawing Count",
+            "description": "Number of drawings associated with this design",
+            "default": 0
+          },
+          "material_count": {
+            "type": "integer",
+            "title": "Material Count",
+            "description": "Number of material specifications",
+            "default": 0
+          },
+          "compliance_check_count": {
+            "type": "integer",
+            "title": "Compliance Check Count",
+            "description": "Number of compliance checks performed",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "created_at",
+          "updated_at",
+          "id",
+          "project_id",
+          "name",
+          "building_type",
+          "current_version",
+          "version_number",
+          "status",
+          "created_by",
+          "location",
+          "is_deleted"
+        ],
+        "title": "DesignDetailResponse",
+        "description": "Response schema for design document (detailed).",
+        "example": {
+          "building_type": "commercial",
+          "compliance_check_count": 3,
+          "created_at": "2024-01-15T10:00:00Z",
+          "created_by": "770e8400-e29b-41d4-a716-446655440000",
+          "current_version": "2.0",
+          "description": "10-story commercial office building with ground floor retail",
+          "drawing_count": 15,
+          "id": "550e8400-e29b-41d4-a716-446655440000",
+          "is_deleted": false,
+          "location": {
+            "address": "123 Main Street",
+            "city": "San Francisco",
+            "country": "United States",
+            "jurisdiction": "City and County of San Francisco",
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "postal_code": "94102",
+            "state": "California"
+          },
+          "material_count": 42,
+          "metadata": {
+            "floors": 10,
+            "parking_spaces": 50,
+            "total_area_sqft": 150000
+          },
+          "name": "Downtown Office Building",
+          "project_id": "660e8400-e29b-41d4-a716-446655440000",
+          "status": "in_review",
+          "updated_at": "2024-01-16T14:30:00Z",
+          "version_number": 2
+        }
+      },
+      "DesignListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DesignResponse"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "List of design documents"
+          },
+          "has_next": {
+            "type": "boolean",
+            "title": "Has Next",
+            "description": "Whether there are more items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "Cursor for next page"
+          },
+          "total_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Count",
+            "description": "Total count (if requested)"
+          },
+          "page_info": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Page Info",
+            "description": "Additional pagination metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "has_next"
+        ],
+        "title": "DesignListResponse",
+        "description": "Paginated response for design list.",
+        "example": {
+          "has_next": true,
+          "items": [
+            {
+              "building_type": "commercial",
+              "created_at": "2024-01-15T10:00:00Z",
+              "created_by": "770e8400-e29b-41d4-a716-446655440000",
+              "current_version": "2.0",
+              "id": "550e8400-e29b-41d4-a716-446655440000",
+              "name": "Downtown Office Building",
+              "project_id": "660e8400-e29b-41d4-a716-446655440000",
+              "status": "in_review",
+              "updated_at": "2024-01-16T14:30:00Z",
+              "version_number": 2
+            }
+          ],
+          "next_cursor": "eyJpZCI6IjU1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwMCJ9",
+          "page_info": {
+            "limit": 20,
+            "sort_direction": "desc",
+            "sort_field": "created_at"
+          },
+          "total_count": 42
+        }
+      },
+      "DesignResponse": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Unique design identifier"
+          },
+          "project_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Project Id",
+            "description": "Associated project ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Design document name"
+          },
+          "building_type": {
+            "$ref": "#/components/schemas/BuildingType",
+            "description": "Type of building"
+          },
+          "current_version": {
+            "type": "string",
+            "title": "Current Version",
+            "description": "Current version string (e.g., '1.0', '2.0')"
+          },
+          "version_number": {
+            "type": "integer",
+            "title": "Version Number",
+            "description": "Numeric version for optimistic locking"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DesignStatus",
+            "description": "Design status"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By",
+            "description": "User ID who created the design"
+          }
+        },
+        "type": "object",
+        "required": [
+          "created_at",
+          "updated_at",
+          "id",
+          "project_id",
+          "name",
+          "building_type",
+          "current_version",
+          "version_number",
+          "status",
+          "created_by"
+        ],
+        "title": "DesignResponse",
+        "description": "Response schema for design document (summary).",
+        "example": {
+          "building_type": "commercial",
+          "created_at": "2024-01-15T10:00:00Z",
+          "created_by": "770e8400-e29b-41d4-a716-446655440000",
+          "current_version": "2.0",
+          "id": "550e8400-e29b-41d4-a716-446655440000",
+          "name": "Downtown Office Building",
+          "project_id": "660e8400-e29b-41d4-a716-446655440000",
+          "status": "in_review",
+          "updated_at": "2024-01-16T14:30:00Z",
+          "version_number": 2
+        }
+      },
+      "DesignStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "in_review",
+          "approved",
+          "archived"
+        ],
+        "title": "DesignStatus",
+        "description": "Design document status."
+      },
+      "DesignVersionDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Version record ID"
+          },
+          "design_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Design Id",
+            "description": "Associated design ID"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Version string (e.g., '1.0', '2.0')"
+          },
+          "version_number": {
+            "type": "integer",
+            "title": "Version Number",
+            "description": "Numeric version number"
+          },
+          "change_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Summary",
+            "description": "Summary of changes in this version"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By",
+            "description": "User ID who created this version"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Version creation timestamp"
+          },
+          "design_data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Design Data",
+            "description": "Complete snapshot of design data at this version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "design_id",
+          "version",
+          "version_number",
+          "created_by",
+          "created_at",
+          "design_data"
+        ],
+        "title": "DesignVersionDetailResponse",
+        "description": "Response schema for design version with full snapshot data.",
+        "example": {
+          "change_summary": "Added 2 floors and updated parking requirements",
+          "created_at": "2024-01-16T14:30:00Z",
+          "created_by": "770e8400-e29b-41d4-a716-446655440000",
+          "design_data": {
+            "building_type": "commercial",
+            "description": "12-story commercial office building",
+            "location": {
+              "address": "123 Main Street",
+              "city": "San Francisco",
+              "country": "United States",
+              "state": "California"
+            },
+            "metadata": {
+              "floors": 12,
+              "parking_spaces": 60,
+              "total_area_sqft": 180000
+            },
+            "name": "Downtown Office Building"
+          },
+          "design_id": "550e8400-e29b-41d4-a716-446655440000",
+          "id": "880e8400-e29b-41d4-a716-446655440000",
+          "version": "2.0",
+          "version_number": 2
+        }
+      },
+      "DesignVersionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Version record ID"
+          },
+          "design_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Design Id",
+            "description": "Associated design ID"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Version string (e.g., '1.0', '2.0')"
+          },
+          "version_number": {
+            "type": "integer",
+            "title": "Version Number",
+            "description": "Numeric version number"
+          },
+          "change_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Summary",
+            "description": "Summary of changes in this version"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By",
+            "description": "User ID who created this version"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Version creation timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "design_id",
+          "version",
+          "version_number",
+          "created_by",
+          "created_at"
+        ],
+        "title": "DesignVersionResponse",
+        "description": "Response schema for design version history.",
+        "example": {
+          "change_summary": "Added 2 floors and updated parking requirements",
+          "created_at": "2024-01-16T14:30:00Z",
+          "created_by": "770e8400-e29b-41d4-a716-446655440000",
+          "design_id": "550e8400-e29b-41d4-a716-446655440000",
+          "id": "880e8400-e29b-41d4-a716-446655440000",
+          "version": "2.0",
+          "version_number": 2
+        }
+      },
+      "DrawingDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Drawing ID"
+          },
+          "design_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Design Id",
+            "description": "Associated design ID"
+          },
+          "design_version": {
+            "type": "string",
+            "title": "Design Version",
+            "description": "Design version when drawing was added"
+          },
+          "drawing_type": {
+            "$ref": "#/components/schemas/DrawingType",
+            "description": "Type of architectural drawing"
+          },
+          "file_url": {
+            "type": "string",
+            "title": "File Url",
+            "description": "URL to access the drawing file"
+          },
+          "file_size": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "File Size",
+            "description": "File size in bytes"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "MIME type of the file"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale",
+            "description": "Drawing scale"
+          },
+          "sheet_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sheet Number",
+            "description": "Sheet number in drawing set"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "description": "Additional drawing metadata"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By",
+            "description": "User ID who uploaded the drawing"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Upload timestamp"
+          },
+          "file_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Name",
+            "description": "Original file name"
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url",
+            "description": "URL to thumbnail preview"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "design_id",
+          "design_version",
+          "drawing_type",
+          "file_url",
+          "file_size",
+          "mime_type",
+          "created_by",
+          "created_at"
+        ],
+        "title": "DrawingDetailResponse",
+        "description": "Detailed response schema for drawing with additional information.",
+        "example": {
+          "created_at": "2024-01-15T10:30:00Z",
+          "created_by": "770e8400-e29b-41d4-a716-446655440000",
+          "design_id": "550e8400-e29b-41d4-a716-446655440000",
+          "design_version": "1.0",
+          "drawing_type": "floor_plan",
+          "file_size": 2048576,
+          "file_url": "https://storage.example.com/drawings/990e8400.pdf",
+          "id": "990e8400-e29b-41d4-a716-446655440000",
+          "metadata": {
+            "level": "Ground Floor",
+            "revision": "A"
+          },
+          "mime_type": "application/pdf",
+          "scale": "1/4\"=1'",
+          "sheet_number": "A-101"
+        }
+      },
+      "DrawingListResponse": {
+        "properties": {
+          "drawings": {
+            "items": {
+              "$ref": "#/components/schemas/DrawingResponse"
+            },
+            "type": "array",
+            "title": "Drawings",
+            "description": "List of drawings"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total number of drawings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "drawings",
+          "total"
+        ],
+        "title": "DrawingListResponse",
+        "description": "Response schema for list of drawings."
+      },
+      "DrawingResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Drawing ID"
+          },
+          "design_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Design Id",
+            "description": "Associated design ID"
+          },
+          "design_version": {
+            "type": "string",
+            "title": "Design Version",
+            "description": "Design version when drawing was added"
+          },
+          "drawing_type": {
+            "$ref": "#/components/schemas/DrawingType",
+            "description": "Type of architectural drawing"
+          },
+          "file_url": {
+            "type": "string",
+            "title": "File Url",
+            "description": "URL to access the drawing file"
+          },
+          "file_size": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "File Size",
+            "description": "File size in bytes"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "MIME type of the file"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale",
+            "description": "Drawing scale"
+          },
+          "sheet_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sheet Number",
+            "description": "Sheet number in drawing set"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "description": "Additional drawing metadata"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By",
+            "description": "User ID who uploaded the drawing"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Upload timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "design_id",
+          "design_version",
+          "drawing_type",
+          "file_url",
+          "file_size",
+          "mime_type",
+          "created_by",
+          "created_at"
+        ],
+        "title": "DrawingResponse",
+        "description": "Response schema for drawing.",
+        "example": {
+          "created_at": "2024-01-15T10:30:00Z",
+          "created_by": "770e8400-e29b-41d4-a716-446655440000",
+          "design_id": "550e8400-e29b-41d4-a716-446655440000",
+          "design_version": "1.0",
+          "drawing_type": "floor_plan",
+          "file_size": 2048576,
+          "file_url": "https://storage.example.com/drawings/990e8400.pdf",
+          "id": "990e8400-e29b-41d4-a716-446655440000",
+          "metadata": {
+            "level": "Ground Floor",
+            "revision": "A"
+          },
+          "mime_type": "application/pdf",
+          "scale": "1/4\"=1'",
+          "sheet_number": "A-101"
+        }
+      },
+      "DrawingType": {
+        "type": "string",
+        "enum": [
+          "floor_plan",
+          "elevation",
+          "section",
+          "site_plan",
+          "detail",
+          "roof_plan",
+          "reflected_ceiling_plan",
+          "3d_view"
+        ],
+        "title": "DrawingType",
+        "description": "Architectural drawing types."
+      },
+      "EfficiencyRecommendation": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Recommendation category"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Recommendation description"
+          },
+          "estimated_savings_kwh": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Estimated Savings Kwh",
+            "description": "Estimated energy savings in kWh"
+          },
+          "estimated_cost_savings": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Estimated Cost Savings",
+            "description": "Estimated cost savings"
+          },
+          "implementation_cost": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Implementation Cost",
+            "description": "Estimated implementation cost"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "description",
+          "estimated_savings_kwh",
+          "estimated_cost_savings"
+        ],
+        "title": "EfficiencyRecommendation",
+        "description": "Energy efficiency recommendation."
+      },
+      "EnergyAnalysisRequest": {
+        "properties": {
+          "standards": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Standards",
+            "description": "Energy standards (e.g., 'ASHRAE-90.1', 'LEED')"
+          },
+          "climate_zone": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Climate Zone",
+            "description": "Climate zone"
+          },
+          "building_parameters": {
+            "$ref": "#/components/schemas/BuildingParameters",
+            "description": "Building parameters"
+          }
+        },
+        "type": "object",
+        "required": [
+          "standards",
+          "climate_zone",
+          "building_parameters"
+        ],
+        "title": "EnergyAnalysisRequest",
+        "description": "Request schema for energy analysis.",
+        "example": {
+          "building_parameters": {
+            "hvac_system": "VAV",
+            "number_of_floors": 5,
+            "occupancy_type": "office",
+            "total_area": 50000
+          },
+          "climate_zone": "4A",
+          "standards": [
+            "ASHRAE-90.1",
+            "LEED"
+          ]
+        }
+      },
+      "EnergyAnalysisResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Energy analysis ID"
+          },
+          "design_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Design Id",
+            "description": "Associated design ID"
+          },
+          "design_version": {
+            "type": "string",
+            "title": "Design Version",
+            "description": "Design version analyzed"
+          },
+          "standards": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Standards",
+            "description": "Standards used"
+          },
+          "climate_zone": {
+            "type": "string",
+            "title": "Climate Zone",
+            "description": "Climate zone"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus",
+            "description": "Analysis status"
+          },
+          "envelope_performance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EnvelopeMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Envelope performance metrics"
+          },
+          "energy_consumption": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EnergyEstimate"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Energy consumption estimate"
+          },
+          "recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/EfficiencyRecommendation"
+            },
+            "type": "array",
+            "title": "Recommendations",
+            "description": "Efficiency recommendations"
+          },
+          "certificate_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Certificate Url",
+            "description": "URL to performance certificate"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At",
+            "description": "Analysis start time"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "Analysis completion time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "design_id",
+          "design_version",
+          "standards",
+          "climate_zone",
+          "status",
+          "started_at"
+        ],
+        "title": "EnergyAnalysisResponse",
+        "description": "Response schema for energy analysis."
+      },
+      "EnergyEstimate": {
+        "properties": {
+          "annual_consumption_kwh": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Annual Consumption Kwh",
+            "description": "Annual energy consumption in kWh"
+          },
+          "heating_kwh": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Heating Kwh",
+            "description": "Heating energy in kWh"
+          },
+          "cooling_kwh": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Cooling Kwh",
+            "description": "Cooling energy in kWh"
+          },
+          "lighting_kwh": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Lighting Kwh",
+            "description": "Lighting energy in kWh"
+          },
+          "equipment_kwh": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Equipment Kwh",
+            "description": "Equipment energy in kWh"
+          },
+          "estimated_cost": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Estimated Cost",
+            "description": "Estimated annual energy cost"
+          }
+        },
+        "type": "object",
+        "required": [
+          "annual_consumption_kwh",
+          "heating_kwh",
+          "cooling_kwh",
+          "lighting_kwh",
+          "equipment_kwh",
+          "estimated_cost"
+        ],
+        "title": "EnergyEstimate",
+        "description": "Energy consumption estimate."
+      },
+      "EnvelopeMetrics": {
+        "properties": {
+          "wall_r_value": {
+            "type": "number",
+            "title": "Wall R Value",
+            "description": "Wall R-value"
+          },
+          "roof_r_value": {
+            "type": "number",
+            "title": "Roof R Value",
+            "description": "Roof R-value"
+          },
+          "window_u_factor": {
+            "type": "number",
+            "title": "Window U Factor",
+            "description": "Window U-factor"
+          },
+          "infiltration_rate": {
+            "type": "number",
+            "title": "Infiltration Rate",
+            "description": "Air infiltration rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "wall_r_value",
+          "roof_r_value",
+          "window_u_factor",
+          "infiltration_rate"
+        ],
+        "title": "EnvelopeMetrics",
+        "description": "Building envelope performance metrics."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "JoinSessionRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User ID joining the session"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username",
+            "description": "Username for display"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "username"
+        ],
+        "title": "JoinSessionRequest",
+        "description": "Request schema for joining a collaboration session."
+      },
+      "LayoutRecommendation": {
+        "properties": {
+          "space_type": {
+            "type": "string",
+            "title": "Space Type",
+            "description": "Space type"
+          },
+          "recommended_area": {
+            "type": "number",
+            "title": "Recommended Area",
+            "description": "Recommended area"
+          },
+          "location": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Location",
+            "description": "Recommended location"
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale",
+            "description": "Rationale for recommendation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "space_type",
+          "recommended_area",
+          "location",
+          "rationale"
+        ],
+        "title": "LayoutRecommendation",
+        "description": "Layout recommendation."
+      },
+      "LoadCalculations": {
+        "properties": {
+          "dead_loads": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Dead Loads",
+            "description": "Dead load calculations by element"
+          },
+          "live_loads": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Live Loads",
+            "description": "Live load calculations by element"
+          },
+          "wind_loads": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wind Loads",
+            "description": "Wind load calculations"
+          },
+          "seismic_loads": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seismic Loads",
+            "description": "Seismic load calculations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dead_loads",
+          "live_loads"
+        ],
+        "title": "LoadCalculations",
+        "description": "Structural load calculations."
+      },
+      "LoadParameters": {
+        "properties": {
+          "dead_load_factor": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Dead Load Factor",
+            "description": "Dead load factor",
+            "default": 1.2
+          },
+          "live_load_factor": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Live Load Factor",
+            "description": "Live load factor",
+            "default": 1.6
+          },
+          "wind_speed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wind Speed",
+            "description": "Design wind speed in mph"
+          },
+          "seismic_zone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seismic Zone",
+            "description": "Seismic design category"
+          },
+          "snow_load": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snow Load",
+            "description": "Snow load in psf"
+          }
+        },
+        "type": "object",
+        "title": "LoadParameters",
+        "description": "Load parameters for structural analysis."
+      },
+      "LocationData": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address",
+            "description": "Street address"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City",
+            "description": "City name"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State",
+            "description": "State or province"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Country",
+            "description": "Country name"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code",
+            "description": "Postal or ZIP code"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 90.0,
+                "minimum": -90.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude",
+            "description": "Latitude coordinate"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180.0,
+                "minimum": -180.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude",
+            "description": "Longitude coordinate"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction",
+            "description": "Local jurisdiction or municipality"
+          }
+        },
+        "type": "object",
+        "required": [
+          "country"
+        ],
+        "title": "LocationData",
+        "description": "Location information for designs.",
+        "example": {
+          "address": "123 Main Street",
+          "city": "San Francisco",
+          "country": "United States",
+          "jurisdiction": "City and County of San Francisco",
+          "latitude": 37.7749,
+          "longitude": -122.4194,
+          "postal_code": "94102",
+          "state": "California"
+        }
+      },
+      "MaterialCategory": {
+        "type": "string",
+        "enum": [
+          "structural",
+          "finishes",
+          "mechanical",
+          "electrical",
+          "plumbing",
+          "insulation",
+          "roofing",
+          "glazing",
+          "doors_windows",
+          "hardware"
+        ],
+        "title": "MaterialCategory",
+        "description": "Material categories."
+      },
+      "MaterialProperties": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Type",
+            "description": "Material type"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade",
+            "description": "Material grade"
+          },
+          "dimensions": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dimensions",
+            "description": "Material dimensions"
+          },
+          "finish": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finish",
+            "description": "Material finish"
+          },
+          "properties": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Properties",
+            "description": "Additional properties"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "MaterialProperties",
+        "description": "Material properties."
+      },
+      "MaterialSpecificationRequest": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/MaterialCategory",
+            "description": "Material category"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/MaterialProperties",
+            "description": "Material properties"
+          },
+          "design_elements": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Design Elements",
+            "description": "Design elements using this material"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "properties"
+        ],
+        "title": "MaterialSpecificationRequest",
+        "description": "Request schema for material specification.",
+        "example": {
+          "category": "structural",
+          "design_elements": [],
+          "properties": {
+            "type": "Steel",
+            "grade": "A992",
+            "dimensions": "W12x26",
+            "finish": "Painted",
+            "properties": {
+              "yield_strength": "50 ksi",
+              "tensile_strength": "65 ksi"
+            }
+          }
+        }
+      },
+      "MaterialSpecificationResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Material specification ID"
+          },
+          "design_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Design Id",
+            "description": "Associated design ID"
+          },
+          "category": {
+            "$ref": "#/components/schemas/MaterialCategory",
+            "description": "Material category"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/MaterialProperties",
+            "description": "Material properties"
+          },
+          "vendor_info": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VendorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vendor information"
+          },
+          "cost_estimate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Estimate",
+            "description": "Cost estimate"
+          },
+          "design_elements": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Design Elements",
+            "description": "Associated design elements"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "design_id",
+          "category",
+          "properties",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "MaterialSpecificationResponse",
+        "description": "Response schema for material specification."
+      },
+      "OptimizationGoal": {
+        "type": "string",
+        "enum": [
+          "maximize_efficiency",
+          "minimize_circulation",
+          "maximize_natural_light",
+          "optimize_adjacencies",
+          "minimize_cost"
+        ],
+        "title": "OptimizationGoal",
+        "description": "Space planning optimization goals."
+      },
+      "PlanningConstraints": {
+        "properties": {
+          "total_area": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Area",
+            "description": "Total available area"
+          },
+          "shape_constraints": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shape Constraints",
+            "description": "Shape and geometry constraints"
+          },
+          "code_requirements": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code Requirements",
+            "description": "Code-based constraints"
+          }
+        },
+        "type": "object",
+        "title": "PlanningConstraints",
+        "description": "Space planning constraints."
+      },
+      "RouteValidation": {
+        "properties": {
+          "route_id": {
+            "type": "string",
+            "title": "Route Id",
+            "description": "Route identifier"
+          },
+          "from_location": {
+            "type": "string",
+            "title": "From Location",
+            "description": "Starting location"
+          },
+          "to_location": {
+            "type": "string",
+            "title": "To Location",
+            "description": "Ending location"
+          },
+          "is_accessible": {
+            "type": "boolean",
+            "title": "Is Accessible",
+            "description": "Whether route is accessible"
+          },
+          "issues": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Issues",
+            "description": "Issues found on route"
+          }
+        },
+        "type": "object",
+        "required": [
+          "route_id",
+          "from_location",
+          "to_location",
+          "is_accessible"
+        ],
+        "title": "RouteValidation",
+        "description": "Accessible route validation."
+      },
+      "SpaceMetrics": {
+        "properties": {
+          "area_efficiency": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Area Efficiency",
+            "description": "Area efficiency percentage"
+          },
+          "circulation_ratio": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Circulation Ratio",
+            "description": "Circulation to usable area ratio"
+          },
+          "density": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Density",
+            "description": "Occupancy density (people per sq ft)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "area_efficiency",
+          "circulation_ratio",
+          "density"
+        ],
+        "title": "SpaceMetrics",
+        "description": "Space utilization metrics."
+      },
+      "SpacePlanningRequest": {
+        "properties": {
+          "requirements": {
+            "items": {
+              "$ref": "#/components/schemas/SpaceRequirement"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Requirements",
+            "description": "Space requirements"
+          },
+          "constraints": {
+            "$ref": "#/components/schemas/PlanningConstraints",
+            "description": "Planning constraints"
+          },
+          "optimization_goals": {
+            "items": {
+              "$ref": "#/components/schemas/OptimizationGoal"
+            },
+            "type": "array",
+            "title": "Optimization Goals",
+            "description": "Optimization goals"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirements",
+          "constraints"
+        ],
+        "title": "SpacePlanningRequest",
+        "description": "Request schema for space planning.",
+        "example": {
+          "constraints": {
+            "total_area": 2000
+          },
+          "optimization_goals": [
+            "maximize_efficiency"
+          ],
+          "requirements": [
+            {
+              "adjacencies": [
+                "kitchen",
+                "entry"
+              ],
+              "min_area": 200,
+              "space_type": "living_room"
+            }
+          ]
+        }
+      },
+      "SpacePlanningResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Space planning ID"
+          },
+          "design_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Design Id",
+            "description": "Associated design ID"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus",
+            "description": "Planning status"
+          },
+          "recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/LayoutRecommendation"
+            },
+            "type": "array",
+            "title": "Recommendations",
+            "description": "Layout recommendations"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SpaceMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Space utilization metrics"
+          },
+          "space_program": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Space Program",
+            "description": "Detailed space program document"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At",
+            "description": "Planning start time"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "Planning completion time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "design_id",
+          "status",
+          "started_at"
+        ],
+        "title": "SpacePlanningResponse",
+        "description": "Response schema for space planning."
+      },
+      "SpaceRequirement": {
+        "properties": {
+          "space_type": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Space Type",
+            "description": "Type of space (e.g., 'bedroom', 'kitchen')"
+          },
+          "min_area": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Min Area",
+            "description": "Minimum area in square feet"
+          },
+          "max_area": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Area",
+            "description": "Maximum area in square feet"
+          },
+          "adjacencies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Adjacencies",
+            "description": "Required adjacent spaces"
+          },
+          "requirements": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Requirements",
+            "description": "Additional requirements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "space_type",
+          "min_area"
+        ],
+        "title": "SpaceRequirement",
+        "description": "Space requirement specification."
+      },
+      "StructuralAnalysisRequest": {
+        "properties": {
+          "structural_system": {
+            "$ref": "#/components/schemas/StructuralSystem",
+            "description": "Type of structural system"
+          },
+          "load_parameters": {
+            "$ref": "#/components/schemas/LoadParameters",
+            "description": "Load parameters for analysis"
+          },
+          "analysis_type": {
+            "$ref": "#/components/schemas/AnalysisType",
+            "description": "Type of analysis to perform",
+            "default": "static"
+          }
+        },
+        "type": "object",
+        "required": [
+          "structural_system",
+          "load_parameters"
+        ],
+        "title": "StructuralAnalysisRequest",
+        "description": "Request schema for structural analysis.",
+        "example": {
+          "analysis_type": "static",
+          "load_parameters": {
+            "dead_load_factor": 1.2,
+            "live_load_factor": 1.6,
+            "seismic_zone": "D",
+            "wind_speed": 90
+          },
+          "structural_system": "steel_frame"
+        }
+      },
+      "StructuralAnalysisResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Analysis ID"
+          },
+          "design_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Design Id",
+            "description": "Associated design ID"
+          },
+          "design_version": {
+            "type": "string",
+            "title": "Design Version",
+            "description": "Design version analyzed"
+          },
+          "structural_system": {
+            "$ref": "#/components/schemas/StructuralSystem",
+            "description": "Structural system type"
+          },
+          "analysis_type": {
+            "$ref": "#/components/schemas/AnalysisType",
+            "description": "Analysis type"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus",
+            "description": "Analysis status"
+          },
+          "load_calculations": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LoadCalculations"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Load calculations"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/StructuralIssue"
+            },
+            "type": "array",
+            "title": "Issues",
+            "description": "Structural issues found"
+          },
+          "recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommendations",
+            "description": "General recommendations"
+          },
+          "report_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Url",
+            "description": "URL to detailed analysis report"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At",
+            "description": "Analysis start time"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "Analysis completion time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "design_id",
+          "design_version",
+          "structural_system",
+          "analysis_type",
+          "status",
+          "started_at"
+        ],
+        "title": "StructuralAnalysisResponse",
+        "description": "Response schema for structural analysis."
+      },
+      "StructuralIssue": {
+        "properties": {
+          "element_id": {
+            "type": "string",
+            "title": "Element Id",
+            "description": "Design element with issue"
+          },
+          "issue_type": {
+            "type": "string",
+            "title": "Issue Type",
+            "description": "Type of structural issue"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Issue description"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Severity level"
+          },
+          "recommendation": {
+            "type": "string",
+            "title": "Recommendation",
+            "description": "Recommended action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "element_id",
+          "issue_type",
+          "description",
+          "severity",
+          "recommendation"
+        ],
+        "title": "StructuralIssue",
+        "description": "Structural issue detail."
+      },
+      "StructuralSystem": {
+        "type": "string",
+        "enum": [
+          "steel_frame",
+          "concrete",
+          "wood_frame",
+          "masonry",
+          "hybrid",
+          "precast_concrete",
+          "post_tensioned"
+        ],
+        "title": "StructuralSystem",
+        "description": "Structural system types."
+      },
+      "UpdateDesignRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Design document name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Design description"
+          },
+          "building_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BuildingType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Type of building"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocationData"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Location information"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DesignStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Design status"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Additional metadata and custom fields"
+          }
+        },
+        "type": "object",
+        "title": "UpdateDesignRequest",
+        "description": "Request schema for updating a design document.",
+        "example": {
+          "description": "Updated design with client feedback incorporated",
+          "metadata": {
+            "floors": 12,
+            "parking_spaces": 60,
+            "revision_notes": "Added 2 floors per client request",
+            "total_area_sqft": 180000
+          },
+          "name": "Downtown Office Building - Revised",
+          "status": "in_review"
+        }
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VendorInfo": {
+        "properties": {
+          "vendor_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Vendor Id",
+            "description": "Vendor ID"
+          },
+          "vendor_name": {
+            "type": "string",
+            "title": "Vendor Name",
+            "description": "Vendor name"
+          },
+          "product_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Code",
+            "description": "Vendor product code"
+          },
+          "availability": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Availability",
+            "description": "Availability status"
+          },
+          "lead_time_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lead Time Days",
+            "description": "Lead time in days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vendor_id",
+          "vendor_name"
+        ],
+        "title": "VendorInfo",
+        "description": "Vendor information for material."
+      },
+      "ViolationDetail": {
+        "properties": {
+          "code_section": {
+            "type": "string",
+            "title": "Code Section",
+            "description": "Code section reference"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Violation description"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Severity level (critical, major, minor)"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "Location in design where violation occurs"
+          },
+          "remediation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remediation",
+            "description": "Suggested remediation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code_section",
+          "description",
+          "severity"
+        ],
+        "title": "ViolationDetail",
+        "description": "Compliance violation detail."
+      },
+      "WarningDetail": {
+        "properties": {
+          "code_section": {
+            "type": "string",
+            "title": "Code Section",
+            "description": "Code section reference"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Warning description"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation",
+            "description": "Recommended action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code_section",
+          "description"
+        ],
+        "title": "WarningDetail",
+        "description": "Compliance warning detail."
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "designs",
+      "description": "Design document management operations including creation, updates, and versioning"
+    },
+    {
+      "name": "drawings",
+      "description": "Architectural drawing upload and management (floor plans, elevations, sections)"
+    },
+    {
+      "name": "compliance",
+      "description": "Building code compliance checking against IBC, IRC, and local codes"
+    },
+    {
+      "name": "structural-analysis",
+      "description": "Structural analysis including load calculations and integrity validation"
+    },
+    {
+      "name": "materials",
+      "description": "Material specification management with vendor integration"
+    },
+    {
+      "name": "space-planning",
+      "description": "Space planning and layout optimization operations"
+    },
+    {
+      "name": "accessibility",
+      "description": "Accessibility compliance checking (ADA, ANSI A117.1)"
+    },
+    {
+      "name": "energy-analysis",
+      "description": "Energy efficiency analysis and building envelope performance"
+    },
+    {
+      "name": "collaboration",
+      "description": "Real-time collaboration and multi-user design editing"
+    },
+    {
+      "name": "projects",
+      "description": "Project-level operations and summaries"
+    },
+    {
+      "name": "health",
+      "description": "Service health checks and monitoring"
+    }
+  ]
+}

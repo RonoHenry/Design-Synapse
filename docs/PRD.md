@@ -3,7 +3,7 @@
 ## 1. Introduction
 
 ### 1.1 Purpose
-DesignSynapse is an AI-driven platform designed to revolutionize the DAEC (Design, Architecture, Engineering, Construction) industry in Africa by streamlining built environment workflows, enhancing collaboration, and improving project outcomes.
+DesignSynapse is an AI-driven platform designed to revolutionize the DAEC (Design, Architecture, Engineering, Construction) industry globally by streamlining built environment workflows, enhancing collaboration, and improving project outcomes.
 
 ### 1.2 Target Users
 - Architects and Designers
@@ -16,11 +16,11 @@ DesignSynapse is an AI-driven platform designed to revolutionize the DAEC (Desig
 - Construction Consultants
 
 ### 1.3 Business Goals
-1. Streamline construction project workflows in Africa
+1. Streamline construction project workflows globally
 2. Reduce design and construction errors through AI validation
 3. Improve collaboration between DAEC professionals
 4. Create a standardized approach to construction documentation
-5. Build Africa's largest construction design marketplace
+5. Build a leading global construction design marketplace
 
 ## 2. Product Features
 
@@ -69,7 +69,7 @@ DesignSynapse is an AI-driven platform designed to revolutionize the DAEC (Desig
 - Mobile-responsive design
 - Offline capability for essential features
 - Maximum 2-second response time for common operations
-- Support for multiple African languages
+- Support for multiple international languages
 
 ## 3. Technical Requirements
 
@@ -169,7 +169,7 @@ DesignSynapse is an AI-driven platform designed to revolutionize the DAEC (Desig
 ## 8. Compliance and Standards
 
 ### 8.1 Building Codes
-- Support for local building codes across African countries
+- Support for international building codes and regional standards
 - International building standard compliance
 - Environmental regulation adherence
 

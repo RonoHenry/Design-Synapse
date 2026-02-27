@@ -302,6 +302,202 @@ def pytest_configure_database_fixtures():
     }
 
 
+class DatabaseTestManager:
+    """Manages test database connections and isolation for integration testing."""
+
+    def __init__(self):
+        self.engines = {}
+        self.session_makers = {}
+        self._setup_test_databases()
+
+    def _setup_test_databases(self):
+        """Set up test database connections for each service."""
+        # Use in-memory SQLite for testing
+        test_db_url = "sqlite:///:memory:"
+
+        # Create engines for each service
+        for service in ["user", "knowledge", "project"]:
+            engine = create_test_engine(test_db_url)
+            self.engines[service] = engine
+            self.session_makers[service] = sessionmaker(bind=engine)
+
+    def get_session(self, service: str) -> Session:
+        """Get a database session for the specified service."""
+        return self.session_makers[service]()
+
+    def get_user_session(self) -> Session:
+        """Get a user service database session."""
+        return self.get_session("user")
+
+    def get_knowledge_session(self) -> Session:
+        """Get a knowledge service database session."""
+        return self.get_session("knowledge")
+
+    def get_project_session(self) -> Session:
+        """Get a project service database session."""
+        return self.get_session("project")
+
+    def get_connection_pool_info(self, service: str = "knowledge") -> Dict[str, Any]:
+        """Get connection pool information for monitoring."""
+        engine = self.engines[service]
+        pool = engine.pool
+
+        return {
+            "pool_size": getattr(pool, "size", lambda: 5)(),
+            "checked_out_connections": getattr(pool, "checkedout", lambda: 0)(),
+            "overflow_connections": getattr(pool, "overflow", lambda: 0)(),
+            "active_connections": getattr(pool, "checkedin", lambda: 0)(),
+        }
+
+    def create_tables(self, service: str):
+        """Create tables for the specified service."""
+        # Import models and create tables
+        try:
+            if service == "user":
+                from apps.user_service.src.models.role import Role
+                from apps.user_service.src.models.user import Base
+
+                Base.metadata.create_all(self.engines[service])
+
+                # Create default role for testing
+                session = self.get_session(service)
+                try:
+                    default_role = Role(
+                        name="default", description="Default role for testing"
+                    )
+                    session.add(default_role)
+                    session.commit()
+                except Exception:
+                    session.rollback()
+                finally:
+                    session.close()
+
+            elif service == "knowledge":
+                from apps.knowledge_service.knowledge_service.models.resource import \
+                    Base
+
+                Base.metadata.create_all(self.engines[service])
+
+            elif service == "project":
+                from apps.project_service.src.models.project import Base
+
+                Base.metadata.create_all(self.engines[service])
+        except ImportError:
+            # Skip table creation if models can't be imported
+            pass
+
+    def drop_tables(self, service: str):
+        """Drop tables for the specified service."""
+        try:
+            if service == "user":
+                from apps.user_service.src.models.user import Base
+
+                Base.metadata.drop_all(self.engines[service])
+            elif service == "knowledge":
+                from apps.knowledge_service.knowledge_service.models.resource import \
+                    Base
+
+                Base.metadata.drop_all(self.engines[service])
+            elif service == "project":
+                from apps.project_service.src.models.project import Base
+
+                Base.metadata.drop_all(self.engines[service])
+        except ImportError:
+            # Skip table cleanup if models can't be imported
+            pass
+
+    def execute_with_retry(
+        self, session: Session, operation, max_retries: int = 3
+    ) -> Any:
+        """Execute database operation with retry logic for deadlock recovery."""
+        import time
+
+        from sqlalchemy.exc import OperationalError
+
+        for attempt in range(max_retries):
+            try:
+                return operation()
+            except OperationalError as e:
+                if "deadlock" in str(e).lower() and attempt < max_retries - 1:
+                    # Exponential backoff for deadlock retry
+                    wait_time = (2**attempt) * 0.1
+                    time.sleep(wait_time)
+                    session.rollback()
+                    continue
+                else:
+                    raise
+            except Exception as e:
+                session.rollback()
+                raise
+
+    def test_connection_health(self, service: str) -> bool:
+        """Test if database connection is healthy."""
+        try:
+            from sqlalchemy import text
+
+            session = self.get_session(service)
+            session.execute(text("SELECT 1"))
+            session.close()
+            return True
+        except Exception:
+            return False
+
+
+@pytest.fixture
+def db_test_manager():
+    """Provide a database test manager for integration tests."""
+    manager = DatabaseTestManager()
+
+    # Create tables for all services
+    for service in ["user", "knowledge", "project"]:
+        manager.create_tables(service)
+
+    yield manager
+
+    # Clean up tables after test
+    for service in ["user", "knowledge", "project"]:
+        try:
+            manager.drop_tables(service)
+        except Exception:
+            pass  # Ignore cleanup errors
+
+
+@pytest.fixture
+def user_db_session(db_test_manager):
+    """Provide a user service database session."""
+    session = db_test_manager.get_session("user")
+    yield session
+    try:
+        session.rollback()
+        session.close()
+    except Exception:
+        pass
+
+
+@pytest.fixture
+def knowledge_db_session(db_test_manager):
+    """Provide a knowledge service database session."""
+    session = db_test_manager.get_session("knowledge")
+    yield session
+    try:
+        session.rollback()
+        session.close()
+    except Exception:
+        pass
+
+
+@pytest.fixture
+def project_db_session(db_test_manager):
+    """Provide a project service database session."""
+    session = db_test_manager.get_session("project")
+    yield session
+    try:
+        session.rollback()
+        session.close()
+    except Exception:
+        pass
+
+
 # Database URL configurations for different testing scenarios
 TEST_DATABASE_URLS = {
     "sqlite_memory": "sqlite:///:memory:",

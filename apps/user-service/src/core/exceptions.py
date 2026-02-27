@@ -1,176 +1,63 @@
-"""Error handling and exception definitions for API endpoints.
+"""User Service error handling using shared error classes."""
 
-This module provides custom exception classes and handlers for consistent API
-error management, including auth, validation, and database error scenarios.
-"""
+import sys
+from pathlib import Path
 
-from typing import Any, Dict, Optional
+# Add packages to path for common imports
+packages_path = Path(__file__).parent.parent.parent.parent.parent / "packages"
+sys.path.insert(0, str(packages_path))
 
-from fastapi import Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy.exc import SQLAlchemyError
-
-
-class ErrorResponse(BaseModel):
-    """Standard error response model."""
-
-    message: str
-    error_code: str
-    details: Optional[Dict[str, Any]] = None
-    
-    model_config = ConfigDict(from_attributes=True)
+# Import all shared error classes and handlers
+from common.errors.base import (APIError, AuthenticationError,
+                                AuthorizationError, ConflictError,
+                                DatabaseError, NotFoundError, ValidationError)
+from common.errors.handlers import register_error_handlers
+from common.errors.responses import ErrorResponse, ErrorType
 
 
-class APIError(Exception):
-    """Base exception for API errors."""
-
-    def __init__(
-        self,
-        message: str,
-        error_code: str,
-        status_code: int = status.HTTP_400_BAD_REQUEST,
-        details: Optional[Dict[str, Any]] = None,
-    ):
-        """Initialize a new API error.
-
-        Args:
-            message: Human-readable error message
-            error_code: Machine-readable error code
-            status_code: HTTP status code to return
-            details: Optional additional error details
-        """
-        self.message = message
-        self.error_code = error_code
-        self.status_code = status_code
-        self.details = details
-        super().__init__(message)
+def create_user_not_found_error(user_id: int) -> NotFoundError:
+    """Create a standardized user not found error."""
+    return NotFoundError(resource="User", resource_id=str(user_id))
 
 
-class NotFoundError(APIError):
-    """Resource not found error."""
-
-    def __init__(self, resource: str, resource_id: str):
-        """Initialize a not found error.
-
-        Args:
-            resource: Type of resource that was not found
-            resource_id: ID of the resource that was not found
-        """
-        super().__init__(
-            message=f"{resource} with id {resource_id} not found",
-            error_code="NOT_FOUND",
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
+def create_role_not_found_error(role_id: int) -> NotFoundError:
+    """Create a standardized role not found error."""
+    return NotFoundError(resource="Role", resource_id=str(role_id))
 
 
-class ValidationError(APIError):
-    """Validation error."""
-
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
-        """Initialize a validation error.
-
-        Args:
-            message: Description of the validation error
-            details: Optional dictionary with validation error details
-        """
-        super().__init__(
-            message=message,
-            error_code="VALIDATION_ERROR",
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            details=details,
-        )
+def create_user_validation_error(
+    message: str, field: str = None, value: any = None
+) -> ValidationError:
+    """Create a standardized user validation error."""
+    details = {}
+    if field:
+        details["field"] = field
+    if value is not None:
+        details["invalid_value"] = value
+    return ValidationError(message=message, details=details)
 
 
-class DatabaseError(APIError):
-    """Database operation error."""
-
-    def __init__(self, message: str = "Database error occurred"):
-        """Initialize a database error.
-
-        Args:
-            message: Description of the database error
-        """
-        super().__init__(
-            message=message,
-            error_code="DATABASE_ERROR",
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+def create_validation_error(
+    message: str, field: str = None, value: any = None
+) -> ValidationError:
+    """Create a standardized validation error."""
+    details = {}
+    if field:
+        details["field"] = field
+    if value is not None:
+        details["invalid_value"] = value
+    return ValidationError(message=message, details=details)
 
 
-class AuthenticationError(APIError):
-    """Authentication error."""
-
-    def __init__(self, message: str = "Authentication failed"):
-        """Initialize an authentication error.
-
-        Args:
-            message: Description of the authentication failure
-        """
-        super().__init__(
-            message=message,
-            error_code="AUTHENTICATION_ERROR",
-            status_code=status.HTTP_401_UNAUTHORIZED,
-        )
+def create_authentication_error(
+    message: str = "Authentication failed",
+) -> AuthenticationError:
+    """Create a standardized authentication error."""
+    return AuthenticationError(message=message)
 
 
-class AuthorizationError(APIError):
-    """Authorization error."""
-
-    def __init__(self, message: str = "Insufficient permissions"):
-        """Initialize an authorization error.
-
-        Args:
-            message: Description of the authorization failure
-        """
-        super().__init__(
-            message=message,
-            error_code="AUTHORIZATION_ERROR",
-            status_code=status.HTTP_403_FORBIDDEN,
-        )
-
-
-async def api_error_handler(request: Request, exc: APIError) -> JSONResponse:
-    """Handle APIError exceptions."""
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
-
-
-async def validation_error_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
-    """Handle FastAPI's RequestValidationError."""
-    error_response = ErrorResponse(
-        message="Validation error",
-        error_code="VALIDATION_ERROR",
-        details={"errors": exc.errors()},
-    )
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=error_response.model_dump(exclude_none=True),
-    )
-
-
-async def sqlalchemy_error_handler(
-    request: Request, exc: SQLAlchemyError
-) -> JSONResponse:
-    """Handle SQLAlchemy errors."""
-    error_response = ErrorResponse(
-        message="Database error occurred", error_code="DATABASE_ERROR"
-    )
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.model_dump(exclude_none=True),
-    )
-
-
-async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Handle any unhandled exceptions."""
-    error_response = ErrorResponse(
-        message="An unexpected error occurred",
-        error_code="INTERNAL_SERVER_ERROR",
-    )
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.model_dump(exclude_none=True),
-    )
+def create_authorization_error(
+    message: str = "Insufficient permissions",
+) -> AuthorizationError:
+    """Create a standardized authorization error."""
+    return AuthorizationError(message=message)

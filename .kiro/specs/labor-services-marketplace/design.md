@@ -15,18 +15,18 @@ graph TB
         MOBILE[Mobile App]
         API_CLIENT[External APIs]
     end
-    
+
     subgraph "API Gateway"
         GATEWAY[API Gateway]
     end
-    
+
     subgraph "Labor Services Marketplace"
         API[FastAPI Application]
         AUTH[Authentication Layer]
         BL[Business Logic Layer]
         DATA[Data Access Layer]
     end
-    
+
     subgraph "External Services"
         USER_SVC[User Service]
         PROJECT_SVC[Project Service]
@@ -35,29 +35,29 @@ graph TB
         NOTIFICATION[Notification Service]
         MAPS[Maps/Geocoding API]
     end
-    
+
     subgraph "Data Layer"
         DB[(TiDB Database)]
         REDIS[(Redis Cache)]
         SEARCH[Search Index]
     end
-    
+
     WEB --> GATEWAY
     MOBILE --> GATEWAY
     API_CLIENT --> GATEWAY
     GATEWAY --> API
-    
+
     API --> AUTH
     API --> BL
     BL --> DATA
-    
+
     API --> USER_SVC
     API --> PROJECT_SVC
     API --> VENDOR_SVC
     API --> PAYMENT
     API --> NOTIFICATION
     API --> MAPS
-    
+
     DATA --> DB
     DATA --> REDIS
     BL --> SEARCH
@@ -75,7 +75,7 @@ graph LR
         REVIEWS[Reviews API]
         MATCHING[Matching API]
     end
-    
+
     subgraph "Service Layer"
         PROVIDER_SVC[Provider Service]
         REQUEST_SVC[Request Service]
@@ -85,7 +85,7 @@ graph LR
         MATCHING_SVC[Matching Service]
         NOTIFICATION_SVC[Notification Service]
     end
-    
+
     subgraph "Repository Layer"
         PROVIDER_REPO[Provider Repository]
         REQUEST_REPO[Request Repository]
@@ -93,20 +93,20 @@ graph LR
         PAYMENT_REPO[Payment Repository]
         REVIEW_REPO[Review Repository]
     end
-    
+
     PROVIDERS --> PROVIDER_SVC
     REQUESTS --> REQUEST_SVC
     BOOKINGS --> BOOKING_SVC
     PAYMENTS --> PAYMENT_SVC
     REVIEWS --> REVIEW_SVC
     MATCHING --> MATCHING_SVC
-    
+
     PROVIDER_SVC --> PROVIDER_REPO
     REQUEST_SVC --> REQUEST_REPO
     BOOKING_SVC --> BOOKING_REPO
     PAYMENT_SVC --> PAYMENT_REPO
     REVIEW_SVC --> REVIEW_REPO
-    
+
     MATCHING_SVC --> PROVIDER_REPO
     MATCHING_SVC --> REQUEST_REPO
 ```
@@ -526,22 +526,22 @@ CREATE TABLE reviews (
 class MatchingAlgorithm:
     def calculate_match_score(self, provider: ServiceProvider, request: ServiceRequest) -> float:
         """Calculate compatibility score between provider and request"""
-        
+
         # Skill match (40% weight)
         skill_score = self._calculate_skill_match(provider.skills, request.skills_required)
-        
+
         # Location proximity (25% weight)
         distance_score = self._calculate_distance_score(provider.service_areas, request.location)
-        
+
         # Availability match (20% weight)
         availability_score = self._calculate_availability_match(provider.availability, request.preferred_start_date)
-        
+
         # Rating and reputation (10% weight)
         reputation_score = self._calculate_reputation_score(provider.rating, provider.total_reviews)
-        
+
         # Response time (5% weight)
         response_score = self._calculate_response_score(provider.response_time_avg)
-        
+
         total_score = (
             skill_score * 0.40 +
             distance_score * 0.25 +
@@ -549,7 +549,7 @@ class MatchingAlgorithm:
             reputation_score * 0.10 +
             response_score * 0.05
         )
-        
+
         return min(total_score, 1.0)
 ```
 

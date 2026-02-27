@@ -5,66 +5,41 @@ SQLAlchemy models for the Labor Services Marketplace.
 """
 
 from .base import Base
-from .service_provider import (
-    ServiceProvider, ServiceArea, Skill, SkillCategory, ProviderSkill,
-    ProviderType, VerificationStatus, ProficiencyLevel
-)
-
-from .service_request import (
-    ServiceRequest, SkillRequirement,
-    UrgencyLevel, RequestStatus,
-)
-
-from .quote import (
-    Quote,
-    QuoteStatus,
-)
-
-from .booking import (
-    Booking,
-    BookingMilestone,
-    BookingStatus,
-    MilestoneStatus,
-)
-
-from .review import (
-    Review,
-    ReviewType,
-    ReviewerType,  # Alias for test compatibility
-    ReviewStatus,
-)
+from .booking import Booking, BookingMilestone, BookingStatus, MilestoneStatus
+from .quote import Quote, QuoteStatus
+from .review import ReviewerType  # Alias for test compatibility
+from .review import Review, ReviewStatus, ReviewType
+from .service_provider import (ProficiencyLevel, ProviderSkill, ProviderType,
+                               ServiceArea, ServiceProvider, Skill,
+                               SkillCategory, VerificationStatus)
+from .service_request import (RequestStatus, ServiceRequest, SkillRequirement,
+                              UrgencyLevel)
 
 __all__ = [
     "Base",
-    
     # Service Provider models
     "ServiceProvider",
     "ServiceArea",
     "ProviderType",
-    "VerificationStatus", 
+    "VerificationStatus",
     "ProficiencyLevel",
-    
     # Skill models
-    "Skill", 
+    "Skill",
     "SkillCategory",
     "ProviderSkill",
-    
     # Service Request models
     "ServiceRequest",
     "SkillRequirement",
     "UrgencyLevel",
     "RequestStatus",
-    
     # Quote models
     "Quote",
     "QuoteStatus",
-    
     # Booking models
     "Booking",
     "BookingMilestone",
     "BookingStatus",
     "MilestoneStatus",
-    
     # Review models
     "Review",
     "ReviewType",

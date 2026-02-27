@@ -1,19 +1,22 @@
 """API endpoints for managing roles and role assignments."""
 
+import sys
+from pathlib import Path
 from typing import List
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_current_user, has_role
-from .schemas.roles import (
-    RoleAssignmentResponse,
-    RoleCreate,
-    RoleList,
-    RoleResponse,
-    UserRolesResponse,
-)
-from ...core.exceptions import NotFoundError, ValidationError
+from .schemas.roles import (RoleAssignmentResponse, RoleCreate, RoleList,
+                            RoleResponse, UserRolesResponse)
+
+# Add packages to path for common imports
+packages_path = Path(__file__).parent.parent.parent.parent.parent.parent / "packages"
+sys.path.insert(0, str(packages_path))
+
+from common.errors.base import NotFoundError, ValidationError
+
 from ...infrastructure.database import get_db
 from ...models import Role, User
 

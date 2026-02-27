@@ -54,7 +54,7 @@ class ReviewService:
         # Validate booking and authorization
         booking = await self.booking_repository.get_by_id(booking_id)
         if not booking:
-            raise NotFoundError("Booking not found")
+            raise NotFoundError("Booking", booking_id)
 
         if booking.status != BookingStatus.COMPLETED:
             raise BusinessLogicError("Can only review completed bookings")
@@ -80,6 +80,12 @@ class ReviewService:
             communication_rating=rating,
             timeliness_rating=rating,
             comment=comment,
+            title=review_data.get("title") if review_data else None,
+            categories=review_data.get("categories", {}) if review_data else {},
+            would_recommend=review_data.get("would_recommend", True)
+            if review_data
+            else True,
+            images=review_data.get("photos", []) if review_data else [],
             status=ReviewStatus.PUBLISHED,
             created_at=datetime.now(timezone.utc),
         )
@@ -92,7 +98,7 @@ class ReviewService:
             )
             review.timeliness_rating = review_data.get("timeliness_rating", rating)
 
-        created_review = await self.review_repository.create(review)
+        created_review = await self.review_repository.save(review)
 
         # Update provider's average rating
         await self._update_provider_rating(booking.provider_id)
@@ -115,7 +121,7 @@ class ReviewService:
         # Validate booking and authorization
         booking = await self.booking_repository.get_by_id(booking_id)
         if not booking:
-            raise NotFoundError("Booking not found")
+            raise NotFoundError("Booking", booking_id)
 
         if booking.status != BookingStatus.COMPLETED:
             raise BusinessLogicError("Can only review completed bookings")
@@ -145,7 +151,7 @@ class ReviewService:
             created_at=datetime.now(timezone.utc),
         )
 
-        return await self.review_repository.create(review)
+        return await self.review_repository.save(review)
 
     async def get_review(self, review_id: int) -> Review:
         """Get review by ID."""
@@ -267,13 +273,13 @@ class ReviewService:
         """Flag a review as inappropriate."""
         review = await self.review_repository.get_by_id(review_id)
         if not review:
-            raise NotFoundError("Review not found")
+            raise NotFoundError("Review", review_id)
 
         if review.reviewer_id == flagger_id:
             raise BusinessLogicError("Cannot flag your own review")
 
         # Call repository method to add flag
-        self.review_repository.add_flag(review_id, reason, flagger_id)
+        await self.review_repository.add_flag(review_id, reason, flagger_id)
 
         # Notify if notification service is available
         if self.notification_service:
@@ -292,52 +298,51 @@ class ReviewService:
         """Moderate a flagged review."""
         review = await self.review_repository.get_by_id(review_id)
         if not review:
-            raise NotFoundError("Review not found")
+            raise NotFoundError("Review", review_id)
 
+        update_data = {}
         if action == "content_removed":
-            review.content = "[Content removed by moderator]"
-            review.is_verified = False
+            update_data["content"] = "[Content removed by moderator]"
+            update_data["is_verified"] = False
         elif action == "approve":
-            review.status = ReviewStatus.PUBLISHED
+            update_data["status"] = ReviewStatus.PUBLISHED
         elif action == "remove":
-            review.status = ReviewStatus.REJECTED
+            update_data["status"] = ReviewStatus.REJECTED
         else:
             raise ValidationError("Invalid moderation action")
 
         if hasattr(review, "moderated_by"):
-            review.moderated_by = moderator_id
+            update_data["moderated_by"] = moderator_id
         if hasattr(review, "moderated_at"):
-            review.moderated_at = datetime.now(timezone.utc)
+            update_data["moderated_at"] = datetime.now(timezone.utc)
         if hasattr(review, "moderation_reason"):
-            review.moderation_reason = reason
+            update_data["moderation_reason"] = reason
 
-        return await self.review_repository.update(review)
+        return await self.review_repository.update(review.id, update_data)
 
     async def respond_to_review(
         self,
         review_id: int,
-        response_data: Dict[str, Any],
-        responder_id: Optional[int] = None,  # For backward compatibility
+        responder_id: int,
+        response_content: str,
     ) -> bool:
         """Respond to a review."""
         review = await self.review_repository.get_by_id(review_id)
         if not review:
-            raise NotFoundError("Review not found")
+            raise NotFoundError("Review", review_id)
 
-        # Extract responder_id from response_data or parameter
-        actual_responder_id = response_data.get("responder_id", responder_id)
-        response_content = response_data.get("content", "")
-
-        if review.reviewee_id != actual_responder_id:
+        if review.reviewee_id != responder_id:
             raise AuthorizationError("Only reviewee can respond to review")
 
-        if review.reviewer_id == actual_responder_id:
+        if review.reviewer_id == responder_id:
             raise BusinessLogicError("Cannot respond to your own review")
 
-        # Call repository method to add response
-        self.review_repository.add_response(
-            review_id, response_content, actual_responder_id
-        )
+        # Update the review with response
+        update_data = {
+            "response": response_content,
+            "response_date": datetime.now(timezone.utc),
+        }
+        await self.review_repository.update(review.id, update_data)
 
         # Notify if notification service is available
         if self.notification_service:
@@ -351,7 +356,7 @@ class ReviewService:
         """Mark a review as helpful."""
         review = await self.review_repository.get_by_id(review_id)
         if not review:
-            raise NotFoundError("Review not found")
+            raise NotFoundError("Review", review_id)
 
         if review.reviewer_id == user_id:
             raise BusinessLogicError("Cannot mark your own review as helpful")
@@ -361,9 +366,10 @@ class ReviewService:
             raise BusinessLogicError("Already marked this review as helpful")
 
         await self.review_repository.mark_helpful(review_id, user_id)
-        review.helpful_votes = (review.helpful_votes or 0) + 1
+        new_helpful_count = (review.helpful_votes or 0) + 1
 
-        return await self.review_repository.update(review)
+        update_data = {"helpful_votes": new_helpful_count}
+        return await self.review_repository.update(review.id, update_data)
 
     async def search_reviews_by_rating(
         self, search_criteria: Dict[str, Any]
@@ -373,7 +379,9 @@ class ReviewService:
         max_rating = search_criteria.get("max_rating", 5)
         reviewee_id = search_criteria.get("reviewee_id")
 
-        return self.review_repository.search_by_criteria(search_criteria)
+        return await self.review_repository.search_by_criteria(
+            search_criteria
+        )  # Added await
 
     async def get_recent_reviews(
         self, days_back: int = 30, limit: int = 50
@@ -389,7 +397,7 @@ class ReviewService:
         """Verify review authenticity."""
         review = await self.review_repository.get_by_id(review_id)
         if not review:
-            raise NotFoundError("Review not found")
+            raise NotFoundError("Review", review_id)
 
         # Check if booking exists and is completed
         booking = await self.booking_repository.get_by_id(review.booking_id)
@@ -440,6 +448,89 @@ class ReviewService:
         await self.provider_repository.bulk_update_ratings(rating_updates)
         return len(rating_updates) if rating_updates else 0
 
+    async def get_provider_reviews(
+        self,
+        provider_id: int,
+        rating_min: Optional[int] = None,
+        page: int = 1,
+        size: int = 10,
+        sort_by: str = "created_at",
+        order: str = "desc",
+    ) -> Dict[str, Any]:
+        """Get reviews for a provider with pagination and filtering."""
+        # Calculate offset
+        offset = (page - 1) * size
+
+        # Get reviews
+        reviews = await self.get_reviews_for_provider(
+            provider_id, limit=size, offset=offset
+        )
+
+        # Filter by rating if specified
+        if rating_min:
+            reviews = [r for r in reviews if r.overall_rating >= rating_min]
+
+        # Sort reviews
+        if sort_by == "rating":
+            reviews.sort(key=lambda x: x.overall_rating, reverse=(order == "desc"))
+        elif sort_by == "helpful_votes":
+            reviews.sort(key=lambda x: x.helpful_votes or 0, reverse=(order == "desc"))
+        else:  # created_at
+            reviews.sort(key=lambda x: x.created_at, reverse=(order == "desc"))
+
+        # Calculate total and pagination
+        total = len(reviews)
+
+        # Calculate average rating and distribution
+        if reviews:
+            avg_rating = sum(r.overall_rating for r in reviews) / len(reviews)
+            rating_dist = {}
+            for i in range(1, 6):
+                rating_dist[str(i)] = len([r for r in reviews if r.overall_rating == i])
+        else:
+            avg_rating = 0
+            rating_dist = {str(i): 0 for i in range(1, 6)}
+
+        return {
+            "items": reviews,
+            "total": total,
+            "page": page,
+            "size": size,
+            "pages": (total + size - 1) // size,
+            "average_rating": avg_rating,
+            "rating_distribution": rating_dist,
+        }
+
+    async def get_seeker_reviews(
+        self, seeker_id: int, page: int = 1, size: int = 5
+    ) -> Dict[str, Any]:
+        """Get reviews for a seeker with pagination."""
+        # Calculate offset
+        offset = (page - 1) * size
+
+        # Get reviews
+        reviews = await self.get_reviews_for_seeker(
+            seeker_id, limit=size, offset=offset
+        )
+
+        # Calculate total and pagination
+        total = len(reviews)
+
+        # Calculate average rating
+        if reviews:
+            avg_rating = sum(r.overall_rating for r in reviews) / len(reviews)
+        else:
+            avg_rating = 0
+
+        return {
+            "items": reviews,
+            "total": total,
+            "page": page,
+            "size": size,
+            "pages": (total + size - 1) // size,
+            "average_rating": avg_rating,
+        }
+
     # Alias methods for test compatibility
     async def submit_review(self, review_data: Dict[str, Any]) -> Review:
         """Generic submit review method for test compatibility."""
@@ -447,24 +538,33 @@ class ReviewService:
         reviewer_id = review_data["reviewer_id"]
         rating = review_data["rating"]
         comment = review_data.get("content", review_data.get("comment", ""))
-        reviewer_type = review_data.get("reviewer_type", ReviewType.SEEKER)
+        reviewer_type = review_data.get("reviewer_type", "provider_review")
 
-        # Convert string to enum if needed
+        # Convert string to enum if needed and fix the logic
         if isinstance(reviewer_type, str):
-            if reviewer_type.upper() == "SEEKER":
-                reviewer_type = ReviewType.SEEKER
-            elif reviewer_type.upper() == "PROVIDER":
-                reviewer_type = ReviewType.PROVIDER
+            if reviewer_type.lower() in ["provider_review", "seeker_to_provider"]:
+                # This is a seeker reviewing a provider
+                return await self.submit_provider_review(
+                    booking_id,
+                    reviewer_id,
+                    rating,
+                    comment,
+                    review_data,  # Pass full review_data
+                )
+            elif reviewer_type.lower() in ["seeker_review", "provider_to_seeker"]:
+                # This is a provider reviewing a seeker
+                return await self.submit_seeker_review(
+                    booking_id, reviewer_id, rating, comment
+                )
 
-        # Determine which method to call based on reviewer type
-        if reviewer_type in [ReviewType.SEEKER, "SEEKER"]:
-            return await self.submit_provider_review(
-                booking_id, reviewer_id, rating, comment, review_data.get("categories")
-            )
-        else:
-            return await self.submit_seeker_review(
-                booking_id, reviewer_id, rating, comment
-            )
+        # Default to provider review (seeker reviewing provider)
+        return await self.submit_provider_review(
+            booking_id,
+            reviewer_id,
+            rating,
+            comment,
+            review_data,  # Pass full review_data
+        )
 
     async def calculate_aggregate_rating(self, provider_id: int) -> Dict[str, Any]:
         """Alias for calculate_provider_rating for test compatibility."""
@@ -474,9 +574,29 @@ class ReviewService:
         """Alias for mark_review_helpful for test compatibility."""
         return await self.mark_review_helpful(review_id, user_id)
 
-    async def search_reviews(self, search_criteria: Dict[str, Any]) -> List[Review]:
-        """Alias for search_reviews_by_rating for test compatibility."""
-        return await self.search_reviews_by_rating(search_criteria)
+    async def search_reviews(self, search_criteria: Dict[str, Any]) -> Dict[str, Any]:
+        """Search reviews with pagination and filtering."""
+        # Get basic parameters
+        page = search_criteria.get("page", 1)
+        size = search_criteria.get("size", 10)
+
+        # Call the existing search method
+        reviews = await self.search_reviews_by_rating(search_criteria)
+
+        # Apply pagination
+        offset = (page - 1) * size
+        paginated_reviews = reviews[offset : offset + size]
+
+        # Calculate total
+        total = len(reviews)
+
+        return {
+            "items": paginated_reviews,  # Changed from "results" to "items" to match schema
+            "total": total,
+            "page": page,
+            "size": size,
+            "pages": (total + size - 1) // size,
+        }
 
     # Missing methods that tests expect
     async def flag_review(
@@ -505,4 +625,4 @@ class ReviewService:
         if provider:
             provider.average_rating = Decimal(str(rating_data["average_rating"]))
             provider.total_reviews = rating_data["total_reviews"]
-            await self.provider_repository.update(provider)
+            await self.provider_repository.save(provider)

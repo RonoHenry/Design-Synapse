@@ -2,8 +2,6 @@
 Project API routes.
 """
 
-from typing import List
-
 import sys
 from pathlib import Path
 from typing import List
@@ -17,16 +15,13 @@ sys.path.insert(0, str(packages_path))
 
 from common.errors.base import ValidationError
 
-from ..schemas.project import (
-    Project,
-    ProjectCreate,
-    ProjectStatusUpdate,
-    ProjectUpdate,
-)
 from ....core.config import settings
-from ....core.exceptions import ProjectNotFoundError
+from ....core.exceptions import (create_project_not_found_error,
+                                 create_validation_error)
 from ....infrastructure.database import get_db
 from ....models import Project as ProjectModel
+from ..schemas.project import (Project, ProjectCreate, ProjectStatusUpdate,
+                               ProjectUpdate)
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -37,11 +32,19 @@ def create_project(
     db: Session = Depends(get_db),
 ) -> Project:
     """Create a new project."""
-    project = ProjectModel(**project_data.model_dump())
-    db.add(project)
-    db.commit()
-    db.refresh(project)
-    return project
+    try:
+        project = ProjectModel(**project_data.model_dump())
+        db.add(project)
+        db.commit()
+        db.refresh(project)
+        return project
+    except ValueError as e:
+        # Handle model validation errors
+        raise create_validation_error(str(e))
+    except Exception as e:
+        # Database errors will be handled by the shared SQLAlchemy error handler
+        db.rollback()
+        raise
 
 
 @router.get("/{project_id}", response_model=Project)
@@ -52,7 +55,7 @@ def get_project(
     """Get a specific project by ID."""
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
-        raise ProjectNotFoundError(project_id)
+        raise create_project_not_found_error(project_id)
     return project
 
 
@@ -63,12 +66,7 @@ def list_projects(
     db: Session = Depends(get_db),
 ) -> List[Project]:
     """List all projects with pagination."""
-    projects = (
-        db.query(ProjectModel)
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    projects = db.query(ProjectModel).offset(skip).limit(limit).all()
     return projects
 
 
@@ -81,14 +79,22 @@ def update_project(
     """Update a project."""
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
-        raise ProjectNotFoundError(project_id)
+        raise create_project_not_found_error(project_id)
 
-    for key, value in project_data.model_dump(exclude_unset=True).items():
-        setattr(project, key, value)
+    try:
+        for key, value in project_data.model_dump(exclude_unset=True).items():
+            setattr(project, key, value)
 
-    db.commit()
-    db.refresh(project)
-    return project
+        db.commit()
+        db.refresh(project)
+        return project
+    except ValueError as e:
+        # Handle model validation errors
+        raise create_validation_error(str(e))
+    except Exception as e:
+        # Database errors will be handled by the shared SQLAlchemy error handler
+        db.rollback()
+        raise
 
 
 @router.patch("/{project_id}/status", response_model=Project)
@@ -100,12 +106,20 @@ def update_project_status(
     """Update a project's status."""
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
-        raise ProjectNotFoundError(project_id)
+        raise create_project_not_found_error(project_id)
 
-    project.status = status_data.status
-    db.commit()
-    db.refresh(project)
-    return project
+    try:
+        project.status = status_data.status
+        db.commit()
+        db.refresh(project)
+        return project
+    except ValueError as e:
+        # Handle model validation errors
+        raise create_validation_error(str(e))
+    except Exception as e:
+        # Database errors will be handled by the shared SQLAlchemy error handler
+        db.rollback()
+        raise
 
 
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -116,7 +130,12 @@ def delete_project(
     """Delete a project."""
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
-        raise ProjectNotFoundError(project_id)
+        raise create_project_not_found_error(project_id)
 
-    db.delete(project)
-    db.commit()
+    try:
+        db.delete(project)
+        db.commit()
+    except Exception as e:
+        # Database errors will be handled by the shared SQLAlchemy error handler
+        db.rollback()
+        raise

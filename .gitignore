@@ -161,6 +161,26 @@ Thumbs.db
 docs/_build/
 site/
 
+# AI-generated summary files (temporary documentation)
+*_SUMMARY.md
+*SUMMARY.md
+*_REPORT.md
+*REPORT.md
+*_PROGRESS.md
+*PROGRESS.md
+*_GUIDE.md
+*GUIDE.md
+*_CHECKPOINT.md
+*CHECKPOINT.md
+*_VALIDATION.md
+*VALIDATION.md
+*_ANALYSIS.md
+*ANALYSIS.md
+*_PLAN.md
+*PLAN.md
+*_TRACKER.md
+*TRACKER.md
+
 # Jupyter Notebooks
 .ipynb_checkpoints
 */.ipynb_checkpoints/*

@@ -1,7 +1,7 @@
 # DesignSynapse 🏗️
 
 ## Overview
-DesignSynapse is an AI-driven platform revolutionizing the DAEC (Design, Architecture, Engineering, Construction) industry by streamlining built environment. it combines cutting-edge AI technology with industry-specific tools to enhance tool efficiency, improve collaboration, and drive innovation in construction projects.
+DesignSynapse is an AI-driven platform revolutionizing the DAEC (Design, Architecture, Engineering, Construction) industry by streamlining built environment workflows globally. Our platform combines cutting-edge AI technology with industry-specific tools to enhance productivity, improve collaboration, and drive innovation in construction projects worldwide.
 
 ### Key Features
 - 🤖 AI-powered design assistance and validation
@@ -9,6 +9,10 @@ DesignSynapse is an AI-driven platform revolutionizing the DAEC (Design, Archite
 - 👥 Collaborative project management
 - 📊 Real-time analytics and insights
 - 🔐 Role-based access control
+- 🌍 International construction standards and regional compliance
+
+## Vision
+To transform the global construction industry by providing accessible, intelligent tools that bridge the gap between design and execution, making sustainable and efficient construction practices the norm rather than the exception.
 
 # DesignSynapse Project Structure
 
@@ -17,9 +21,10 @@ designsynapse/
 │
 ├── apps/                           # Microservices
 │   ├── api-gateway/               # API Gateway & Request Routing
-│   ├── architectural-service/     # Design Management & Analysis
+│   ├── analytics-service/         # Business Intelligence & Drone Analytics
+│   ├── architectural-service/     # Architectural Design & Analysis
 │   ├── design-service/            # AI-Powered Design Generation
-│   ├── engineering-service/       # Engineering Calculations (In Progress)
+│   ├── engineering-service/       # Engineering Calculations & MEP Systems
 │   ├── knowledge-service/         # Knowledge Base & Vector Search
 │   ├── labor-service/             # Labor Marketplace
 │   ├── project-service/           # Project Management
@@ -119,6 +124,18 @@ designsynapse/
 
 ## Key Features by Service
 
+### Analytics Service
+- Business intelligence dashboards
+- Project and design analytics
+- Service performance monitoring
+- User activity tracking
+- Drone survey site analysis
+- 3D terrain modeling from aerial imagery
+- Volume calculations and measurements
+- Construction progress monitoring
+- Real-time data processing
+- Multi-format data export (PDF, Excel, CSV)
+
 ### Architectural Service
 - Design version control & management
 - Building code compliance checking
@@ -136,6 +153,16 @@ designsynapse/
 - Building code validation
 - Design file management
 - Comment & feedback system
+
+### Engineering Service
+- Structural engineering calculations (ASCE 7)
+- MEP systems design (HVAC, electrical, plumbing)
+- Civil engineering (grading, drainage, utilities)
+- Code compliance verification (IBC, NEC, IPC)
+- Engineering document management
+- Unit system support (Imperial/Metric)
+- Load calculations and analysis
+- Technical specifications generation
 
 ### Knowledge Service
 - Vector-based semantic search
@@ -183,17 +210,24 @@ All features follow a structured specification process:
 2. **Design** - Technical design & architecture
 3. **Tasks** - Implementation plan with TDD approach
 
-### Testing Approch
+### Testing Approach
 - Unit tests for all business logic
 - Property-based tests using Hypothesis
 - Integration tests for API endpoints
 - Load tests for performance validation
-- Minimum 80% code coverage
+- Minimum 80% code coverage target
 
 
 ## Getting Started
 
-See [README.md](README.md) for detailed setup instructions.
+For detailed setup instructions, see the service-specific README files in each service directory:
+- [Architectural Service](apps/architectural-service/README.md)
+- [Design Service](apps/design-service/README.md)
+- [Knowledge Service](apps/knowledge-service/README.md)
+- [Project Service](apps/project-service/README.md)
+- [User Service](apps/user-service/README.md)
+
+General platform setup documentation is available in [docs/ENV.md](docs/ENV.md).
 
 ## Documentation
 
@@ -206,3 +240,22 @@ See [README.md](README.md) for detailed setup instructions.
 
 MIT License - See [LICENSE](LICENSE) for details.
 
+## Acknowledgments
+- Design inspiration from existing DAEC tools
+- AI/ML community for model architectures and best practices
+- Open source community and contributors
+- Construction industry professionals worldwide for domain expertise
+
+## Status
+
+🚧 Active Development - Production-Ready Services:
+- ✅ Architectural Service - Complete with 92%+ test coverage
+- ✅ Design Service - Complete with visual generation capabilities
+- ✅ Knowledge Service - Complete with vector search and recommendations
+- ✅ Labor Service - Complete with marketplace functionality
+- ✅ Vendor Service - Complete with order management
+- ✅ Project Service - Complete with collaboration features
+- ✅ User Service - Complete with RBAC
+- 🔨 Analytics Service - In specification phase
+- 🔨 Engineering Service - In specification phase
+- 🔨 API Gateway - In development

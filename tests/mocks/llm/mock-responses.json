@@ -1,0 +1,64 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/v1/chat/completions"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "id": "chatcmpl-mock-{{randomValue type='UUID'}}",
+          "object": "chat.completion",
+          "created": "{{now}}",
+          "model": "gpt-3.5-turbo",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "This is a mock response for integration testing. The content analysis shows key insights about the provided text."
+              },
+              "finish_reason": "stop"
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 50,
+            "completion_tokens": 25,
+            "total_tokens": 75
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/v1/embeddings"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "object": "list",
+          "data": [
+            {
+              "object": "embedding",
+              "embedding": "{{range type='FLOAT' min=-1.0 max=1.0 count=384}}",
+              "index": 0
+            }
+          ],
+          "model": "text-embedding-ada-002",
+          "usage": {
+            "prompt_tokens": 10,
+            "total_tokens": 10
+          }
+        }
+      }
+    }
+  ]
+}
