@@ -1,8 +1,8 @@
 """Shared error handling classes and utilities for all services."""
 
 from .base import (APIError, AuthenticationError, AuthorizationError,
-                   CircuitBreakerError, ConflictError, DatabaseError, 
-                   ExternalServiceError, LLMServiceError, NotFoundError, 
+                   CircuitBreakerError, ConflictError, DatabaseError,
+                   ExternalServiceError, LLMServiceError, NotFoundError,
                    RateLimitError, ServiceUnavailableError, TimeoutError,
                    ValidationError, VectorSearchError)
 from .handlers import (api_error_handler, general_exception_handler,

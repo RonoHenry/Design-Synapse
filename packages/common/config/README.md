@@ -124,17 +124,17 @@ class MyServiceConfig(BaseServiceConfig):
             port=8001,
             **kwargs
         )
-        
+
         # Initialize sub-configurations
         self.database = DatabaseConfig()
         self.llm = LLMConfig()
-        
+
         # Service-specific settings
         self.custom_setting = os.getenv("CUSTOM_SETTING", "default")
-        
+
         # Validate configuration
         self._validate_config()
-    
+
     def _validate_config(self):
         self.database.validate_connection_settings()
         self.llm.validate_configuration()
@@ -314,13 +314,13 @@ security_config = SecurityHeadersConfig(
 @app.middleware("http")
 async def add_security_headers(request, call_next):
     response = await call_next(request)
-    
+
     middleware = SecurityHeadersMiddleware(security_config)
     headers = middleware.get_security_headers()
-    
+
     for name, value in headers.items():
         response.headers[name] = value
-    
+
     return response
 ```
 
@@ -338,7 +338,7 @@ async def add_security_headers(request, call_next):
         "password": "secret"
     },
     "redis": {
-        "host": "localhost", 
+        "host": "localhost",
         "port": 6379,
         "db": 0
     },
@@ -414,7 +414,7 @@ python -m pytest packages/common/config/tests/test_integration.py -v
 ```python
 class ConfigLoader:
     def load_from_file(self, file_path: str) -> ConfigSchema
-    def load_from_env(self) -> ConfigSchema  
+    def load_from_env(self) -> ConfigSchema
     def load_from_file_and_env(self, file_path: str) -> ConfigSchema
 ```
 
@@ -448,7 +448,7 @@ See `production_example.py` for a complete example of setting up a production Fa
 This production configuration system satisfies:
 
 - ✅ **4.1**: Environment-specific configuration loading
-- ✅ **4.2**: Configuration validation with clear error messages  
+- ✅ **4.2**: Configuration validation with clear error messages
 - ✅ **4.3**: SSL/TLS configuration and security headers
 - ✅ **4.5**: Secrets management with secure storage
 - ✅ **6.1**: HTTPS enforcement and security headers

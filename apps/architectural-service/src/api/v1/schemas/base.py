@@ -68,15 +68,24 @@ class PaginationParams(BaseModel):
 
     cursor: Optional[str] = Field(None, description="Cursor for pagination")
     limit: int = Field(20, description="Number of items per page", ge=1, le=100)
+    sort_field: Optional[str] = Field(
+        None, description="Field to sort by (defaults to created_at)"
+    )
+    sort_direction: Optional[str] = Field(
+        "desc", description="Sort direction (asc or desc)", pattern="^(asc|desc)$"
+    )
 
 
 class PaginatedResponse(BaseModel):
     """Paginated response wrapper."""
 
     items: list = Field(..., description="List of items")
+    has_next: bool = Field(..., description="Whether there are more items")
     next_cursor: Optional[str] = Field(None, description="Cursor for next page")
-    has_more: bool = Field(..., description="Whether more items are available")
-    total: Optional[int] = Field(None, description="Total count (if available)")
+    total_count: Optional[int] = Field(None, description="Total count (if requested)")
+    page_info: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional pagination metadata"
+    )
 
 
 class ErrorDetail(BaseModel):

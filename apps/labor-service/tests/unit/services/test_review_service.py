@@ -20,20 +20,23 @@ class TestReviewService:
     def mock_review_repository(self):
         """Mock review repository for testing"""
         mock = Mock()
-        mock.get_by_id = AsyncMock()
         mock.create = AsyncMock()
+        mock.save = AsyncMock()  # Add AsyncMock for save method
+        mock.get_by_id = AsyncMock()
         mock.update = AsyncMock()
+        mock.get_by_booking_id = AsyncMock()
         mock.get_by_booking_and_reviewer = AsyncMock()
-        mock.get_provider_reviews = AsyncMock()
-        mock.get_seeker_reviews = AsyncMock()
-        mock.get_review_analytics = AsyncMock()
-        mock.has_user_marked_helpful = AsyncMock()
+        mock.get_by_reviewee_id = Mock(return_value=[])
+        mock.get_provider_reviews = Mock(return_value=[])
+        mock.search_by_criteria = AsyncMock()
+        mock.get_analytics = Mock()
+        mock.add_flag = Mock()
+        mock.moderate = AsyncMock()
+        mock.add_response = Mock()
         mock.mark_helpful = AsyncMock()
-        mock.search_by_rating = AsyncMock()
+        mock.has_user_marked_helpful = AsyncMock()
         mock.get_recent_reviews = AsyncMock()
-        mock.calculate_aggregate_ratings = (
-            Mock()
-        )  # Non-async mock for test compatibility
+        mock.calculate_aggregate_ratings = Mock()
         return mock
 
     @pytest.fixture
@@ -49,6 +52,7 @@ class TestReviewService:
         mock = Mock()
         mock.get_by_id = AsyncMock()
         mock.update = AsyncMock()
+        mock.save = AsyncMock()  # Add AsyncMock for save methodLiterally
         mock.bulk_update_ratings = AsyncMock()
         return mock
 
@@ -99,7 +103,7 @@ class TestReviewService:
             "booking_id": 1,
             "reviewer_id": 2,  # Seeker reviewing provider
             "reviewee_id": 1,  # Provider being reviewed
-            "reviewer_type": ReviewerType.SEEKER,
+            "reviewer_type": ReviewerType.PROVIDER,  # SEEKER_TO_PROVIDER
             "rating": 5,
             "title": "Excellent electrical work",
             "content": "John did outstanding work on our kitchen electrical. Professional, on time, and clean work.",
@@ -119,7 +123,7 @@ class TestReviewService:
             "booking_id": 1,
             "reviewer_id": 1,  # Provider reviewing seeker
             "reviewee_id": 2,  # Seeker being reviewed
-            "reviewer_type": ReviewerType.PROVIDER,
+            "reviewer_type": ReviewerType.SEEKER,  # PROVIDER_TO_SEEKER
             "rating": 4,
             "title": "Good client to work with",
             "content": "Clear requirements, prompt payment, and respectful throughout the project.",

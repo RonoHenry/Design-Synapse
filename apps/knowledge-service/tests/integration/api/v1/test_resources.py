@@ -1,13 +1,13 @@
 """Integration tests for knowledge resource API endpoints."""
 
 from datetime import datetime
+
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
-
-from knowledge_service.models.resource import Resource, Topic
 from knowledge_service.main import app
+from knowledge_service.models.resource import Resource, Topic
+from sqlalchemy.orm import Session
 
 
 @pytest.fixture
@@ -236,13 +236,13 @@ def test_create_resource_unauthorized(client: TestClient, test_topic):
 
 def test_upload_pdf_file_creates_resource(client: TestClient, auth_headers):
     """Test uploading a PDF file creates a resource.
-    
+
     This test should fail - endpoint doesn't exist yet.
     Following TDD RED phase - write failing test first.
     """
     # Create a mock PDF file for testing
     pdf_content = b"%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n"
-    
+
     response = client.post(
         "/api/v1/resources/upload",
         files={"file": ("test.pdf", pdf_content, "application/pdf")},
@@ -252,7 +252,7 @@ def test_upload_pdf_file_creates_resource(client: TestClient, auth_headers):
         },
         headers=auth_headers
     )
-    
+
     # This should fail because the endpoint doesn't exist yet
     # Currently returns 404 - endpoint not found
     assert response.status_code == status.HTTP_201_CREATED
@@ -263,12 +263,12 @@ def test_upload_pdf_file_creates_resource(client: TestClient, auth_headers):
     assert "storage_path" in data
     assert "id" in data
 
-def 
+def
 test_upload_text_file_creates_resource(client: TestClient, auth_headers):
     """Test uploading a text file creates a resource with content extraction."""
     # Create a mock text file for testing
     text_content = "This is a test document.\n\nIt contains multiple paragraphs.\n\nThis should be extracted properly."
-    
+
     response = client.post(
         "/api/v1/resources/upload",
         files={"file": ("test.txt", text_content.encode('utf-8'), "text/plain")},
@@ -278,7 +278,7 @@ test_upload_text_file_creates_resource(client: TestClient, auth_headers):
         },
         headers=auth_headers
     )
-    
+
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
     assert data["title"] == "Uploaded Text Document"
@@ -303,7 +303,7 @@ It contains multiple sections.
 
 This should be extracted properly with markdown formatting preserved.
 """
-    
+
     response = client.post(
         "/api/v1/resources/upload",
         files={"file": ("test.md", markdown_content.encode('utf-8'), "text/markdown")},
@@ -313,7 +313,7 @@ This should be extracted properly with markdown formatting preserved.
         },
         headers=auth_headers
     )
-    
+
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
     assert data["title"] == "Uploaded Markdown Document"
@@ -340,7 +340,7 @@ def test_upload_html_file_creates_resource(client: TestClient, auth_headers):
     <script>console.log('This should be removed');</script>
 </body>
 </html>"""
-    
+
     response = client.post(
         "/api/v1/resources/upload",
         files={"file": ("test.html", html_content.encode('utf-8'), "text/html")},
@@ -350,7 +350,7 @@ def test_upload_html_file_creates_resource(client: TestClient, auth_headers):
         },
         headers=auth_headers
     )
-    
+
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
     assert data["title"] == "Uploaded HTML Document"
@@ -364,7 +364,7 @@ def test_upload_unsupported_file_type_fails(client: TestClient, auth_headers):
     """Test uploading an unsupported file type fails with appropriate error."""
     # Create a mock unsupported file for testing
     unsupported_content = b"This is an unsupported file type"
-    
+
     response = client.post(
         "/api/v1/resources/upload",
         files={"file": ("test.xyz", unsupported_content, "application/octet-stream")},
@@ -374,7 +374,7 @@ def test_upload_unsupported_file_type_fails(client: TestClient, auth_headers):
         },
         headers=auth_headers
     )
-    
+
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     data = response.json()
     assert "Unsupported file type" in data["detail"]
@@ -384,14 +384,14 @@ def test_preview_file_content(client: TestClient, auth_headers):
     """Test previewing file content without storing the file."""
     # Create a test text file for preview
     text_content = "This is a test document for preview functionality.\n\nIt contains multiple paragraphs.\n\nThis should be previewed properly."
-    
+
     response = client.post(
         "/api/v1/resources/preview",
         files={"file": ("test.txt", text_content.encode('utf-8'), "text/plain")},
         params={"max_length": 100},
         headers=auth_headers
     )
-    
+
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data["filename"] == "test.txt"
@@ -407,13 +407,13 @@ def test_validate_file_endpoint(client: TestClient, auth_headers):
     """Test file validation endpoint."""
     # Create a test text file for validation
     text_content = "This is a test document for validation."
-    
+
     response = client.post(
         "/api/v1/resources/validate",
         files={"file": ("test.txt", text_content.encode('utf-8'), "text/plain")},
         headers=auth_headers
     )
-    
+
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data["filename"] == "test.txt"
@@ -428,7 +428,7 @@ def test_validate_file_endpoint(client: TestClient, auth_headers):
 def test_get_upload_config(client: TestClient, auth_headers):
     """Test getting upload configuration."""
     response = client.get("/api/v1/resources/upload/config", headers=auth_headers)
-    
+
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert "max_file_size_mb" in data
@@ -436,7 +436,7 @@ def test_get_upload_config(client: TestClient, auth_headers):
     assert "supported_types" in data
     assert "supported_extensions" in data
     assert "processing_config" in data
-    
+
     # Check that new file types are supported
     supported_extensions = data["supported_extensions"]
     assert ".txt" in supported_extensions

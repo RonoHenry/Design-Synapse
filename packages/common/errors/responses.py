@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ErrorType(str, Enum):
     """Standard error types across all services."""
-    
+
     # Client errors (4xx)
     VALIDATION_ERROR = "VALIDATION_ERROR"
     AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR"
@@ -19,19 +19,19 @@ class ErrorType(str, Enum):
     BAD_REQUEST = "BAD_REQUEST"
     REQUEST_TIMEOUT = "REQUEST_TIMEOUT"
     PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE"
-    
+
     # Server errors (5xx)
     DATABASE_ERROR = "DATABASE_ERROR"
     EXTERNAL_SERVICE_ERROR = "EXTERNAL_SERVICE_ERROR"
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
     SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
     GATEWAY_TIMEOUT = "GATEWAY_TIMEOUT"
-    
+
     # Service-specific errors
     LLM_SERVICE_ERROR = "LLM_SERVICE_ERROR"
     VECTOR_SEARCH_ERROR = "VECTOR_SEARCH_ERROR"
     PDF_PROCESSING_ERROR = "PDF_PROCESSING_ERROR"
-    
+
     # Infrastructure errors
     CIRCUIT_BREAKER_OPEN = "CIRCUIT_BREAKER_OPEN"
     RETRY_EXHAUSTED = "RETRY_EXHAUSTED"
@@ -39,24 +39,18 @@ class ErrorType(str, Enum):
 
 class ErrorResponse(BaseModel):
     """Standard error response model for all services."""
-    
+
     model_config = ConfigDict(from_attributes=True)
-    
+
     message: str = Field(..., description="Human-readable error message")
     error_code: str = Field(..., description="Machine-readable error code")
     details: Optional[Dict[str, Any]] = Field(
         None, description="Additional error details"
     )
-    request_id: Optional[str] = Field(
-        None, description="Request ID for tracking"
-    )
-    timestamp: Optional[str] = Field(
-        None, description="Error timestamp in ISO format"
-    )
-    service: Optional[str] = Field(
-        None, description="Service that generated the error"
-    )
-    
+    request_id: Optional[str] = Field(None, description="Request ID for tracking")
+    timestamp: Optional[str] = Field(None, description="Error timestamp in ISO format")
+    service: Optional[str] = Field(None, description="Service that generated the error")
+
     @classmethod
     def from_exception(
         cls,
@@ -76,9 +70,9 @@ class ErrorResponse(BaseModel):
 
 class ValidationErrorDetail(BaseModel):
     """Detailed validation error information."""
-    
+
     model_config = ConfigDict(from_attributes=True)
-    
+
     field: str = Field(..., description="Field that failed validation")
     message: str = Field(..., description="Validation error message")
     type: str = Field(..., description="Type of validation error")

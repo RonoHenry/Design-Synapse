@@ -6,26 +6,26 @@ This script applies the database migration and optionally seeds the database
 with initial data for development and testing.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add the src directory to the path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from alembic.config import Config
 from alembic import command
-from utils.database_seeder import seed_database
+from alembic.config import Config
 from utils.database_cleanup import clean_test_data, vacuum_database
+from utils.database_seeder import seed_database
 
 
 def apply_migration():
     """Apply the database migration."""
     print("🔄 Applying Labor Service database migration...")
-    
+
     # Configure Alembic
     alembic_cfg = Config("alembic.ini")
-    
+
     try:
         # Apply migration
         command.upgrade(alembic_cfg, "head")
@@ -40,11 +40,11 @@ def main():
     """Main function."""
     print("🚀 Labor Service Database Setup")
     print("=" * 40)
-    
+
     # Apply migration
     if not apply_migration():
         sys.exit(1)
-    
+
     # Check if we should seed data
     if len(sys.argv) > 1 and sys.argv[1] == "--seed":
         print("\n🌱 Seeding database with initial data...")
@@ -54,7 +54,7 @@ def main():
         except Exception as e:
             print(f"❌ Seeding failed: {e}")
             sys.exit(1)
-    
+
     # Check if we should clean test data
     elif len(sys.argv) > 1 and sys.argv[1] == "--clean-test":
         print("\n🧹 Cleaning test data...")
@@ -64,7 +64,7 @@ def main():
         except Exception as e:
             print(f"❌ Cleanup failed: {e}")
             sys.exit(1)
-    
+
     # Check if we should vacuum
     elif len(sys.argv) > 1 and sys.argv[1] == "--vacuum":
         print("\n🗜️  Vacuuming database...")
@@ -74,7 +74,7 @@ def main():
         except Exception as e:
             print(f"❌ Vacuum failed: {e}")
             sys.exit(1)
-    
+
     print("\n🎉 Labor Service database setup completed!")
     print("\nUsage:")
     print("  python apply_migration.py           # Apply migration only")

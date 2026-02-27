@@ -1,0 +1,48 @@
+# Development Docker Compose - Simplified for faster builds
+# Note: This project uses TiDB Serverless for database services.
+# TiDB is a cloud-native, distributed SQL database that provides:
+# - Auto-scaling based on workload
+# - MySQL compatibility
+# - HTAP capabilities (transactional + analytical)
+# - High availability without infrastructure management
+#
+# Database connection is configured via environment variables in .env:
+# - DATABASE_HOST: TiDB gateway endpoint
+# - DATABASE_PORT: 4000 (TiDB default)
+# - DATABASE_USER: Your TiDB username
+# - DATABASE_PASSWORD: Your TiDB password
+# - DATABASE_NAME: Service-specific database name
+# - DATABASE_SSL_CA: Path to TiDB CA certificate (ca.pem)
+#
+# No local database container is needed. All services connect directly to TiDB Serverless.
+
+services:
+  # Redis for caching (vector search and content analysis)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Pinecone alternative - using Qdrant for local vector search
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+
+volumes:
+  redis_data:
+  qdrant_data:

@@ -9,7 +9,7 @@ from .responses import ErrorType
 
 class APIError(Exception):
     """Base exception for all API errors."""
-    
+
     def __init__(
         self,
         message: str,
@@ -18,7 +18,7 @@ class APIError(Exception):
         details: Optional[Dict[str, Any]] = None,
     ):
         """Initialize an API error.
-        
+
         Args:
             message: Human-readable error message
             error_code: Machine-readable error code
@@ -34,14 +34,14 @@ class APIError(Exception):
 
 class ValidationError(APIError):
     """Validation error for invalid input data."""
-    
+
     def __init__(
         self,
         message: str = "Validation error",
         details: Optional[Dict[str, Any]] = None,
     ):
         """Initialize a validation error.
-        
+
         Args:
             message: Description of the validation error
             details: Dictionary with validation error details
@@ -56,10 +56,10 @@ class ValidationError(APIError):
 
 class AuthenticationError(APIError):
     """Authentication error for failed authentication attempts."""
-    
+
     def __init__(self, message: str = "Authentication failed"):
         """Initialize an authentication error.
-        
+
         Args:
             message: Description of the authentication failure
         """
@@ -72,10 +72,10 @@ class AuthenticationError(APIError):
 
 class AuthorizationError(APIError):
     """Authorization error for insufficient permissions."""
-    
+
     def __init__(self, message: str = "Insufficient permissions"):
         """Initialize an authorization error.
-        
+
         Args:
             message: Description of the authorization failure
         """
@@ -88,10 +88,10 @@ class AuthorizationError(APIError):
 
 class NotFoundError(APIError):
     """Resource not found error."""
-    
+
     def __init__(self, resource: str, resource_id: str):
         """Initialize a not found error.
-        
+
         Args:
             resource: Type of resource that was not found
             resource_id: ID of the resource that was not found
@@ -106,14 +106,14 @@ class NotFoundError(APIError):
 
 class ConflictError(APIError):
     """Conflict error for duplicate resources or conflicting operations."""
-    
+
     def __init__(
         self,
         message: str = "Resource conflict",
         details: Optional[Dict[str, Any]] = None,
     ):
         """Initialize a conflict error.
-        
+
         Args:
             message: Description of the conflict
             details: Additional conflict details
@@ -128,14 +128,14 @@ class ConflictError(APIError):
 
 class DatabaseError(APIError):
     """Database operation error."""
-    
+
     def __init__(
         self,
         message: str = "Database error occurred",
         details: Optional[Dict[str, Any]] = None,
     ):
         """Initialize a database error.
-        
+
         Args:
             message: Description of the database error
             details: Additional error details
@@ -150,14 +150,14 @@ class DatabaseError(APIError):
 
 class RateLimitError(APIError):
     """Rate limit exceeded error."""
-    
+
     def __init__(
         self,
         message: str = "Rate limit exceeded",
         retry_after: Optional[int] = None,
     ):
         """Initialize a rate limit error.
-        
+
         Args:
             message: Description of the rate limit error
             retry_after: Seconds until the rate limit resets
@@ -173,7 +173,7 @@ class RateLimitError(APIError):
 
 class ExternalServiceError(APIError):
     """External service error for third-party service failures."""
-    
+
     def __init__(
         self,
         service_name: str,
@@ -181,7 +181,7 @@ class ExternalServiceError(APIError):
         details: Optional[Dict[str, Any]] = None,
     ):
         """Initialize an external service error.
-        
+
         Args:
             service_name: Name of the external service
             message: Description of the error
@@ -190,7 +190,7 @@ class ExternalServiceError(APIError):
         error_details = {"service": service_name}
         if details:
             error_details.update(details)
-        
+
         super().__init__(
             message=message,
             error_code=ErrorType.EXTERNAL_SERVICE_ERROR,
@@ -201,14 +201,14 @@ class ExternalServiceError(APIError):
 
 class LLMServiceError(ExternalServiceError):
     """LLM service specific error."""
-    
+
     def __init__(
         self,
         message: str = "LLM service error",
         details: Optional[Dict[str, Any]] = None,
     ):
         """Initialize an LLM service error.
-        
+
         Args:
             message: Description of the error
             details: Additional error details
@@ -223,14 +223,14 @@ class LLMServiceError(ExternalServiceError):
 
 class VectorSearchError(ExternalServiceError):
     """Vector search service specific error."""
-    
+
     def __init__(
         self,
         message: str = "Vector search error",
         details: Optional[Dict[str, Any]] = None,
     ):
         """Initialize a vector search error.
-        
+
         Args:
             message: Description of the error
             details: Additional error details
@@ -245,7 +245,7 @@ class VectorSearchError(ExternalServiceError):
 
 class ServiceUnavailableError(APIError):
     """Service unavailable error."""
-    
+
     def __init__(
         self,
         service_name: str,
@@ -253,7 +253,7 @@ class ServiceUnavailableError(APIError):
         retry_after: Optional[int] = None,
     ):
         """Initialize a service unavailable error.
-        
+
         Args:
             service_name: Name of the unavailable service
             message: Description of the error
@@ -262,7 +262,7 @@ class ServiceUnavailableError(APIError):
         details = {"service": service_name}
         if retry_after:
             details["retry_after"] = retry_after
-        
+
         super().__init__(
             message=message,
             error_code=ErrorType.SERVICE_UNAVAILABLE,
@@ -273,7 +273,7 @@ class ServiceUnavailableError(APIError):
 
 class CircuitBreakerError(APIError):
     """Circuit breaker open error."""
-    
+
     def __init__(
         self,
         service_name: str,
@@ -281,7 +281,7 @@ class CircuitBreakerError(APIError):
         retry_after: Optional[int] = None,
     ):
         """Initialize a circuit breaker error.
-        
+
         Args:
             service_name: Name of the service with open circuit breaker
             message: Description of the error
@@ -290,7 +290,7 @@ class CircuitBreakerError(APIError):
         details = {"service": service_name}
         if retry_after:
             details["retry_after"] = retry_after
-        
+
         super().__init__(
             message=message,
             error_code=ErrorType.CIRCUIT_BREAKER_OPEN,
@@ -301,14 +301,14 @@ class CircuitBreakerError(APIError):
 
 class TimeoutError(APIError):
     """Request timeout error."""
-    
+
     def __init__(
         self,
         message: str = "Request timeout",
         timeout_seconds: Optional[float] = None,
     ):
         """Initialize a timeout error.
-        
+
         Args:
             message: Description of the timeout
             timeout_seconds: Timeout duration that was exceeded
@@ -316,7 +316,7 @@ class TimeoutError(APIError):
         details = {}
         if timeout_seconds:
             details["timeout_seconds"] = timeout_seconds
-        
+
         super().__init__(
             message=message,
             error_code=ErrorType.REQUEST_TIMEOUT,

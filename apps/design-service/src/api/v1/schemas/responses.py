@@ -28,10 +28,30 @@ class DesignResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: int = Field(..., description="Unique design identifier")
-    project_id: int = Field(..., description="Project this design belongs to")
-    name: str = Field(..., description="Design name")
-    description: Optional[str] = Field(None, description="Design description")
+    id: int = Field(
+        ..., description="Unique design identifier", examples=[1, 15, 42, 123]
+    )
+    project_id: int = Field(
+        ..., description="Project this design belongs to", examples=[1, 8, 25, 67]
+    )
+    name: str = Field(
+        ...,
+        description="Design name",
+        examples=[
+            "Sustainable Office Building Design v2.1",
+            "Residential Complex Layout - Final",
+            "Green Energy Research Center - Concept",
+        ],
+    )
+    description: Optional[str] = Field(
+        None,
+        description="Design description",
+        examples=[
+            "Modern 5-story office building with LEED Gold certification features",
+            "50-unit residential complex with community amenities and green spaces",
+            None,
+        ],
+    )
 
     # Design specification (structured JSON)
     specification: Dict[str, Any] = Field(
@@ -40,11 +60,34 @@ class DesignResponse(BaseModel):
 
     # Metadata
     building_type: str = Field(
-        ..., description="Type of building (residential, commercial, industrial)"
+        ...,
+        description="Type of building (residential, commercial, industrial)",
+        examples=[
+            "residential",
+            "commercial",
+            "industrial",
+            "institutional",
+            "mixed-use",
+        ],
     )
-    total_area: Optional[float] = Field(None, description="Total area in square meters")
-    num_floors: Optional[int] = Field(None, description="Number of floors")
-    materials: Optional[List[str]] = Field(None, description="List of materials used")
+    total_area: Optional[float] = Field(
+        None,
+        description="Total area in square meters",
+        examples=[10000.0, 5500.5, 25000.0, None],
+    )
+    num_floors: Optional[int] = Field(
+        None, description="Number of floors", examples=[5, 3, 12, 1, None]
+    )
+    materials: Optional[List[str]] = Field(
+        None,
+        description="List of materials used",
+        examples=[
+            ["steel", "glass", "concrete", "wood"],
+            ["brick", "steel", "aluminum"],
+            ["concrete", "glass", "sustainable_wood"],
+            None,
+        ],
+    )
 
     # AI generation metadata
     generation_prompt: Optional[str] = Field(
@@ -63,9 +106,13 @@ class DesignResponse(BaseModel):
 
     # Status and compliance
     status: str = Field(
-        ..., description="Design status (draft, validated, compliant, non_compliant)"
+        ...,
+        description="Design status (draft, validated, compliant, non_compliant)",
+        examples=["draft", "validated", "compliant", "non_compliant"],
     )
-    is_archived: bool = Field(..., description="Whether the design is archived")
+    is_archived: bool = Field(
+        ..., description="Whether the design is archived", examples=[True, False]
+    )
 
     # Visual output fields
     floor_plan_url: Optional[str] = Field(None, description="URL to floor plan image")

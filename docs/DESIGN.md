@@ -1,7 +1,7 @@
 # DesignSynapse System Architecture
 
 ## 1. System Overview
-DesignSynapse is an AI-driven platform for the DAEC (Design, Architecture, Engineering, Construction) industry, aimed at streamlining the built environment workflow.
+DesignSynapse is an AI-driven platform for the global DAEC (Design, Architecture, Engineering, Construction) industry, aimed at streamlining built environment workflows worldwide.
 
 ## 2. High-Level Architecture
 ```
@@ -166,4 +166,3 @@ Web App (Next.js) ←→ Mobile PWA
 - AI model expansion
 - AR/VR capabilities
 - Mobile native apps
-- International market expansion

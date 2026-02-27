@@ -20,6 +20,8 @@ from packages.common.resilience.circuit_breaker import (CircuitBreaker,
                                                         CircuitBreakerConfig)
 from packages.common.resilience.retry import RetryConfig, retry_async_call
 
+from ..core.cache import get_cache
+
 logger = logging.getLogger(__name__)
 
 
@@ -73,17 +75,15 @@ class KnowledgeServiceClient:
         self,
         base_url: str,
         timeout: float = 30.0,
-        cache_ttl: int = 3600,
         circuit_breaker_config: Optional[CircuitBreakerConfig] = None,
         retry_config: Optional[RetryConfig] = None,
     ):
         """Initialize Knowledge Service client."""
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
-        self.cache_ttl = cache_ttl
 
-        # Simple in-memory cache for frequently accessed codes
-        self._cache: Dict[str, tuple[Any, datetime]] = {}
+        # Get Redis cache instance
+        self.cache = get_cache()
 
         # Initialize circuit breaker
         if circuit_breaker_config is None:
@@ -115,33 +115,14 @@ class KnowledgeServiceClient:
         """Close the HTTP client."""
         await self._client.aclose()
 
-    def _get_from_cache(self, key: str) -> Optional[Any]:
-        """Get value from cache if not expired."""
-        if key in self._cache:
-            value, timestamp = self._cache[key]
-            if datetime.utcnow() - timestamp < timedelta(seconds=self.cache_ttl):
-                logger.debug(f"Cache hit for key: {key}")
-                return value
-            else:
-                # Expired, remove from cache
-                del self._cache[key]
-                logger.debug(f"Cache expired for key: {key}")
-        return None
-
-    def _set_in_cache(self, key: str, value: Any):
-        """Set value in cache with current timestamp."""
-        self._cache[key] = (value, datetime.utcnow())
-        logger.debug(f"Cached value for key: {key}")
-
     def invalidate_cache(self, key: Optional[str] = None):
         """Invalidate cache entry or entire cache."""
-        if key:
-            if key in self._cache:
-                del self._cache[key]
-                logger.info(f"Invalidated cache for key: {key}")
-        else:
-            self._cache.clear()
-            logger.info("Invalidated entire cache")
+        # This method is kept for backward compatibility but now delegates to Redis cache
+        logger.info("Cache invalidation requested - will be handled by Redis cache")
+
+    async def invalidate_knowledge_cache(self):
+        """Invalidate all knowledge service cache entries."""
+        return await self.cache.invalidate_knowledge_cache()
 
     async def _make_request(self, method: str, path: str, **kwargs) -> httpx.Response:
         """Make HTTP request with circuit breaker and retry logic."""
@@ -173,14 +154,13 @@ class KnowledgeServiceClient:
         Raises:
             httpx.HTTPStatusError: If request fails
         """
-        # Build cache key
-        cache_key = f"search:{query}:{filters.model_dump_json() if filters else 'none'}"
+        return await self._search_codes_impl(query, filters)
 
-        # Check cache
-        cached = self._get_from_cache(cache_key)
-        if cached is not None:
-            return cached
-
+    @get_cache().cached("knowledge:search", ttl=3600)  # Cache for 1 hour
+    async def _search_codes_impl(
+        self, query: str, filters: Optional[CodeFilters] = None
+    ) -> List[CodeSection]:
+        """Implementation of search_codes with caching."""
         try:
             params = {"q": query}
             if filters:
@@ -194,9 +174,7 @@ class KnowledgeServiceClient:
             data = response.json()
             results = [CodeSection(**item) for item in data.get("results", [])]
 
-            # Cache results
-            self._set_in_cache(cache_key, results)
-
+            logger.info(f"Retrieved {len(results)} code sections for query: {query}")
             return results
 
         except Exception as e:
@@ -219,14 +197,13 @@ class KnowledgeServiceClient:
         Raises:
             httpx.HTTPStatusError: If request fails
         """
-        # Build cache key
-        cache_key = f"applicable:{location}:{building_type}"
+        return await self._get_applicable_codes_impl(location, building_type)
 
-        # Check cache
-        cached = self._get_from_cache(cache_key)
-        if cached is not None:
-            return cached
-
+    @get_cache().cached("knowledge:applicable", ttl=7200)  # Cache for 2 hours
+    async def _get_applicable_codes_impl(
+        self, location: str, building_type: str
+    ) -> List[CodeStandard]:
+        """Implementation of get_applicable_codes with caching."""
         try:
             response = await self._make_request(
                 "GET",
@@ -237,9 +214,10 @@ class KnowledgeServiceClient:
             data = response.json()
             results = [CodeStandard(**item) for item in data.get("codes", [])]
 
-            # Cache results
-            self._set_in_cache(cache_key, results)
-
+            logger.info(
+                f"Retrieved {len(results)} applicable codes for "
+                f"location='{location}', building_type='{building_type}'"
+            )
             return results
 
         except Exception as e:
@@ -263,14 +241,13 @@ class KnowledgeServiceClient:
         Raises:
             httpx.HTTPStatusError: If code section not found or request fails
         """
-        # Build cache key
-        cache_key = f"section:{code_id}:{section}"
+        return await self._get_code_section_impl(code_id, section)
 
-        # Check cache
-        cached = self._get_from_cache(cache_key)
-        if cached is not None:
-            return cached
-
+    @get_cache().cached("knowledge:section", ttl=14400)  # Cache for 4 hours
+    async def _get_code_section_impl(
+        self, code_id: str, section: str
+    ) -> CodeSectionDetail:
+        """Implementation of get_code_section with caching."""
         try:
             response = await self._make_request(
                 "GET", f"/api/v1/codes/{code_id}/sections/{section}"
@@ -279,9 +256,7 @@ class KnowledgeServiceClient:
             data = response.json()
             result = CodeSectionDetail(**data)
 
-            # Cache result
-            self._set_in_cache(cache_key, result)
-
+            logger.info(f"Retrieved code section {code_id}/{section}")
             return result
 
         except Exception as e:

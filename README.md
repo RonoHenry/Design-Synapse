@@ -1,7 +1,7 @@
 # DesignSynapse 🏗️
 
 ## Overview
-DesignSynapse is an AI-driven platform revolutionizing the DAEC (Design, Architecture, Engineering, Construction) industry by streamlining built environment workflows in Africa. Our platform combines cutting-edge AI technology with industry-specific tools to enhance productivity, improve collaboration, and drive innovation in construction projects.
+DesignSynapse is an AI-driven platform revolutionizing the DAEC (Design, Architecture, Engineering, Construction) industry by streamlining built environment workflows globally. Our platform combines cutting-edge AI technology with industry-specific tools to enhance productivity, improve collaboration, and drive innovation in construction projects worldwide.
 
 ### Key Features
 - 🤖 AI-powered design assistance and validation
@@ -9,253 +9,253 @@ DesignSynapse is an AI-driven platform revolutionizing the DAEC (Design, Archite
 - 👥 Collaborative project management
 - 📊 Real-time analytics and insights
 - 🔐 Role-based access control
-- 🌍 Africa-focused construction standards
+- 🌍 International construction standards and regional compliance
 
 ## Vision
-To transform Africa's construction industry by providing accessible, intelligent tools that bridge the gap between design and execution, making sustainable and efficient construction practices the norm rather than the exception.
+To transform the global construction industry by providing accessible, intelligent tools that bridge the gap between design and execution, making sustainable and efficient construction practices the norm rather than the exception.
 
-## Project Structure
+# DesignSynapse Project Structure
+
 ```
 designsynapse/
-├── apps/                          # Monorepo apps (services + frontend)
-│   ├── frontend/                  # Next.js frontend
-│   ├── design-service/           # AI/ML service (FastAPI)
-│   ├── user-service/            # User management service
-│   └── project-service/         # Project management service
-├── packages/                      # Shared utilities
-├── infra/                        # Infrastructure as Code
-├── docs/                         # Documentation
-└── tests/                        # Integration tests
+│
+├── apps/                           # Microservices
+│   ├── api-gateway/               # API Gateway & Request Routing
+│   ├── analytics-service/         # Business Intelligence & Drone Analytics
+│   ├── architectural-service/     # Architectural Design & Analysis
+│   ├── design-service/            # AI-Powered Design Generation
+│   ├── engineering-service/       # Engineering Calculations & MEP Systems
+│   ├── knowledge-service/         # Knowledge Base & Vector Search
+│   ├── labor-service/             # Labor Marketplace
+│   ├── project-service/           # Project Management
+│   ├── user-service/              # Authentication & User Management
+│   └── vendor-service/            # Vendor & Product Management
+│
+├── packages/common/               # Shared Libraries
+│   ├── auth/                      # JWT Authentication & RBAC
+│   ├── config/                    # Configuration Management
+│   ├── database/                  # Database Utilities & Health Checks
+│   ├── errors/                    # Error Handling Framework
+│   ├── http/                      # HTTP Clients & Service Communication
+│   ├── monitoring/                # Logging, Metrics & Tracing
+│   ├── performance/               # Caching, CDN & Connection Pooling
+│   ├── rate_limiting/             # Rate Limiting Middleware
+│   ├── resilience/                # Circuit Breaker & Retry Patterns
+│   ├── security/                  # Input Validation & Threat Detection
+│   ├── service_registry/          # Service Discovery
+│   ├── storage/                   # Object Storage Client
+│   └── testing/                   # Test Utilities & Fixtures
+│
+├── tests/                         # Integration Tests
+│   └── integration/               # Cross-Service Integration Tests
+│
+├── docs/                          # Documentation
+│   ├── ENV.md                     # Environment Configuration Guide
+│   ├── TIDB_MIGRATION.md          # Database Migration Documentation
+│   └── FUTURE_VISION_ROADMAP.md   # Product Roadmap
+│
+├── scripts/                       # Utility Scripts
+│   └── init-databases.sh          # Database Initialization
+│
+├── .github/                       # CI/CD Workflows
+│   └── workflows/                 # GitHub Actions
+│
+├── .kiro/                         # Kiro AI Configuration
+│   ├── specs/                     # Feature Specifications
+│   └── settings/                  # Kiro Settings
+│
+├── docker-compose.yml             # Docker Services Configuration
+├── requirements-dev.txt           # Development Dependencies
+└── README.md                      # Project Overview
 ```
+
+
+## Technology Stack
+
+### Backend
+- **Framework**: FastAPI (Python 3.13+)
+- **Database**: TiDB Serverless (MySQL-compatible)
+- **Caching**: Redis 7+
+- **Task Queue**: Celery
+- **ORM**: SQLAlchemy (async)
+- **Validation**: Pydantic v2
+
+### Frontend
+- **Framework**: Next.js
+- **Language**: TypeScript
+- **Styling**: TailwindCSS
+
+### Infrastructure
+- **Containerization**: Docker & Docker Compose
+- **Database**: TiDB Cloud (Serverless)
+- **Storage**: S3-compatible object storage
+- **Monitoring**: Prometheus & Grafana (planned)
+
+### Development
+- **Testing**: pytest, Hypothesis (property-based testing)
+- **Code Quality**: Black, Flake8, isort, ESLint
+- **Version Control**: Git with conventional commits
+- **CI/CD**: GitHub Actions
+
+## Common Packages
+
+### Authentication & Security
+- `auth/` - JWT validation, RBAC, service-to-service auth
+- `security/` - Input validation, threat detection, audit logging
+
+### Infrastructure
+- `database/` - Connection management, health checks, migrations
+- `http/` - Service clients, retry logic, circuit breakers
+- `service_registry/` - Service discovery and health monitoring
+- `storage/` - Object storage abstraction
+
+### Observability
+- `monitoring/` - Structured logging, metrics, distributed tracing
+- `performance/` - Caching strategies, CDN integration, connection pooling
+
+### Resilience
+- `resilience/` - Circuit breakers, exponential backoff, retry policies
+- `rate_limiting/` - Token bucket, sliding window algorithms
+- `errors/` - Standardized error handling and responses
+
+### Development
+- `testing/` - Test fixtures, factories, database utilities
+- `config/` - Configuration management, secrets handling
+
+## Key Features by Service
+
+### Analytics Service
+- Business intelligence dashboards
+- Project and design analytics
+- Service performance monitoring
+- User activity tracking
+- Drone survey site analysis
+- 3D terrain modeling from aerial imagery
+- Volume calculations and measurements
+- Construction progress monitoring
+- Real-time data processing
+- Multi-format data export (PDF, Excel, CSV)
+
+### Architectural Service
+- Design version control & management
+- Building code compliance checking
+- Structural analysis (loads, beams, columns)
+- Energy performance analysis
+- Accessibility validation (ADA/WCAG)
+- Space planning & optimization
+- Material specification
+- Real-time collaboration (WebSocket)
+
+### Design Service
+- AI-powered design generation
+- Design validation & optimization
+- Visual output generation (renders, diagrams)
+- Building code validation
+- Design file management
+- Comment & feedback system
+
+### Engineering Service
+- Structural engineering calculations (ASCE 7)
+- MEP systems design (HVAC, electrical, plumbing)
+- Civil engineering (grading, drainage, utilities)
+- Code compliance verification (IBC, NEC, IPC)
+- Engineering document management
+- Unit system support (Imperial/Metric)
+- Load calculations and analysis
+- Technical specifications generation
+
+### Knowledge Service
+- Vector-based semantic search
+- PDF processing & content extraction
+- Building code database
+- AI-powered recommendations
+- Citation management
+- Project-specific knowledge bases
+
+### Project Service
+- Project lifecycle management
+- Team collaboration
+- Resource allocation
+- Timeline tracking
+- Activity logging
+- Comment threads
+
+### User Service
+- JWT-based authentication
+- Role-based access control (RBAC)
+- User profile management
+- Organization management
+- Permission system
+
+### Vendor Service
+- Vendor directory
+- Product catalog
+- Material specifications
+- Order management
+- Review & rating system
+- Staging area for approvals
+
+### Labor Service
+- Service provider marketplace
+- Service request management
+- Quote & booking system
+- Provider matching algorithm
+- Review & rating system
+
+## Development Approach
+
+### Spec-Driven Development
+All features follow a structured specification process:
+1. **Requirements** - User stories & acceptance criteria
+2. **Design** - Technical design & architecture
+3. **Tasks** - Implementation plan with TDD approach
+
+### Testing Approach
+- Unit tests for all business logic
+- Property-based tests using Hypothesis
+- Integration tests for API endpoints
+- Load tests for performance validation
+- Minimum 80% code coverage target
+
 
 ## Getting Started
 
-### Prerequisites
+For detailed setup instructions, see the service-specific README files in each service directory:
+- [Architectural Service](apps/architectural-service/README.md)
+- [Design Service](apps/design-service/README.md)
+- [Knowledge Service](apps/knowledge-service/README.md)
+- [Project Service](apps/project-service/README.md)
+- [User Service](apps/user-service/README.md)
 
-#### Required Software
-- Python 3.13+
-- Node.js 18+ & npm
-- Docker & Docker Compose
-- PostgreSQL 14+
-- Redis 7+
+General platform setup documentation is available in [docs/ENV.md](docs/ENV.md).
 
-#### Development Tools
-- VS Code (recommended)
-- Docker Desktop
-- Git
-- Pre-commit hooks
+## Documentation
 
-#### Environment Setup
-We use pre-commit hooks for code quality. Install them with:
-```bash
-pip install pre-commit
-pre-commit install
-```
-
-### Development Setup
-1. Clone the repository
-```bash
-git clone https://github.com/RonoHenry/Design-Synapse.git
-cd Design-Synapse
-```
-
-2. Install dependencies
-```bash
-# Install root dependencies
-npm install
-
-# Install backend dependencies
-cd apps/design-service
-python -m venv venv
-source venv/Scripts/activate  # Windows
-pip install -r requirements.txt
-
-# Install frontend dependencies
-cd ../frontend
-npm install
-```
-
-3. Set up environment variables
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-4. Configure TiDB Serverless connection
-
-#### Obtaining TiDB Credentials
-1. Sign up for a free TiDB Cloud account at https://tidbcloud.com
-2. Create a new Serverless Tier cluster (free tier available)
-3. Select your preferred region (e.g., EU Central 1 - Frankfurt)
-4. Once created, navigate to your cluster's "Connect" page
-5. Copy the connection details:
-   - Host (e.g., gateway01.eu-central-1.prod.aws.tidbcloud.com)
-   - Port (typically 4000)
-   - Username (e.g., your_cluster_id.root)
-   - Password (generate and save securely)
-
-#### SSL Certificate Setup
-TiDB Serverless requires SSL/TLS connections. Download the CA certificate:
-
-```bash
-# Download the TiDB CA certificate
-curl -o ca.pem https://letsencrypt.org/certs/isrgrootx1.pem
-
-# Or download from TiDB Cloud console and place in project root
-# The ca.pem file should be in the same directory as your .env file
-```
-
-#### Environment Configuration
-Update your `.env` file with TiDB connection details:
-
-```bash
-# TiDB Connection Settings
-DATABASE_HOST=gateway01.eu-central-1.prod.aws.tidbcloud.com
-DATABASE_PORT=4000
-DATABASE_USER=your_cluster_id.root
-DATABASE_PASSWORD=your_secure_password
-
-# SSL Configuration (required for TiDB Serverless)
-DATABASE_SSL_CA=./ca.pem
-DATABASE_SSL_VERIFY_CERT=true
-DATABASE_SSL_VERIFY_IDENTITY=true
-
-# Service-specific databases
-USER_SERVICE_DB=design_synapse_user_db
-PROJECT_SERVICE_DB=design_synapse_project_db
-KNOWLEDGE_SERVICE_DB=design_synapse_knowledge_db
-```
-
-5. Start development servers
-```bash
-# Note: docker-compose.yml is available for future application services
-# but does not include a database container (TiDB Serverless is used instead)
-
-# Start frontend
-cd apps/frontend
-npm run dev
-
-# Start backend services individually
-cd ../design-service
-uvicorn main:app --reload
-
-cd ../user-service
-uvicorn main:app --reload --port 8001
-
-cd ../project-service
-uvicorn main:app --reload --port 8002
-```
-
-### Database Setup
-```bash
-# Setup database users and permissions
-cd scripts
-./init-databases.sh  # or init-databases.bat on Windows
-
-# Run migrations
-cd ../apps/user-service
-alembic upgrade head
-```
-
-### Environment Variables
-Each service requires specific environment variables. Copy the example files and update them:
-
-```bash
-# User Service
-cd apps/user-service
-cp .env.example .env
-
-# Design Service
-cd ../design-service
-cp .env.example .env
-
-# Frontend
-cd ../frontend
-cp .env.local.example .env.local
-```
-
-## Testing
-
-### Running Tests
-```bash
-# Run all tests
-npm test
-
-# Run specific service tests
-cd apps/design-service
-pytest
-
-cd ../user-service
-pytest
-
-cd ../project-service
-pytest
-```
-
-### Code Quality
-We maintain high code quality standards using:
-- Black (code formatting)
-- Flake8 (linting)
-- isort (import sorting)
-- ESLint (JavaScript/TypeScript)
-- Pre-commit hooks
-
-Code style is automatically enforced through pre-commit hooks. Maximum line length is set to 88 characters.
-
-## API Documentation
-Each service provides its own OpenAPI documentation:
-
-- User Service: http://localhost:8001/docs
-- Design Service: http://localhost:8000/docs
-- Project Service: http://localhost:8002/docs
-- Marketplace Service: http://localhost:8003/docs
-
-## Project Documentation
-- [System Design](docs/DESIGN.md)
-- [Requirements](docs/REQUIREMENTS.md)
-- [Tasks](docs/TASKS.md)
-- [API Documentation](docs/api/README.md)
-
-## Architecture
-
-### System Components
-- **Frontend**: Next.js application with TypeScript
-- **User Service**: Authentication and user management
-- **Design Service**: Core AI/ML functionality for design analysis
-- **Project Service**: Project and resource management
-- **Marketplace Service**: Design template marketplace
-- **Analytics Service**: Usage and performance metrics
-
-### Technologies Used
-- **Frontend**: Next.js, TypeScript, TailwindCSS
-- **Backend**: FastAPI, SQLAlchemy, Pydantic
-- **AI/ML**: PyTorch, TensorFlow, Scikit-learn
-- **Database**: PostgreSQL
-- **Caching**: Redis
-- **Infrastructure**: Docker, Kubernetes (planned)
-
-## Contributing
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests. We use [conventional commits](https://www.conventionalcommits.org/) for our commit messages.
-
-### Branch Naming Convention
-- `feature/*`: New features
-- `fix/*`: Bug fixes
-- `chore/*`: Maintenance tasks
-- `docs/*`: Documentation updates
-- `refactor/*`: Code refactoring
-- `test/*`: Test additions or modifications
+- [Environment Setup](docs/ENV.md)
+- [TiDB Migration Guide](docs/TIDB_MIGRATION.md)
+- [Future Roadmap](docs/FUTURE_VISION_ROADMAP.md)
+- [API Documentation](http://localhost:8000/docs) (when services are running)
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Authors
-- RonoHenry - Initial work - [RonoHenry](https://github.com/RonoHenry)
+MIT License - See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 - Design inspiration from existing DAEC tools
 - AI/ML community for model architectures and best practices
 - Open source community and contributors
-- African construction industry professionals for domain expertise
+- Construction industry professionals worldwide for domain expertise
 
 ## Status
-🚧 Project is currently in active development
+
+🚧 Active Development - Production-Ready Services:
+- ✅ Architectural Service - Complete with 92%+ test coverage
+- ✅ Design Service - Complete with visual generation capabilities
+- ✅ Knowledge Service - Complete with vector search and recommendations
+- ✅ Labor Service - Complete with marketplace functionality
+- ✅ Vendor Service - Complete with order management
+- ✅ Project Service - Complete with collaboration features
+- ✅ User Service - Complete with RBAC
+- 🔨 Analytics Service - In specification phase
+- 🔨 Engineering Service - In specification phase
+- 🔨 API Gateway - In development

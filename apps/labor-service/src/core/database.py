@@ -5,11 +5,14 @@ Handles SQLAlchemy setup, session management, and database connections
 for the Labor Services Marketplace with TiDB compatibility.
 """
 
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from sqlalchemy.pool import QueuePool
-from typing import Generator
 import logging
+from typing import AsyncGenerator, Generator
+
+from sqlalchemy import MetaData, create_engine
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlalchemy.pool import QueuePool
 
 from .config import get_settings
 
@@ -36,9 +39,7 @@ elif settings.database_url.startswith("sqlite"):
 if settings.database_url.startswith("sqlite"):
     # SQLite configuration
     engine = create_engine(
-        settings.database_url,
-        echo=settings.debug,
-        connect_args=connect_args
+        settings.database_url, echo=settings.debug, connect_args=connect_args
     )
 else:
     # MySQL/TiDB configuration
@@ -50,14 +51,25 @@ else:
         pool_pre_ping=True,
         pool_recycle=3600,
         echo=settings.debug,
-        connect_args=connect_args
+        connect_args=connect_args,
     )
 
 # Session factory
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Async engine and session for FastAPI
+async_engine = create_async_engine(
+    settings.database_url.replace("mysql://", "mysql+aiomysql://")
+    if settings.database_url.startswith("mysql")
+    else settings.database_url.replace("sqlite://", "sqlite+aiosqlite://")
+    if settings.database_url.startswith("sqlite")
+    else settings.database_url,
+    echo=settings.debug,
+    pool_pre_ping=True if not settings.database_url.startswith("sqlite") else False,
+)
+
+AsyncSessionLocal = async_sessionmaker(
+    async_engine, class_=AsyncSession, expire_on_commit=False
 )
 
 # Base class for models
@@ -70,7 +82,7 @@ metadata = MetaData()
 def get_db() -> Generator[Session, None, None]:
     """
     Database session dependency for FastAPI
-    
+
     Yields:
         Session: SQLAlchemy database session
     """
@@ -88,11 +100,29 @@ def get_db() -> Generator[Session, None, None]:
 def get_db_session():
     """
     Context manager for database sessions
-    
+
     Returns:
         Session: SQLAlchemy database session
     """
     return SessionLocal()
+
+
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Async database session dependency for FastAPI
+
+    Yields:
+        AsyncSession: SQLAlchemy async database session
+    """
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        except Exception as e:
+            logger.error(f"Async database session error: {e}")
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 def create_tables():
@@ -118,13 +148,15 @@ def drop_tables():
 def check_database_connection() -> bool:
     """
     Check if database connection is working
-    
+
     Returns:
         bool: True if connection is successful, False otherwise
     """
     try:
         with engine.connect() as connection:
-            connection.execute("SELECT 1")
+            from sqlalchemy import text
+
+            connection.execute(text("SELECT 1"))
         logger.info("Database connection successful")
         return True
     except Exception as e:
@@ -134,12 +166,12 @@ def check_database_connection() -> bool:
 
 class DatabaseManager:
     """Database management utilities"""
-    
+
     @staticmethod
     def get_session() -> Session:
         """Get a new database session"""
         return SessionLocal()
-    
+
     @staticmethod
     def close_session(session: Session):
         """Close a database session"""
@@ -147,7 +179,7 @@ class DatabaseManager:
             session.close()
         except Exception as e:
             logger.error(f"Error closing database session: {e}")
-    
+
     @staticmethod
     def commit_session(session: Session):
         """Commit a database session"""
@@ -157,7 +189,7 @@ class DatabaseManager:
             logger.error(f"Error committing database session: {e}")
             session.rollback()
             raise
-    
+
     @staticmethod
     def rollback_session(session: Session):
         """Rollback a database session"""
@@ -171,7 +203,7 @@ class DatabaseManager:
 async def health_check() -> dict:
     """
     Perform database health check
-    
+
     Returns:
         dict: Health check results
     """
@@ -179,12 +211,8 @@ async def health_check() -> dict:
         is_connected = check_database_connection()
         return {
             "database": "healthy" if is_connected else "unhealthy",
-            "connection": "active" if is_connected else "failed"
+            "connection": "active" if is_connected else "failed",
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        return {
-            "database": "unhealthy",
-            "connection": "failed",
-            "error": str(e)
-        }
+        return {"database": "unhealthy", "connection": "failed", "error": str(e)}

@@ -6,23 +6,30 @@ Environment Variables:
                       If not set, uses SQLite in-memory for fast unit tests.
                       Example: mysql+pymysql://user:pass@host:port/db?charset=utf8mb4
 """
-import pytest
 import asyncio
 import os
+# Add workspace root to path for proper import resolution
 import sys
+from pathlib import Path
 from typing import Generator
+
+import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
-from fastapi.testclient import TestClient
 
-# Add packages to path for shared testing infrastructure
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'packages'))
+workspace_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(workspace_root))
 
-from common.testing.database import create_test_engine, create_test_session
-from common.testing.fixtures import event_loop, mock_llm_service, mock_vector_service
+from factories import (RoleFactory, UserFactory, create_test_role,
+                       create_test_user)
 from src.infrastructure.database import Base, get_db
-from factories import UserFactory, RoleFactory, create_test_user, create_test_role
+
+from packages.common.testing.database import (create_test_engine,
+                                              create_test_session)
+from packages.common.testing.fixtures import (event_loop, mock_llm_service,
+                                              mock_vector_service)
 
 
 @pytest.fixture(scope="session")
@@ -39,14 +46,14 @@ def db_engine():
     """Create a test database engine with proper isolation."""
     # Check if TiDB integration testing is enabled
     test_db_url = os.getenv("TEST_DATABASE_URL")
-    
+
     if test_db_url:
         # Use TiDB for integration testing
         engine = create_test_engine(test_db_url, echo=False)
     else:
         # Use SQLite in-memory for fast, isolated tests (default)
         engine = create_test_engine("sqlite:///:memory:", echo=False)
-    
+
     return engine
 
 
@@ -57,7 +64,7 @@ def db_session(db_engine):
         # Configure factories to use this session
         UserFactory._meta.sqlalchemy_session = session
         RoleFactory._meta.sqlalchemy_session = session
-        
+
         yield session
 
 
@@ -66,7 +73,7 @@ def client(db_session):
     """Create a FastAPI test client with database session override."""
     # Import app here to avoid loading it during conftest import
     from src.main import app
-    
+
     def override_get_db():
         try:
             yield db_session
@@ -74,10 +81,10 @@ def client(db_session):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
-    
+
     with TestClient(app) as test_client:
         yield test_client
-    
+
     app.dependency_overrides.clear()
 
 
@@ -90,7 +97,7 @@ def test_user(db_session):
         username="testuser",
         password="testpass123",
         first_name="Test",
-        last_name="User"
+        last_name="User",
     )
 
 
@@ -98,13 +105,14 @@ def test_user(db_session):
 def test_admin_user(db_session):
     """Create a test admin user."""
     from .factories import create_test_admin_user
+
     return create_test_admin_user(
         db_session,
         email="admin@example.com",
         username="adminuser",
         password="adminpass123",
         first_name="Admin",
-        last_name="User"
+        last_name="User",
     )
 
 
@@ -112,9 +120,7 @@ def test_admin_user(db_session):
 def test_role(db_session):
     """Create a test role."""
     return create_test_role(
-        db_session,
-        name="test_role",
-        description="Test role for testing"
+        db_session, name="test_role", description="Test role for testing"
     )
 
 
@@ -137,7 +143,7 @@ def admin_auth_headers(test_admin_user):
 def clean_db(db_session):
     """Ensure clean database state for each test."""
     yield db_session
-    
+
     # Clean up any remaining data
     db_session.rollback()
 
@@ -148,11 +154,11 @@ def performance_db_session(db_engine):
     """Create a session for performance testing with different configuration."""
     SessionLocal = sessionmaker(bind=db_engine, autoflush=False, autocommit=False)
     session = SessionLocal()
-    
+
     # Configure factories
     UserFactory._meta.sqlalchemy_session = session
     RoleFactory._meta.sqlalchemy_session = session
-    
+
     try:
         yield session
     finally:
@@ -164,6 +170,7 @@ def performance_db_session(db_engine):
 def batch_users(db_session):
     """Create a batch of test users."""
     from .factories import create_batch_users
+
     return create_batch_users(db_session, count=10)
 
 
@@ -171,4 +178,5 @@ def batch_users(db_session):
 def batch_roles(db_session):
     """Create a batch of test roles."""
     from .factories import create_batch_roles
+
     return create_batch_roles(db_session, count=5)

@@ -189,7 +189,10 @@ class TestGetTaskStatus:
 
         # Assert
         # Note: May return 503 if Celery is unavailable, which is also correct behavior
-        assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_503_SERVICE_UNAVAILABLE]
+        assert response.status_code in [
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+        ]
 
     def test_get_task_status_invalid_task_id(self, client, auth_headers):
         """Test task status retrieval with invalid task ID format."""

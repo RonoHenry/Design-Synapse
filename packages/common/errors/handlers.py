@@ -8,7 +8,7 @@ from uuid import uuid4
 from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from .base import APIError
 from .responses import ErrorResponse, ErrorType
@@ -24,6 +24,7 @@ def get_request_id(request: Request) -> str:
 def get_service_name() -> str:
     """Get service name from environment or default."""
     import os
+
     return os.getenv("SERVICE_NAME", "unknown-service")
 
 
@@ -43,16 +44,16 @@ def create_error_context(request: Request, exc: Exception) -> dict:
 
 async def api_error_handler(request: Request, exc: APIError) -> JSONResponse:
     """Handle APIError exceptions with standardized response.
-    
+
     Args:
         request: FastAPI request object
         exc: APIError exception
-        
+
     Returns:
         JSONResponse with error details
     """
     context = create_error_context(request, exc)
-    
+
     # Log with appropriate level based on status code
     log_level = logging.WARNING if exc.status_code < 500 else logging.ERROR
     logger.log(
@@ -65,7 +66,7 @@ async def api_error_handler(request: Request, exc: APIError) -> JSONResponse:
             "details": exc.details,
         },
     )
-    
+
     error_response = ErrorResponse(
         message=exc.message,
         error_code=exc.error_code,
@@ -74,12 +75,12 @@ async def api_error_handler(request: Request, exc: APIError) -> JSONResponse:
         timestamp=context["timestamp"],
         service=context["service"],
     )
-    
+
     # Add retry-after header for rate limiting and service unavailable errors
     headers = {}
     if exc.details and "retry_after" in exc.details:
         headers["Retry-After"] = str(exc.details["retry_after"])
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content=error_response.model_dump(exclude_none=True),
@@ -91,27 +92,29 @@ async def validation_error_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
     """Handle FastAPI's RequestValidationError with standardized response.
-    
+
     Args:
         request: FastAPI request object
         exc: RequestValidationError exception
-        
+
     Returns:
         JSONResponse with validation error details
     """
     context = create_error_context(request, exc)
-    
+
     # Format validation errors
     errors = []
     for error in exc.errors():
         field = ".".join(str(loc) for loc in error["loc"])
-        errors.append({
-            "field": field,
-            "message": error["msg"],
-            "type": error["type"],
-            "input": error.get("input"),
-        })
-    
+        errors.append(
+            {
+                "field": field,
+                "message": error["msg"],
+                "type": error["type"],
+                "input": error.get("input"),
+            }
+        )
+
     logger.warning(
         "Validation error",
         extra={
@@ -119,7 +122,7 @@ async def validation_error_handler(
             "validation_errors": errors,
         },
     )
-    
+
     error_response = ErrorResponse(
         message="Request validation failed",
         error_code=ErrorType.VALIDATION_ERROR,
@@ -128,7 +131,7 @@ async def validation_error_handler(
         timestamp=context["timestamp"],
         service=context["service"],
     )
-    
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=error_response.model_dump(exclude_none=True),
@@ -139,22 +142,22 @@ async def sqlalchemy_error_handler(
     request: Request, exc: SQLAlchemyError
 ) -> JSONResponse:
     """Handle SQLAlchemy errors with standardized response.
-    
+
     Args:
         request: FastAPI request object
         exc: SQLAlchemyError exception
-        
+
     Returns:
         JSONResponse with database error details
     """
     context = create_error_context(request, exc)
-    
+
     # Determine error message based on exception type
     if isinstance(exc, IntegrityError):
         message = "Database integrity constraint violation"
         error_code = ErrorType.CONFLICT
         status_code = status.HTTP_409_CONFLICT
-        
+
         # Extract constraint details if available
         details = {"constraint_type": "integrity"}
         if hasattr(exc, "orig") and exc.orig:
@@ -164,7 +167,7 @@ async def sqlalchemy_error_handler(
         error_code = ErrorType.DATABASE_ERROR
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         details = {"database_error_type": type(exc).__name__}
-    
+
     logger.error(
         f"Database error: {str(exc)}",
         extra={
@@ -173,7 +176,7 @@ async def sqlalchemy_error_handler(
         },
         exc_info=True,
     )
-    
+
     error_response = ErrorResponse(
         message=message,
         error_code=error_code,
@@ -182,27 +185,25 @@ async def sqlalchemy_error_handler(
         timestamp=context["timestamp"],
         service=context["service"],
     )
-    
+
     return JSONResponse(
         status_code=status_code,
         content=error_response.model_dump(exclude_none=True),
     )
 
 
-async def general_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle any unhandled exceptions with standardized response.
-    
+
     Args:
         request: FastAPI request object
         exc: Exception
-        
+
     Returns:
         JSONResponse with generic error details
     """
     context = create_error_context(request, exc)
-    
+
     logger.error(
         f"Unhandled exception: {str(exc)}",
         extra={
@@ -211,7 +212,7 @@ async def general_exception_handler(
         },
         exc_info=True,
     )
-    
+
     error_response = ErrorResponse(
         message="An unexpected error occurred",
         error_code=ErrorType.INTERNAL_SERVER_ERROR,
@@ -220,7 +221,7 @@ async def general_exception_handler(
         timestamp=context["timestamp"],
         service=context["service"],
     )
-    
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=error_response.model_dump(exclude_none=True),
@@ -229,7 +230,7 @@ async def general_exception_handler(
 
 def register_error_handlers(app):
     """Register all error handlers with a FastAPI application.
-    
+
     Args:
         app: FastAPI application instance
     """

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Design Service is the core AI-powered feature of DesignSynapse that revolutionizes the DAEC (Design, Architecture, Engineering, Construction) industry by providing intelligent design generation, validation, and optimization capabilities. This service leverages advanced AI/ML models to assist architects, engineers, and construction professionals in creating building designs that are optimized for African construction standards, sustainable practices, and local building codes.
+The Design Service is the core AI-powered feature of DesignSynapse that revolutionizes the DAEC (Design, Architecture, Engineering, Construction) industry by providing intelligent design generation, validation, and optimization capabilities. This service leverages advanced AI/ML models to assist architects, engineers, and construction professionals in creating building designs sustainable practices.
 
 The service integrates with the existing project management system, allowing users to generate, store, version, and iterate on architectural designs within their projects. It provides AI-assisted design generation from natural language descriptions, validates designs against building codes and standards, and offers optimization suggestions for structural integrity, cost efficiency, and sustainability.
 

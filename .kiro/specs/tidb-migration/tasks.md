@@ -12,7 +12,7 @@
     - Add SSL/TLS configuration parameters (ssl_ca, ssl_verify_cert, ssl_verify_identity)
     - Update connection string builder to support TiDB format
     - _Requirements: TDB-2_
-  
+
   - [x] 2.2 Add TiDB-specific connection parameters
     - Implement SSL certificate path configuration
     - Add connection pool settings optimized for TiDB Serverless
@@ -30,12 +30,12 @@
     - Models already use MySQL-compatible types (Integer, String, Boolean, DateTime, JSON)
     - No PostgreSQL-specific types found (no JSONB, ARRAY, UUID columns)
     - _Requirements: TDB-3_
-  
+
   - [x] 4.2 Verify project-service models
     - Models use MySQL-compatible types (Integer, String, Text, Boolean, DateTime, JSON)
     - No PostgreSQL-specific features detected
     - _Requirements: TDB-3_
-  
+
   - [x] 4.3 Verify knowledge-service models
     - Models use MySQL-compatible types (Integer, String, Text, DateTime, JSON)
     - No PostgreSQL-specific column types found
@@ -46,12 +46,12 @@
     - Update alembic.ini to use mysql+pymysql connection string
     - Update env.py to handle MySQL-specific features if needed
     - _Requirements: TDB-4_
-  
+
   - [x] 5.2 Update project-service Alembic configuration
     - Update alembic.ini to use mysql+pymysql connection string
     - Update env.py to handle MySQL-specific features if needed
     - _Requirements: TDB-4_
-  
+
   - [x] 5.3 Update knowledge-service Alembic configuration
     - Update alembic.ini to use mysql+pymysql connection string
     - Update env.py to handle MySQL-specific features if needed
@@ -62,21 +62,21 @@
     - Create backup of existing migration files for reference
     - Document current schema state
     - _Requirements: TDB-4_
-  
+
   - [x] 6.2 Generate fresh migrations for user-service
     - Clear versions directory
     - Generate new initial migration with alembic revision --autogenerate
     - Review generated migration for MySQL compatibility
     - Test migration against TiDB Serverless
     - _Requirements: TDB-4_
-  
+
   - [x] 6.3 Generate fresh migrations for project-service
     - Clear versions directory
     - Generate new initial migration with alembic revision --autogenerate
     - Review generated migration for MySQL compatibility
     - Test migration against TiDB Serverless
     - _Requirements: TDB-4_
-  
+
   - [x] 6.4 Generate fresh migrations for knowledge-service
     - Clear versions directory
     - Generate new initial migration with alembic revision --autogenerate
@@ -90,19 +90,19 @@
     - Update create_test_engine to support MySQL connection strings
     - Add MySQL-specific test database setup (charset, collation)
     - _Requirements: TDB-5_
-  
+
   - [x] 7.2 Update user-service test configuration
     - Update conftest.py to support TiDB test database option
     - Add environment variable to switch between SQLite (fast) and TiDB (integration)
     - Verify all test factories work with TiDB
     - _Requirements: TDB-5_
-  
+
   - [x] 7.3 Update project-service test configuration
     - Update conftest.py to support TiDB test database option
     - Add environment variable to switch between SQLite (fast) and TiDB (integration)
     - Verify all test factories work with TiDB
     - _Requirements: TDB-5_
-  
+
   - [x] 7.4 Update knowledge-service test configuration
     - Update conftest.py to support TiDB test database option
     - Add environment variable to switch between SQLite (fast) and TiDB (integration)
@@ -126,7 +126,7 @@
     - Verify role management functionality
     - _Requirements: TDB-5_
 
-  
+
   - [x] 8.2 Run project-service tests with TiDB
 
     - Set TEST_DATABASE_URL environment variable to TiDB connection string
@@ -137,7 +137,7 @@
     - _Requirements: TDB-5_
 
 
-  
+
   - [x] 8.3 Run knowledge-service tests with TiDB
     - Set TEST_DATABASE_URL environment variable to TiDB connection string
     - Execute full test suite: pytest apps/knowledge-service/tests
@@ -161,7 +161,7 @@
     - _Requirements: TDB-5_
 
 
-  
+
   - [x] 9.2 Integrate health checks into service endpoints
 
 
@@ -206,7 +206,7 @@
     - Update database setup section with TiDB-specific migration commands
     - Add troubleshooting section for common TiDB connection issues
     - _Requirements: TDB-6_
-   
+
 
   - [x] 11.2 Create TiDB migration guide
 
@@ -218,7 +218,7 @@
     - Include migration steps from PostgreSQL to TiDB
     - Document the migration process that was followed for this project
     - _Requirements: TDB-6_
-  
+
 
 
 

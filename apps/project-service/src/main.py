@@ -14,10 +14,11 @@ sys.path.insert(0, str(packages_path))
 from common.database.health import check_database_health
 
 from .api.v1.routes.comments import router as comments_router
+from .api.v1.routes.health import router as health_router
 from .api.v1.routes.projects import router as projects_router
 from .core.config import settings
 from .core.constants import V1_PREFIX
-from .core.exceptions import ProjectNotFoundError, ProjectAccessError
+# Error handling is now managed through shared error handlers
 from .core.versioning import get_api_version
 
 app = FastAPI(
@@ -37,6 +38,7 @@ app.add_middleware(
 
 # Register shared error handlers
 from common.errors.handlers import register_error_handlers
+
 register_error_handlers(app)
 
 # Register routers
@@ -46,6 +48,13 @@ app.include_router(
 
 app.include_router(
     comments_router, prefix=V1_PREFIX, dependencies=[Depends(get_api_version)]
+)
+
+app.include_router(
+    health_router,
+    prefix=V1_PREFIX,
+    dependencies=[Depends(get_api_version)],
+    tags=["health"],
 )
 
 

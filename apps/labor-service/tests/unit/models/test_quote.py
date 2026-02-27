@@ -10,9 +10,10 @@ These tests define the expected behavior of the Quote model
 BEFORE implementation exists.
 """
 
-import pytest
-from decimal import Decimal
 from datetime import datetime, timedelta
+from decimal import Decimal
+
+import pytest
 from sqlalchemy.exc import IntegrityError
 
 # These imports will fail initially - that's the point of TDD!
@@ -30,18 +31,18 @@ from tests.factories import ServiceProviderFactory
 @pytest.mark.tdd
 class TestQuoteModel:
     """TDD Test cases for Quote model - RED phase."""
-    
+
     def test_create_quote_with_required_fields(self, db_session):
         """
         TDD Test: Quote should be created with minimal required fields.
-        
+
         Requirements: 5.1, 5.2
         """
         # Arrange - Define what we expect to work
         provider = ServiceProviderFactory.create()
         db_session.add(provider)
         db_session.flush()  # Get the ID without committing
-        
+
         quote_data = {
             "request_id": 1,  # Reference to ServiceRequest
             "provider_id": provider.id,
@@ -53,15 +54,15 @@ class TestQuoteModel:
             "start_availability": datetime.now() + timedelta(days=3),
             "completion_estimate": datetime.now() + timedelta(days=5),
             "description": "Complete electrical work for kitchen renovation",
-            "valid_until": datetime.now() + timedelta(days=14)
+            "valid_until": datetime.now() + timedelta(days=14),
         }
-        
+
         # Act - Create the quote
         quote = Quote(**quote_data)
         db_session.add(quote)
         db_session.commit()
         db_session.refresh(quote)
-        
+
         # Assert - Verify the quote was created correctly
         assert quote.id is not None
         assert quote.request_id == 1
@@ -74,23 +75,23 @@ class TestQuoteModel:
         assert quote.status == QuoteStatus.DRAFT  # Default status
         assert quote.created_at is not None
         assert quote.updated_at is not None
-    
+
     def test_quote_cost_calculation_validation(self, db_session):
         """
         TDD Test: Quote should validate that total cost matches component costs.
-        
+
         Requirements: 5.1
         """
         # Arrange
         provider = ServiceProviderFactory.create()
         db_session.add(provider)
         db_session.flush()  # Get the ID without committing
-        
+
         labor_cost = Decimal("1000.00")
         material_cost = Decimal("300.00")
         travel_cost = Decimal("75.00")
         expected_total = labor_cost + material_cost + travel_cost
-        
+
         # Act - Create quote with calculated total
         quote = Quote(
             request_id=1,
@@ -103,19 +104,22 @@ class TestQuoteModel:
             start_availability=datetime.now() + timedelta(days=2),
             completion_estimate=datetime.now() + timedelta(days=4),
             description="Cost calculation validation test quote",
-            valid_until=datetime.now() + timedelta(days=10)
+            valid_until=datetime.now() + timedelta(days=10),
         )
         db_session.add(quote)
         db_session.commit()
-        
+
         # Assert - Verify cost calculation
         assert quote.total_cost == expected_total
-        assert quote.labor_cost + quote.material_cost + quote.travel_cost == quote.total_cost
-    
+        assert (
+            quote.labor_cost + quote.material_cost + quote.travel_cost
+            == quote.total_cost
+        )
+
     def test_quote_status_workflow(self, db_session):
         """
         TDD Test: Quote should follow proper status workflow.
-        
+
         Requirements: 5.3, 5.4
         """
         # Arrange - Create draft quote
@@ -131,34 +135,34 @@ class TestQuoteModel:
             start_availability=datetime.now() + timedelta(days=1),
             completion_estimate=datetime.now() + timedelta(days=2),
             description="Status workflow test quote",
-            valid_until=datetime.now() + timedelta(days=7)
+            valid_until=datetime.now() + timedelta(days=7),
         )
         db_session.add(quote)
         db_session.commit()
-        
+
         # Assert initial status
         assert quote.status == QuoteStatus.DRAFT
-        
+
         # Test status transitions
         quote.status = QuoteStatus.SUBMITTED
         db_session.commit()
         assert quote.status == QuoteStatus.SUBMITTED
-        
+
         quote.status = QuoteStatus.ACCEPTED
         db_session.commit()
         assert quote.status == QuoteStatus.ACCEPTED
-    
+
     def test_quote_expiration_handling(self, db_session):
         """
         TDD Test: Quote should handle expiration dates properly.
-        
+
         Requirements: 5.5
         """
         # Arrange
         provider = ServiceProviderFactory.create()
         db_session.add(provider)
         db_session.flush()  # Get the ID without committing
-        
+
         # Create quote with future expiration
         future_expiry = datetime.now() + timedelta(days=14)
         quote = Quote(
@@ -170,29 +174,29 @@ class TestQuoteModel:
             start_availability=datetime.now() + timedelta(days=2),
             completion_estimate=datetime.now() + timedelta(days=4),
             description="Expiration handling test quote",
-            valid_until=future_expiry
+            valid_until=future_expiry,
         )
         db_session.add(quote)
         db_session.commit()
-        
+
         # Assert expiration handling
         assert quote.valid_until == future_expiry
         assert quote.valid_until > datetime.now()
-        
+
         # Test expiration check method (to be implemented)
         # assert not quote.is_expired()
-    
+
     def test_quote_terms_and_notes_fields(self, db_session):
         """
         TDD Test: Quote should store terms and notes as text fields.
-        
+
         Requirements: 5.2
         """
         # Arrange
         provider = ServiceProviderFactory.create()
         db_session.add(provider)
         db_session.flush()  # Get the ID without committing
-        
+
         terms = """
         Payment Terms:
         - 50% deposit required upon acceptance
@@ -200,14 +204,14 @@ class TestQuoteModel:
         - Materials to be purchased by contractor
         - 1-year warranty on workmanship
         """
-        
+
         notes = """
         Additional Notes:
         - Work to be performed during business hours only
         - Client to provide access to electrical panel
         - Permit applications included in quote
         """
-        
+
         # Act - Create quote with terms and notes
         quote = Quote(
             request_id=1,
@@ -221,17 +225,17 @@ class TestQuoteModel:
             description="Terms and notes test quote",
             valid_until=datetime.now() + timedelta(days=21),
             terms_and_conditions=terms,
-            notes=notes
+            notes=notes,
         )
         db_session.add(quote)
         db_session.commit()
-        
+
         # Assert - Verify text storage
         assert quote.terms_and_conditions == terms
         assert quote.notes == notes
         assert "50% deposit" in quote.terms_and_conditions
         assert "business hours" in quote.notes
-    
+
     def test_quote_timeline_validation(self, db_session):
         """
         TDD Test: Quote should validate timeline consistency.
@@ -240,10 +244,10 @@ class TestQuoteModel:
         provider = ServiceProviderFactory.create()
         db_session.add(provider)
         db_session.flush()  # Get the ID without committing
-        
+
         start_date = datetime.now() + timedelta(days=3)
         completion_date = datetime.now() + timedelta(days=7)
-        
+
         # Act - Create quote with valid timeline
         quote = Quote(
             request_id=1,
@@ -254,31 +258,30 @@ class TestQuoteModel:
             start_availability=start_date,
             completion_estimate=completion_date,
             description="Timeline validation test quote",
-            valid_until=datetime.now() + timedelta(days=14)
+            valid_until=datetime.now() + timedelta(days=14),
         )
         db_session.add(quote)
         db_session.commit()
-        
+
         # Assert - Verify timeline logic
         assert quote.start_availability < quote.completion_estimate
         assert quote.completion_estimate > quote.start_availability
-        
+
         # Calculate work duration
         work_duration = quote.completion_estimate - quote.start_availability
         assert work_duration.days >= 0
-    
+
     def test_quote_provider_relationship(self, db_session):
         """
         TDD Test: Quote should have proper relationship with ServiceProvider.
         """
         # Arrange
         provider = ServiceProviderFactory.create(
-            individual_name="John Smith",
-            business_name="Smith Electrical"
+            individual_name="John Smith", business_name="Smith Electrical"
         )
         db_session.add(provider)
         db_session.flush()  # Get the ID without committing
-        
+
         # Act - Create quote linked to provider
         quote = Quote(
             request_id=1,
@@ -289,11 +292,11 @@ class TestQuoteModel:
             start_availability=datetime.now() + timedelta(days=2),
             completion_estimate=datetime.now() + timedelta(days=4),
             description="Provider relationship test quote",
-            valid_until=datetime.now() + timedelta(days=10)
+            valid_until=datetime.now() + timedelta(days=10),
         )
         db_session.add(quote)
         db_session.commit()
-        
+
         # Assert - Verify relationship
         assert quote.provider_id == provider.id
         # Test relationship access (when implemented)
@@ -305,7 +308,7 @@ class TestQuoteModel:
 @pytest.mark.tdd
 class TestQuoteBusinessLogic:
     """TDD Test cases for Quote business logic - RED phase."""
-    
+
     def test_quote_to_dict_method(self, db_session):
         """
         TDD Test: Quote should convert to dictionary for API responses.
@@ -324,14 +327,14 @@ class TestQuoteBusinessLogic:
             start_availability=datetime.now() + timedelta(days=3),
             completion_estimate=datetime.now() + timedelta(days=6),
             description="To dict method test quote",
-            valid_until=datetime.now() + timedelta(days=14)
+            valid_until=datetime.now() + timedelta(days=14),
         )
         db_session.add(quote)
         db_session.commit()
-        
+
         # Act
         quote_dict = quote.to_dict()
-        
+
         # Assert
         assert isinstance(quote_dict, dict)
         assert quote_dict["labor_cost"] == Decimal("800.00")
@@ -339,7 +342,7 @@ class TestQuoteBusinessLogic:
         assert quote_dict["provider_id"] == provider.id
         assert "id" in quote_dict
         assert "created_at" in quote_dict
-    
+
     def test_quote_string_representation(self, db_session):
         """
         TDD Test: Quote should have meaningful string representation.
@@ -357,23 +360,23 @@ class TestQuoteBusinessLogic:
             start_availability=datetime.now() + timedelta(days=1),
             completion_estimate=datetime.now() + timedelta(days=3),
             description="String representation test quote",
-            valid_until=datetime.now() + timedelta(days=7)
+            valid_until=datetime.now() + timedelta(days=7),
         )
         db_session.add(quote)
         db_session.commit()
-        
+
         # Act
         quote_str = str(quote)
-        
+
         # Assert
         assert "Quote" in quote_str
         assert str(quote.id) in quote_str
         assert str(quote.total_cost) in quote_str
-    
+
     def test_quote_comparison_methods(self, db_session):
         """
         TDD Test: Quote should support comparison for ranking.
-        
+
         Requirements: 5.5
         """
         # Arrange - Create multiple quotes for comparison
@@ -381,7 +384,7 @@ class TestQuoteBusinessLogic:
         provider2 = ServiceProviderFactory.create()
         db_session.add_all([provider1, provider2])
         db_session.flush()  # Get the IDs without committing
-        
+
         quote1 = Quote(
             request_id=1,
             provider_id=provider1.id,
@@ -391,9 +394,9 @@ class TestQuoteBusinessLogic:
             start_availability=datetime.now() + timedelta(days=2),
             completion_estimate=datetime.now() + timedelta(days=4),
             description="Comparison test quote 1",
-            valid_until=datetime.now() + timedelta(days=10)
+            valid_until=datetime.now() + timedelta(days=10),
         )
-        
+
         quote2 = Quote(
             request_id=1,
             provider_id=provider2.id,
@@ -403,20 +406,20 @@ class TestQuoteBusinessLogic:
             start_availability=datetime.now() + timedelta(days=1),
             completion_estimate=datetime.now() + timedelta(days=3),
             description="Comparison test quote 2",
-            valid_until=datetime.now() + timedelta(days=14)
+            valid_until=datetime.now() + timedelta(days=14),
         )
-        
+
         db_session.add_all([quote1, quote2])
         db_session.commit()
-        
+
         # Assert - Verify comparison capabilities
         assert quote1.total_cost < quote2.total_cost
         assert quote1.estimated_hours < quote2.estimated_hours
-        
+
         # Test comparison methods (to be implemented)
         # assert quote1.is_cheaper_than(quote2)
         # assert quote2.is_faster_start_than(quote1)
-    
+
     def test_quote_cost_breakdown_calculation(self, db_session):
         """
         TDD Test: Quote should provide cost breakdown analysis.
@@ -425,7 +428,7 @@ class TestQuoteBusinessLogic:
         provider = ServiceProviderFactory.create()
         db_session.add(provider)
         db_session.flush()  # Get the ID without committing
-        
+
         quote = Quote(
             request_id=1,
             provider_id=provider.id,
@@ -437,27 +440,27 @@ class TestQuoteBusinessLogic:
             start_availability=datetime.now() + timedelta(days=3),
             completion_estimate=datetime.now() + timedelta(days=6),
             description="Cost breakdown test quote",
-            valid_until=datetime.now() + timedelta(days=14)
+            valid_until=datetime.now() + timedelta(days=14),
         )
         db_session.add(quote)
         db_session.commit()
-        
+
         # Assert - Verify cost breakdown
         assert quote.labor_cost > Decimal("0")
         assert quote.material_cost >= Decimal("0")
         assert quote.travel_cost >= Decimal("0")
-        
+
         # Test cost breakdown methods (to be implemented)
         # breakdown = quote.get_cost_breakdown()
         # assert breakdown["labor_percentage"] > 0
         # assert breakdown["material_percentage"] >= 0
         # assert breakdown["travel_percentage"] >= 0
-        
+
         # Calculate hourly rate
         if quote.estimated_hours > 0:
             hourly_rate = quote.labor_cost / quote.estimated_hours
             assert hourly_rate > Decimal("0")
-    
+
     def test_quote_duplicate_prevention(self, db_session):
         """
         TDD Test: Quote should prevent duplicate quotes from same provider for same request.
@@ -466,7 +469,7 @@ class TestQuoteBusinessLogic:
         provider = ServiceProviderFactory.create()
         db_session.add(provider)
         db_session.flush()  # Get the ID without committing
-        
+
         # Create first quote
         quote1 = Quote(
             request_id=1,
@@ -477,11 +480,11 @@ class TestQuoteBusinessLogic:
             start_availability=datetime.now() + timedelta(days=1),
             completion_estimate=datetime.now() + timedelta(days=2),
             description="Duplicate prevention test quote 1",
-            valid_until=datetime.now() + timedelta(days=7)
+            valid_until=datetime.now() + timedelta(days=7),
         )
         db_session.add(quote1)
         db_session.commit()
-        
+
         # Act & Assert - Attempt to create duplicate should be handled
         # This might be enforced by unique constraint or business logic
         quote2 = Quote(
@@ -493,13 +496,13 @@ class TestQuoteBusinessLogic:
             start_availability=datetime.now() + timedelta(days=2),
             completion_estimate=datetime.now() + timedelta(days=4),
             description="Duplicate prevention test quote 2",
-            valid_until=datetime.now() + timedelta(days=10)
+            valid_until=datetime.now() + timedelta(days=10),
         )
-        
+
         # This should either raise an error or be handled by business logic
         # The exact behavior will be defined during implementation
         db_session.add(quote2)
-        
+
         # For now, we'll allow multiple quotes but test the constraint exists
         # In implementation, this might raise IntegrityError or be handled differently
         try:

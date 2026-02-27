@@ -11,6 +11,19 @@ pytest-cov==4.1.0          # Coverage reporting
 pytest-asyncio==0.21.1     # Async test support
 pytest-mock==3.11.1        # Mocking support
 pytest-env==1.0.1          # Environment variable support
+testcontainers>=3.7.0      # Container testing support
+pytest-timeout>=2.1.0      # Test timeout handling
+hypothesis>=6.82.0         # Property-based testing
+
+# Database Drivers
+asyncpg>=0.28.0            # PostgreSQL async driver
+psycopg2-binary>=2.9.0     # PostgreSQL sync driver
+pymysql>=1.0.0             # MySQL driver for compatibility
+
+# Additional Dependencies
+redis>=4.5.0               # Redis client
+PyMuPDF>=1.23.0            # PDF processing (fitz)
+numpy>=1.24.0              # Numerical computing
 
 # Documentation
 sphinx==7.2.6              # Documentation generator

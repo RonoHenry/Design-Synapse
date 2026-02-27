@@ -2,6 +2,8 @@
 Design Service client for visual rendering and generation.
 """
 
+import hashlib
+import json
 import logging
 import sys
 from datetime import datetime
@@ -21,6 +23,18 @@ if str(workspace_root) not in sys.path:
 from packages.common.resilience.circuit_breaker import (CircuitBreaker,
                                                         CircuitBreakerConfig)
 from packages.common.resilience.retry import RetryConfig, retry_async_call
+
+# Try to import cache, but make it optional for testing
+try:
+    from ..core.cache import get_cache
+
+    CACHE_AVAILABLE = True
+except ImportError:
+    CACHE_AVAILABLE = False
+
+    def get_cache():
+        return None
+
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +112,9 @@ class DesignServiceClient:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
 
+        # Get Redis cache instance if available
+        self.cache = get_cache() if CACHE_AVAILABLE else None
+
         # Initialize circuit breaker
         if circuit_breaker_config is None:
             circuit_breaker_config = CircuitBreakerConfig(
@@ -125,6 +142,26 @@ class DesignServiceClient:
     async def close(self):
         """Close the HTTP client."""
         await self._client.aclose()
+
+    def _generate_design_hash(
+        self, design_id: UUID, design_version: str, parameters: RenderParameters
+    ) -> str:
+        """Generate hash for design and parameters to use as cache key."""
+        cache_data = {
+            "design_id": str(design_id),
+            "design_version": design_version,
+            "parameters": parameters.model_dump(),
+        }
+        cache_json = json.dumps(cache_data, sort_keys=True)
+        return hashlib.md5(cache_json.encode()).hexdigest()
+
+    async def invalidate_rendering_cache(self, design_id: Optional[UUID] = None):
+        """Invalidate rendering cache entries."""
+        if self.cache:
+            return await self.cache.invalidate_rendering_cache(
+                str(design_id) if design_id else None
+            )
+        return 0
 
     async def _make_request(self, method: str, path: str, **kwargs) -> httpx.Response:
         """Make HTTP request with circuit breaker and retry logic."""
@@ -240,3 +277,97 @@ class DesignServiceClient:
         except Exception as e:
             logger.error(f"Failed to retrieve outputs for job {job_id}: {e}")
             raise
+
+    async def get_cached_outputs(
+        self, design_id: UUID, design_version: str, parameters: RenderParameters
+    ) -> Optional[List[VisualOutput]]:
+        """
+        Check if rendered outputs are cached for given design and parameters.
+
+        Args:
+            design_id: Design document ID
+            design_version: Design version
+            parameters: Rendering parameters
+
+        Returns:
+            Cached visual outputs if available, None otherwise
+        """
+        if not self.cache:
+            return None
+
+        design_hash = self._generate_design_hash(design_id, design_version, parameters)
+        cache_key = f"rendering:{design_id}:{design_hash}"
+
+        result = await self.cache.cache_manager.get(cache_key)
+        if result.value is not None:
+            logger.info(f"Found cached rendering outputs for design {design_id}")
+            return [VisualOutput(**item) for item in result.value]
+
+        return None
+
+    async def cache_outputs(
+        self,
+        design_id: UUID,
+        design_version: str,
+        parameters: RenderParameters,
+        outputs: List[VisualOutput],
+    ):
+        """
+        Cache rendered outputs for reuse.
+
+        Args:
+            design_id: Design document ID
+            design_version: Design version
+            parameters: Rendering parameters
+            outputs: Visual outputs to cache
+        """
+        if not self.cache:
+            return
+
+        design_hash = self._generate_design_hash(design_id, design_version, parameters)
+        cache_key = f"rendering:{design_id}:{design_hash}"
+
+        # Cache for 24 hours (86400 seconds) since renderings are expensive
+        cache_data = [output.model_dump() for output in outputs]
+        await self.cache.cache_manager.set(cache_key, cache_data, ttl=86400)
+
+        logger.info(f"Cached {len(outputs)} rendering outputs for design {design_id}")
+
+    async def request_rendering_with_cache(
+        self,
+        design_id: UUID,
+        design_version: str,
+        render_type: RenderType,
+        parameters: RenderParameters,
+    ) -> tuple[RenderJob, Optional[List[VisualOutput]]]:
+        """
+        Request rendering with cache check.
+
+        Args:
+            design_id: Design document ID
+            design_version: Design version
+            render_type: Type of rendering to generate
+            parameters: Rendering parameters
+
+        Returns:
+            Tuple of (RenderJob, cached_outputs if available)
+        """
+        # Check cache first
+        cached_outputs = await self.get_cached_outputs(
+            design_id, design_version, parameters
+        )
+        if cached_outputs:
+            # Create a mock job for cached results
+            mock_job = RenderJob(
+                job_id=UUID("00000000-0000-0000-0000-000000000000"),
+                design_id=design_id,
+                render_type=render_type,
+                status=RenderStatus.COMPLETED,
+                created_at=datetime.utcnow(),
+                completed_at=datetime.utcnow(),
+            )
+            return mock_job, cached_outputs
+
+        # No cache hit, request new rendering
+        job = await self.request_rendering(design_id, render_type, parameters)
+        return job, None

@@ -304,9 +304,14 @@ class DesignListResponse(PaginatedResponse):
                         "updated_at": "2024-01-16T14:30:00Z",
                     }
                 ],
+                "has_next": True,
                 "next_cursor": "eyJpZCI6IjU1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwMCJ9",
-                "has_more": True,
-                "total": 42,
+                "total_count": 42,
+                "page_info": {
+                    "limit": 20,
+                    "sort_field": "created_at",
+                    "sort_direction": "desc",
+                },
             }
         }
     }

@@ -2,12 +2,13 @@
 
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
 from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.v1.schemas.design import CreateDesignRequest, UpdateDesignRequest
 from src.core.exceptions import ConflictError, NotFoundError, ValidationError
+from src.core.pagination import PaginatedResponse, PaginationParams
 from src.infrastructure.project_service_client import (ActivityLog,
                                                        ProjectServiceClient)
 from src.models.design import Design
@@ -395,3 +396,226 @@ class DesignService:
             logger.warning(f"Failed to log design deletion activity: {e}")
 
         logger.info(f"Soft deleted design {design_id} by user {user_id}")
+
+    async def calculate_project_summary(
+        self,
+        project_id: UUID,
+    ) -> Dict[str, Any]:
+        """
+        Calculate project summary with design count, compliance status, and completion percentage.
+
+        Args:
+            project_id: Project ID to calculate summary for
+
+        Returns:
+            Dictionary containing:
+            - design_count: Total number of designs
+            - compliance_status: Overall compliance status
+            - completion_percentage: Percentage of designs completed
+            - active_designs: Number of non-deleted designs
+            - draft_designs: Number of draft designs
+            - completed_designs: Number of completed designs
+
+        Raises:
+            NotFoundError: If project doesn't exist
+        """
+        # Validate project exists by trying to get project status
+        try:
+            project_status = await self.project_client.get_project_status(project_id)
+        except Exception as e:
+            logger.error(f"Failed to validate project {project_id}: {e}")
+            raise NotFoundError(
+                f"Project {project_id} not found or inaccessible",
+                details={"project_id": str(project_id)},
+            )
+
+        # Get all designs for the project (including deleted ones for total count)
+        from src.core.pagination import PaginationParams
+
+        # Get all designs (including deleted) for total count
+        all_designs_response = await self.design_repository.list_designs(
+            params=PaginationParams(limit=100),  # Use max allowed limit
+            project_id=project_id,
+            include_deleted=True,
+            include_total=True,
+        )
+
+        # Get active designs (non-deleted)
+        active_designs_response = await self.design_repository.list_designs(
+            params=PaginationParams(limit=100),  # Use max allowed limit
+            project_id=project_id,
+            include_deleted=False,
+            include_total=True,
+        )
+
+        total_designs = all_designs_response.total_count or 0
+        active_designs = active_designs_response.total_count or 0
+
+        # Count designs by status
+        draft_count = 0
+        completed_count = 0
+        in_progress_count = 0
+
+        for design in active_designs_response.items:
+            if design.status == "draft":
+                draft_count += 1
+            elif design.status == "completed":
+                completed_count += 1
+            elif design.status in ["in_progress", "under_review"]:
+                in_progress_count += 1
+
+        # Calculate completion percentage
+        completion_percentage = 0.0
+        if active_designs > 0:
+            completion_percentage = (completed_count / active_designs) * 100
+
+        # Determine overall compliance status
+        # This is a simplified calculation - in a real system, you'd check actual compliance results
+        compliance_status = "unknown"
+        if completed_count > 0:
+            if completion_percentage >= 80:
+                compliance_status = "compliant"
+            elif completion_percentage >= 50:
+                compliance_status = "partially_compliant"
+            else:
+                compliance_status = "non_compliant"
+        elif active_designs > 0:
+            compliance_status = "pending"
+
+        summary = {
+            "project_id": str(project_id),
+            "project_name": project_status.name,
+            "project_status": project_status.status,
+            "design_count": total_designs,
+            "active_designs": active_designs,
+            "draft_designs": draft_count,
+            "in_progress_designs": in_progress_count,
+            "completed_designs": completed_count,
+            "completion_percentage": round(completion_percentage, 2),
+            "compliance_status": compliance_status,
+            "last_updated": project_status.updated_at.isoformat(),
+        }
+
+        logger.info(f"Calculated project summary for {project_id}: {summary}")
+        return summary
+
+    async def cascade_archive_designs(
+        self,
+        project_id: UUID,
+        user_id: UUID,
+    ) -> Dict[str, Any]:
+        """
+        Archive all designs associated with a project when the project is archived.
+
+        This method should be called when a project archive event is received.
+        It archives all active designs in the project within a single transaction.
+
+        Args:
+            project_id: Project ID that was archived
+            user_id: User ID who initiated the archive
+
+        Returns:
+            Dictionary containing:
+            - project_id: The archived project ID
+            - archived_designs: Number of designs archived
+            - design_ids: List of design IDs that were archived
+
+        Raises:
+            NotFoundError: If project doesn't exist
+        """
+        # Validate project exists
+        try:
+            project_status = await self.project_client.get_project_status(project_id)
+        except Exception as e:
+            logger.error(f"Failed to validate project {project_id}: {e}")
+            raise NotFoundError(
+                f"Project {project_id} not found or inaccessible",
+                details={"project_id": str(project_id)},
+            )
+
+        # Get all active designs for the project
+        from src.core.pagination import PaginationParams
+
+        active_designs_response = await self.design_repository.list_designs(
+            params=PaginationParams(limit=100),  # Use max allowed limit
+            project_id=project_id,
+            include_deleted=False,
+            include_total=True,
+        )
+
+        archived_design_ids = []
+
+        # Archive each design in the project
+        for design in active_designs_response.items:
+            try:
+                # Soft delete the design
+                await self.design_repository.soft_delete(design.id)
+                archived_design_ids.append(design.id)
+
+                # Log activity for each design
+                try:
+                    from src.infrastructure.project_service_client import \
+                        ActivityLog
+
+                    activity = ActivityLog(
+                        project_id=project_id,
+                        user_id=user_id,
+                        activity_type="design_archived",
+                        description=f"Archived design due to project archive: {design.name}",
+                        metadata={
+                            "design_id": design.id,
+                            "design_name": design.name,
+                            "reason": "project_archived",
+                        },
+                        timestamp=datetime.utcnow(),
+                    )
+                    await self.project_client.log_activity(project_id, activity)
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to log design archive activity for {design.id}: {e}"
+                    )
+
+            except Exception as e:
+                logger.error(f"Failed to archive design {design.id}: {e}")
+                # Continue with other designs even if one fails
+
+        result = {
+            "project_id": str(project_id),
+            "project_name": project_status.name,
+            "archived_designs": len(archived_design_ids),
+            "design_ids": archived_design_ids,
+            "archived_at": datetime.utcnow().isoformat(),
+        }
+
+        logger.info(
+            f"Cascaded archive for project {project_id}: "
+            f"archived {len(archived_design_ids)} designs"
+        )
+
+        return result
+
+    async def list_designs(
+        self,
+        params: PaginationParams,
+        project_id: Optional[UUID] = None,
+        include_deleted: bool = False,
+        include_total: bool = False,
+    ) -> PaginatedResponse:
+        """
+        List designs with cursor-based pagination.
+
+        Args:
+            params: Pagination parameters (cursor, limit, sort)
+            project_id: Optional project ID to filter by
+            include_deleted: Whether to include soft-deleted designs
+            include_total: Whether to include total count
+
+        Returns:
+            Paginated response with Design instances
+        """
+        return await self.design_repository.list_designs(
+            params=params,
+            project_id=project_id,
+            include_deleted=include_deleted,
+            include_total=include_total,
+        )

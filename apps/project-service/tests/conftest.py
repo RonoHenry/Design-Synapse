@@ -8,6 +8,8 @@ Environment Variables:
 
 import asyncio
 import os
+import sys
+from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, Generator
 
 import pytest
@@ -16,6 +18,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
+
+# Add workspace root to path for proper import resolution
+workspace_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(workspace_root))
+
 from src.infrastructure.database import Base, get_db
 from src.main import app
 from src.models.comment import Comment

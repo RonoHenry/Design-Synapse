@@ -4,26 +4,19 @@ import sys
 from pathlib import Path
 
 from fastapi import Depends, FastAPI
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.exc import SQLAlchemyError
 
 # Add packages to path for common imports
 packages_path = Path(__file__).parent.parent.parent.parent / "packages"
 sys.path.insert(0, str(packages_path))
 
 from common.database.health import check_database_health
+# Import shared error handlers
+from common.errors.handlers import register_error_handlers
 
-from .api.v1 import auth, roles
+from .api.v1 import auth, health, roles
 from .core.config import settings
 from .core.constants import V1_PREFIX
-from .core.exceptions import (
-    APIError,
-    api_error_handler,
-    general_exception_handler,
-    sqlalchemy_error_handler,
-    validation_error_handler,
-)
 from .core.versioning import get_api_version
 
 app = FastAPI(
@@ -41,11 +34,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register error handlers
-app.add_exception_handler(APIError, api_error_handler)
-app.add_exception_handler(RequestValidationError, validation_error_handler)
-app.add_exception_handler(SQLAlchemyError, sqlalchemy_error_handler)
-app.add_exception_handler(Exception, general_exception_handler)
+# Register shared error handlers
+register_error_handlers(app)
 
 # Register routers with versioning
 app.include_router(
@@ -53,6 +43,12 @@ app.include_router(
 )
 app.include_router(
     roles.router, prefix=V1_PREFIX, dependencies=[Depends(get_api_version)]
+)
+app.include_router(
+    health.router,
+    prefix=V1_PREFIX,
+    dependencies=[Depends(get_api_version)],
+    tags=["health"],
 )
 
 
@@ -66,7 +62,7 @@ def read_root():
         ssl_verify_cert=settings.database.ssl_verify_cert,
         ssl_verify_identity=settings.database.ssl_verify_identity,
     )
-    
+
     return {
         "message": "Welcome to the User Service",
         "version": "1.0.0",

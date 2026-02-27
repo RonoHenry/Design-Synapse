@@ -548,3 +548,612 @@ class TestDesignServiceProperties:
         assert (
             deleted_design.current_version == original_design.current_version
         ), "Version must be preserved"
+
+    @pytest.mark.asyncio
+    @given(
+        project_id=st.uuids(),
+        user_id=st.uuids(),
+        request_data=create_design_request_strategy(),
+        project_exists=st.booleans(),
+        user_has_access=st.booleans(),
+    )
+    @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
+    async def test_property_37_project_association_validation(
+        self,
+        project_id: UUID,
+        user_id: UUID,
+        request_data: CreateDesignRequest,
+        project_exists: bool,
+        user_has_access: bool,
+    ):
+        """
+        Property 37: Project association validation.
+
+        For any design creation request, the system should validate that
+        the project exists and the user has access before creating the design.
+        If validation fails, appropriate errors should be raised.
+
+        Validates: Requirements 10.1, 10.2
+        """
+        # Setup mocks
+        mock_repo = AsyncMock(spec=DesignRepository)
+        mock_project_client = AsyncMock()
+
+        # Mock project validation response
+        mock_project_client.validate_project.return_value = ProjectValidation(
+            project_id=project_id,
+            exists=project_exists,
+            user_has_access=user_has_access,
+            project_name="Test Project" if project_exists else None,
+            project_status="active" if project_exists else None,
+        )
+
+        # Mock repository create to return design with ID
+        def create_side_effect(design):
+            design.id = str(uuid4())
+            return design
+
+        mock_repo.create.side_effect = create_side_effect
+        mock_repo.create_version = AsyncMock()
+
+        # Create service
+        service = DesignService(mock_repo, mock_project_client)
+
+        # Override request project_id to match test parameter
+        request_data.project_id = project_id
+
+        # Execute and verify Property 37: Project association validation
+        if not project_exists:
+            # Should raise NotFoundError if project doesn't exist
+            with pytest.raises(Exception) as exc_info:
+                await service.create_design(project_id, user_id, request_data)
+
+            # Verify project validation was called
+            mock_project_client.validate_project.assert_called_once_with(
+                project_id, user_id
+            )
+
+            # Verify design was not created
+            mock_repo.create.assert_not_called()
+
+        elif not user_has_access:
+            # Should raise ValidationError if user doesn't have access
+            with pytest.raises(Exception) as exc_info:
+                await service.create_design(project_id, user_id, request_data)
+
+            # Verify project validation was called
+            mock_project_client.validate_project.assert_called_once_with(
+                project_id, user_id
+            )
+
+            # Verify design was not created
+            mock_repo.create.assert_not_called()
+
+        else:
+            # Should succeed if project exists and user has access
+            design = await service.create_design(project_id, user_id, request_data)
+
+            # Verify project validation was called
+            mock_project_client.validate_project.assert_called_once_with(
+                project_id, user_id
+            )
+
+            # Verify design was created successfully
+            mock_repo.create.assert_called_once()
+            mock_repo.create_version.assert_called_once()
+
+            # Verify design properties
+            assert design.project_id == str(
+                project_id
+            ), "Design must be associated with validated project"
+            assert design.created_by == str(
+                user_id
+            ), "Design must be created by validated user"
+
+    @pytest.mark.asyncio
+    @given(
+        project_id=st.uuids(),
+        user_id=st.uuids(),
+        request_data=create_design_request_strategy(),
+        activity_type=st.sampled_from(
+            ["design_created", "design_updated", "design_deleted"]
+        ),
+    )
+    @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
+    async def test_property_39_activity_logging(
+        self,
+        project_id: UUID,
+        user_id: UUID,
+        request_data: CreateDesignRequest,
+        activity_type: str,
+    ):
+        """
+        Property 39: Activity logging.
+
+        For any design operation (create, update, delete), the system should
+        log the activity to the Project Service timeline with appropriate
+        metadata and timestamps.
+
+        Validates: Requirements 10.5
+        """
+        # Setup mocks
+        mock_repo = AsyncMock(spec=DesignRepository)
+        mock_project_client = AsyncMock()
+
+        # Mock project validation to succeed
+        mock_project_client.validate_project.return_value = ProjectValidation(
+            project_id=project_id,
+            exists=True,
+            user_has_access=True,
+            project_name="Test Project",
+            project_status="active",
+        )
+
+        # Mock repository operations
+        def create_side_effect(design):
+            design.id = str(uuid4())
+            return design
+
+        mock_repo.create.side_effect = create_side_effect
+        mock_repo.create_version = AsyncMock()
+
+        # For update and delete operations, mock existing design
+        existing_design = Design(
+            id=str(uuid4()),
+            project_id=str(project_id),
+            name="Test Design",
+            description="Test Description",
+            building_type="commercial",
+            location_data={"address": "123 Main St"},
+            current_version="1.0",
+            version_number=1,
+            status="draft",
+            metadata={},
+            created_by=str(user_id),
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+            is_deleted=False,
+        )
+
+        mock_repo.get.return_value = existing_design
+        mock_repo.update_with_version_check.return_value = existing_design
+        mock_repo.soft_delete.return_value = existing_design
+
+        # Track activity logging calls
+        activity_calls = []
+
+        async def log_activity_side_effect(project_id, activity):
+            activity_calls.append((project_id, activity))
+
+        mock_project_client.log_activity.side_effect = log_activity_side_effect
+
+        # Create service
+        service = DesignService(mock_repo, mock_project_client)
+
+        # Override request project_id to match test parameter
+        request_data.project_id = project_id
+
+        # Execute operation based on activity type
+        if activity_type == "design_created":
+            await service.create_design(project_id, user_id, request_data)
+        elif activity_type == "design_updated":
+            update_data = UpdateDesignRequest(name="Updated Name")
+            await service.update_design(UUID(existing_design.id), user_id, update_data)
+        elif activity_type == "design_deleted":
+            await service.soft_delete(UUID(existing_design.id), user_id)
+
+        # Verify Property 39: Activity logging
+        assert len(activity_calls) == 1, "Exactly one activity should be logged"
+
+        logged_project_id, logged_activity = activity_calls[0]
+
+        # Verify project ID matches
+        assert (
+            logged_project_id == project_id
+        ), "Activity must be logged to correct project"
+
+        # Verify activity structure
+        assert (
+            logged_activity.project_id == project_id
+        ), "Activity project_id must match"
+        assert logged_activity.user_id == user_id, "Activity user_id must match"
+        assert (
+            logged_activity.activity_type == activity_type
+        ), "Activity type must match operation"
+        assert logged_activity.description is not None, "Activity must have description"
+        assert logged_activity.timestamp is not None, "Activity must have timestamp"
+        assert isinstance(
+            logged_activity.metadata, dict
+        ), "Activity must have metadata dict"
+
+        # Verify metadata contains relevant information
+        if activity_type in ["design_created", "design_updated", "design_deleted"]:
+            assert (
+                "design_id" in logged_activity.metadata
+            ), "Metadata must contain design_id"
+            assert (
+                "design_name" in logged_activity.metadata
+            ), "Metadata must contain design_name"
+
+        # Verify timestamp is recent (within last minute)
+        time_diff = datetime.utcnow() - logged_activity.timestamp
+        assert time_diff.total_seconds() < 60, "Activity timestamp must be recent"
+
+    @pytest.mark.asyncio
+    @given(
+        project_id=st.uuids(),
+        num_designs=st.integers(min_value=0, max_value=10),
+        draft_ratio=st.floats(min_value=0.0, max_value=1.0),
+        completed_ratio=st.floats(min_value=0.0, max_value=1.0),
+    )
+    @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
+    async def test_property_38_project_summary_calculation(
+        self,
+        project_id: UUID,
+        num_designs: int,
+        draft_ratio: float,
+        completed_ratio: float,
+    ):
+        """
+        Property 38: Project summary calculation.
+
+        For any project with N designs, the project summary should accurately
+        calculate design count, compliance status, and completion percentage
+        based on the actual design statuses.
+
+        Validates: Requirements 10.4
+        """
+        # Setup mocks
+        mock_repo = AsyncMock(spec=DesignRepository)
+        mock_project_client = AsyncMock()
+
+        # Mock project status
+        from src.infrastructure.project_service_client import ProjectStatus
+
+        mock_project_client.get_project_status.return_value = ProjectStatus(
+            project_id=project_id,
+            status="active",
+            name="Test Project",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+
+        # Create mock designs with different statuses
+        designs = []
+        if num_designs > 0:
+            # Ensure ratios don't exceed 1.0 when combined
+            total_ratio = draft_ratio + completed_ratio
+            if total_ratio > 1.0:
+                # Normalize ratios
+                draft_ratio = draft_ratio / total_ratio
+                completed_ratio = completed_ratio / total_ratio
+
+            num_draft = int(num_designs * draft_ratio)
+            num_completed = int(num_designs * completed_ratio)
+            num_in_progress = num_designs - num_draft - num_completed
+
+            # Create draft designs
+            for i in range(num_draft):
+                design = Design(
+                    id=str(uuid4()),
+                    project_id=str(project_id),
+                    name=f"Draft Design {i}",
+                    description="Test",
+                    building_type="commercial",
+                    location_data={},
+                    current_version="1.0",
+                    version_number=1,
+                    status="draft",
+                    metadata={},
+                    created_by=str(uuid4()),
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow(),
+                    is_deleted=False,
+                )
+                designs.append(design)
+
+            # Create completed designs
+            for i in range(num_completed):
+                design = Design(
+                    id=str(uuid4()),
+                    project_id=str(project_id),
+                    name=f"Completed Design {i}",
+                    description="Test",
+                    building_type="commercial",
+                    location_data={},
+                    current_version="1.0",
+                    version_number=1,
+                    status="completed",
+                    metadata={},
+                    created_by=str(uuid4()),
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow(),
+                    is_deleted=False,
+                )
+                designs.append(design)
+
+            # Create in-progress designs
+            for i in range(num_in_progress):
+                design = Design(
+                    id=str(uuid4()),
+                    project_id=str(project_id),
+                    name=f"In Progress Design {i}",
+                    description="Test",
+                    building_type="commercial",
+                    location_data={},
+                    current_version="1.0",
+                    version_number=1,
+                    status="in_progress",
+                    metadata={},
+                    created_by=str(uuid4()),
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow(),
+                    is_deleted=False,
+                )
+                designs.append(design)
+
+        # Mock repository responses
+        from src.core.pagination import PaginatedResponse
+
+        # Mock all designs response (including deleted)
+        all_designs_response = PaginatedResponse(
+            items=designs,
+            total_count=len(designs),
+            has_next=False,
+            next_cursor=None,
+        )
+
+        # Mock active designs response (non-deleted)
+        active_designs_response = PaginatedResponse(
+            items=designs,  # All designs are active in this test
+            total_count=len(designs),
+            has_next=False,
+            next_cursor=None,
+        )
+
+        # Configure mock to return appropriate response based on include_deleted parameter
+        def list_designs_side_effect(
+            params, project_id, include_deleted=False, include_total=False
+        ):
+            if include_deleted:
+                return all_designs_response
+            else:
+                return active_designs_response
+
+        mock_repo.list_designs.side_effect = list_designs_side_effect
+
+        # Create service
+        service = DesignService(mock_repo, mock_project_client)
+
+        # Execute
+        summary = await service.calculate_project_summary(project_id)
+
+        # Verify Property 38: Project summary calculation
+        assert summary["project_id"] == str(
+            project_id
+        ), "Summary must include correct project ID"
+        assert (
+            summary["design_count"] == num_designs
+        ), f"Design count must be {num_designs}"
+        assert (
+            summary["active_designs"] == num_designs
+        ), f"Active designs must be {num_designs}"
+
+        # Verify design status counts
+        expected_draft = int(num_designs * draft_ratio) if num_designs > 0 else 0
+        expected_completed = (
+            int(num_designs * completed_ratio) if num_designs > 0 else 0
+        )
+        expected_in_progress = (
+            num_designs - expected_draft - expected_completed if num_designs > 0 else 0
+        )
+
+        assert (
+            summary["draft_designs"] == expected_draft
+        ), f"Draft designs must be {expected_draft}"
+        assert (
+            summary["completed_designs"] == expected_completed
+        ), f"Completed designs must be {expected_completed}"
+        assert (
+            summary["in_progress_designs"] == expected_in_progress
+        ), f"In progress designs must be {expected_in_progress}"
+
+        # Verify completion percentage calculation
+        expected_completion_percentage = 0.0
+        if num_designs > 0:
+            expected_completion_percentage = (expected_completed / num_designs) * 100
+
+        assert (
+            abs(summary["completion_percentage"] - expected_completion_percentage)
+            < 0.01
+        ), f"Completion percentage must be {expected_completion_percentage}"
+
+        # Verify compliance status logic
+        if expected_completed == 0 and num_designs > 0:
+            assert (
+                summary["compliance_status"] == "pending"
+            ), "Compliance status must be pending with no completed designs"
+        elif num_designs == 0:
+            assert (
+                summary["compliance_status"] == "unknown"
+            ), "Compliance status must be unknown with no designs"
+        elif expected_completion_percentage >= 80:
+            assert (
+                summary["compliance_status"] == "compliant"
+            ), "Compliance status must be compliant with >=80% completion"
+        elif expected_completion_percentage >= 50:
+            assert (
+                summary["compliance_status"] == "partially_compliant"
+            ), "Compliance status must be partially_compliant with >=50% completion"
+        else:
+            assert (
+                summary["compliance_status"] == "non_compliant"
+            ), "Compliance status must be non_compliant with <50% completion"
+
+        # Verify project information is included
+        assert (
+            summary["project_name"] == "Test Project"
+        ), "Summary must include project name"
+        assert (
+            summary["project_status"] == "active"
+        ), "Summary must include project status"
+        assert "last_updated" in summary, "Summary must include last updated timestamp"
+
+    @pytest.mark.asyncio
+    @given(
+        project_id=st.uuids(),
+        user_id=st.uuids(),
+        num_designs=st.integers(min_value=0, max_value=5),
+    )
+    @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
+    async def test_property_40_cascading_archive(
+        self,
+        project_id: UUID,
+        user_id: UUID,
+        num_designs: int,
+    ):
+        """
+        Property 40: Cascading archive.
+
+        For any project with N active designs, when the project is archived,
+        all N designs should be archived (soft deleted) and appropriate
+        activity logs should be created for each design.
+
+        Validates: Requirements 10.6
+        """
+        # Setup mocks
+        mock_repo = AsyncMock(spec=DesignRepository)
+        mock_project_client = AsyncMock()
+
+        # Mock project status
+        from src.infrastructure.project_service_client import ProjectStatus
+
+        mock_project_client.get_project_status.return_value = ProjectStatus(
+            project_id=project_id,
+            status="archived",
+            name="Test Project",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+
+        # Create mock designs
+        designs = []
+        for i in range(num_designs):
+            design = Design(
+                id=str(uuid4()),
+                project_id=str(project_id),
+                name=f"Design {i}",
+                description="Test",
+                building_type="commercial",
+                location_data={},
+                current_version="1.0",
+                version_number=1,
+                status="draft",
+                metadata={},
+                created_by=str(user_id),
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+                is_deleted=False,
+            )
+            designs.append(design)
+
+        # Mock repository responses
+        from src.core.pagination import PaginatedResponse
+
+        active_designs_response = PaginatedResponse(
+            items=designs,
+            total_count=len(designs),
+            has_next=False,
+            next_cursor=None,
+        )
+
+        mock_repo.list_designs.return_value = active_designs_response
+
+        # Track soft delete calls
+        soft_delete_calls = []
+
+        async def soft_delete_side_effect(design_id):
+            soft_delete_calls.append(design_id)
+            # Find the design and mark it as deleted
+            for design in designs:
+                if design.id == design_id:
+                    design.is_deleted = True
+                    design.deleted_at = datetime.utcnow()
+                    design.status = "archived"
+                    return design
+            return None
+
+        mock_repo.soft_delete.side_effect = soft_delete_side_effect
+
+        # Track activity logging calls
+        activity_calls = []
+
+        async def log_activity_side_effect(project_id, activity):
+            activity_calls.append((project_id, activity))
+
+        mock_project_client.log_activity.side_effect = log_activity_side_effect
+
+        # Create service
+        service = DesignService(mock_repo, mock_project_client)
+
+        # Execute
+        result = await service.cascade_archive_designs(project_id, user_id)
+
+        # Verify Property 40: Cascading archive
+        assert result["project_id"] == str(
+            project_id
+        ), "Result must include correct project ID"
+        assert (
+            result["archived_designs"] == num_designs
+        ), f"Must archive exactly {num_designs} designs"
+        assert (
+            len(result["design_ids"]) == num_designs
+        ), f"Must return {num_designs} design IDs"
+
+        # Verify all designs were soft deleted
+        assert (
+            len(soft_delete_calls) == num_designs
+        ), f"Must call soft_delete {num_designs} times"
+
+        # Verify all design IDs are in the result
+        for design in designs:
+            assert (
+                design.id in result["design_ids"]
+            ), f"Design {design.id} must be in archived list"
+
+        # Verify activity logging for each design
+        assert len(activity_calls) == num_designs, f"Must log {num_designs} activities"
+
+        for i, (logged_project_id, logged_activity) in enumerate(activity_calls):
+            assert (
+                logged_project_id == project_id
+            ), f"Activity {i} must be logged to correct project"
+            assert (
+                logged_activity.project_id == project_id
+            ), f"Activity {i} project_id must match"
+            assert (
+                logged_activity.user_id == user_id
+            ), f"Activity {i} user_id must match"
+            assert (
+                logged_activity.activity_type == "design_archived"
+            ), f"Activity {i} type must be design_archived"
+            assert (
+                "design_id" in logged_activity.metadata
+            ), f"Activity {i} must contain design_id in metadata"
+            assert (
+                "design_name" in logged_activity.metadata
+            ), f"Activity {i} must contain design_name in metadata"
+            assert (
+                logged_activity.metadata["reason"] == "project_archived"
+            ), f"Activity {i} must have correct reason"
+
+        # Verify result metadata
+        assert (
+            result["project_name"] == "Test Project"
+        ), "Result must include project name"
+        assert "archived_at" in result, "Result must include archive timestamp"
+
+        # Verify edge case: no designs to archive
+        if num_designs == 0:
+            assert result["archived_designs"] == 0, "Must handle zero designs correctly"
+            assert result["design_ids"] == [], "Must return empty list for zero designs"
