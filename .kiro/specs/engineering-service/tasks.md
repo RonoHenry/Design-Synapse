@@ -6,14 +6,14 @@ This task list implements the Engineering Service following Test-Driven Developm
 
 ## Task List
 
-- [-] 1. Project Setup and Infrastructure
-  - [-] 1.1 Initialize FastAPI project structure
-  - [ ] 1.2 Configure TiDB/MySQL database connection
-  - [ ] 1.3 Set up Alembic for database migrations
-  - [ ] 1.4 Configure Pytest with Hypothesis for property-based testing
-  - [ ] 1.5 Set up Redis for caching
-  - [ ] 1.6 Configure logging and monitoring
-  - [ ] 1.7 Create base configuration management
+- [x] 1. Project Setup and Infrastructure
+  - [x] 1.1 Initialize FastAPI project structure
+  - [x] 1.2 Configure TiDB/MySQL database connection
+  - [x] 1.3 Set up Alembic for database migrations
+  - [x] 1.4 Configure Pytest with Hypothesis for property-based testing
+  - [x] 1.5 Set up Redis for caching
+  - [x] 1.6 Configure logging and monitoring
+  - [x] 1.7 Create base configuration management
 
 - [ ] 2. Database Models and Schemas
   - [ ] 2.1 Create CalculationSheet model with tests

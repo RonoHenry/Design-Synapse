@@ -14,6 +14,7 @@ class EngineeringServiceException(Exception):
         status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
         details: Optional[Dict[str, Any]] = None,
     ):
+        """Initialize the exception."""
         self.message = message
         self.status_code = status_code
         self.details = details or {}
@@ -24,6 +25,7 @@ class ValidationError(EngineeringServiceException):
     """Validation error exception."""
 
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        """Initialize the validation error."""
         super().__init__(
             message=message,
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -34,7 +36,10 @@ class ValidationError(EngineeringServiceException):
 class UnauthorizedError(EngineeringServiceException):
     """Unauthorized error exception."""
 
-    def __init__(self, message: str = "Unauthorized", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, message: str = "Unauthorized", details: Optional[Dict[str, Any]] = None
+    ):
+        """Initialize the unauthorized error."""
         super().__init__(
             message=message,
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -45,7 +50,10 @@ class UnauthorizedError(EngineeringServiceException):
 class ForbiddenError(EngineeringServiceException):
     """Forbidden error exception."""
 
-    def __init__(self, message: str = "Forbidden", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, message: str = "Forbidden", details: Optional[Dict[str, Any]] = None
+    ):
+        """Initialize the forbidden error."""
         super().__init__(
             message=message,
             status_code=status.HTTP_403_FORBIDDEN,
@@ -57,6 +65,7 @@ class NotFoundError(EngineeringServiceException):
     """Not found error exception."""
 
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        """Initialize the not found error."""
         super().__init__(
             message=message,
             status_code=status.HTTP_404_NOT_FOUND,
@@ -68,6 +77,7 @@ class ConflictError(EngineeringServiceException):
     """Conflict error exception."""
 
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        """Initialize the conflict error."""
         super().__init__(
             message=message,
             status_code=status.HTTP_409_CONFLICT,
@@ -85,6 +95,7 @@ class ExternalServiceError(EngineeringServiceException):
         status_code: int = status.HTTP_502_BAD_GATEWAY,
         details: Optional[Dict[str, Any]] = None,
     ):
+        """Initialize the external service error."""
         details = details or {}
         details["service"] = service_name
         super().__init__(
@@ -98,6 +109,7 @@ class CalculationError(EngineeringServiceException):
     """Calculation error exception."""
 
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        """Initialize the calculation error."""
         super().__init__(
             message=message,
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -109,6 +121,7 @@ class CodeComplianceError(EngineeringServiceException):
     """Code compliance error exception."""
 
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        """Initialize the code compliance error."""
         super().__init__(
             message=message,
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
