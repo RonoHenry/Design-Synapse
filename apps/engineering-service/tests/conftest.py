@@ -30,15 +30,12 @@ def event_loop():
 @pytest.fixture(scope="function")
 async def test_db_engine():
     """Create a test database engine."""
-    # Use a test database URL
-    test_db_url = app_settings.database_url.replace(
-        "/engineering_service", "/engineering_service_test"
-    )
+    # Use SQLite for testing (in-memory)
+    test_db_url = "sqlite+aiosqlite:///:memory:"
 
     engine = create_async_engine(
         test_db_url,
         echo=False,
-        pool_pre_ping=True,
     )
 
     # Create all tables
