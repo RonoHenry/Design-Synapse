@@ -42,20 +42,20 @@ This task list implements the Engineering Service following Test-Driven Developm
   - [x] 4.6 Create AuditLogRepository with query operations
   - [x] 4.7 Write unit tests for all repository operations
 
-- [ ] 5. Unit Conversion System
-  - [ ] 5.1 Implement UnitConverter class
-  - [ ] 5.2 Add Imperial to Metric conversion methods
-  - [ ] 5.3 Add Metric to Imperial conversion methods
-  - [ ] 5.4 Add unit formatting methods
-  - [ ] 5.5 Write unit tests for conversions
-  - [ ] 5.6 Write property test for conversion round-trip (Property 7)
+- [x] 5. Unit Conversion System
+  - [x] 5.1 Implement UnitConverter class
+  - [x] 5.2 Add Imperial to Metric conversion methods
+  - [x] 5.3 Add Metric to Imperial conversion methods
+  - [x] 5.4 Add unit formatting methods
+  - [x] 5.5 Write unit tests for conversions
+  - [x] 5.6 Write property test for conversion round-trip (Property 7)
 
-- [ ] 6. Structural Engineering Calculations
-  - [ ] 6.1 Implement LoadCalculator for dead loads
-  - [ ] 6.2 Implement LoadCalculator for live loads (ASCE 7)
-  - [ ] 6.3 Implement LoadCalculator for wind loads (ASCE 7)
-  - [ ] 6.4 Implement LoadCalculator for seismic loads (ASCE 7)
-  - [ ] 6.5 Implement beam design calculations
+- [-] 6. Structural Engineering Calculations
+  - [x] 6.1 Implement LoadCalculator for dead loads
+  - [x] 6.2 Implement LoadCalculator for live loads (ASCE 7)
+  - [x] 6.3 Implement LoadCalculator for wind loads (ASCE 7)
+  - [x] 6.4 Implement LoadCalculator for seismic loads (ASCE 7)
+  - [-] 6.5 Implement beam design calculations
   - [ ] 6.6 Implement column design calculations
   - [ ] 6.7 Implement foundation design calculations
   - [ ] 6.8 Write unit tests for all structural calculations
