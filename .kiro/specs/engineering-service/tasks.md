@@ -15,23 +15,23 @@ This task list implements the Engineering Service following Test-Driven Developm
   - [x] 1.6 Configure logging and monitoring
   - [x] 1.7 Create base configuration management
 
-- [ ] 2. Database Models and Schemas
-  - [ ] 2.1 Create CalculationSheet model with tests
-  - [ ] 2.2 Create StructuralDesign model with tests
-  - [ ] 2.3 Create MEPDesign model with tests
-  - [ ] 2.4 Create CivilDesign model with tests
-  - [ ] 2.5 Create ComplianceReport model with tests
-  - [ ] 2.6 Create AuditLog model with tests
-  - [ ] 2.7 Generate and test initial database migration
-  - [ ] 2.8 Write property test for data persistence round-trip (Property 12)
+- [x] 2. Database Models and Schemas
+  - [x] 2.1 Create CalculationSheet model with tests
+  - [x] 2.2 Create StructuralDesign model with tests
+  - [x] 2.3 Create MEPDesign model with tests
+  - [x] 2.4 Create CivilDesign model with tests
+  - [x] 2.5 Create ComplianceReport model with tests
+  - [x] 2.6 Create AuditLog model with tests
+  - [x] 2.7 Generate and test initial database migration
+  - [x] 2.8 Write property test for data persistence round-trip (Property 12)
 
-- [ ] 3. Pydantic Request/Response Schemas
-  - [ ] 3.1 Create structural calculation request/response schemas
-  - [ ] 3.2 Create MEP design request/response schemas
-  - [ ] 3.3 Create civil engineering request/response schemas
-  - [ ] 3.4 Create code validation request/response schemas
-  - [ ] 3.5 Create document management schemas
-  - [ ] 3.6 Add schema validation tests
+- [x] 3. Pydantic Request/Response Schemas
+  - [x] 3.1 Create structural calculation request/response schemas
+  - [x] 3.2 Create MEP design request/response schemas
+  - [x] 3.3 Create civil engineering request/response schemas
+  - [x] 3.4 Create code validation request/response schemas
+  - [x] 3.5 Create document management schemas
+  - [x] 3.6 Add schema validation tests
 
 - [ ] 4. Repository Layer
   - [ ] 4.1 Create CalculationSheetRepository with CRUD operations

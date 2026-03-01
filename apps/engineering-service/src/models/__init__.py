@@ -1,13 +1,18 @@
 """Database models for Engineering Service."""
 
 # Import all models here for Alembic to discover them
-# These will be implemented in Task 2
+from .audit_log import AuditLog
+from .calculation_sheet import CalculationSheet
+from .civil_design import CivilDesign
+from .compliance_report import ComplianceReport
+from .mep_design import MEPDesign
+from .structural_design import StructuralDesign
 
 __all__ = [
-    "calculation_sheet",
-    "structural_design",
-    "mep_design",
-    "civil_design",
-    "compliance_report",
-    "audit_log",
+    "CalculationSheet",
+    "StructuralDesign",
+    "MEPDesign",
+    "CivilDesign",
+    "ComplianceReport",
+    "AuditLog",
 ]
