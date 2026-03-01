@@ -33,14 +33,14 @@ This task list implements the Engineering Service following Test-Driven Developm
   - [x] 3.5 Create document management schemas
   - [x] 3.6 Add schema validation tests
 
-- [ ] 4. Repository Layer
-  - [ ] 4.1 Create CalculationSheetRepository with CRUD operations
-  - [ ] 4.2 Create StructuralDesignRepository with CRUD operations
-  - [ ] 4.3 Create MEPDesignRepository with CRUD operations
-  - [ ] 4.4 Create CivilDesignRepository with CRUD operations
-  - [ ] 4.5 Create ComplianceReportRepository with CRUD operations
-  - [ ] 4.6 Create AuditLogRepository with query operations
-  - [ ] 4.7 Write unit tests for all repository operations
+- [-] 4. Repository Layer
+  - [x] 4.1 Create CalculationSheetRepository with CRUD operations
+  - [x] 4.2 Create StructuralDesignRepository with CRUD operations
+  - [x] 4.3 Create MEPDesignRepository with CRUD operations
+  - [x] 4.4 Create CivilDesignRepository with CRUD operations
+  - [x] 4.5 Create ComplianceReportRepository with CRUD operations
+  - [x] 4.6 Create AuditLogRepository with query operations
+  - [x] 4.7 Write unit tests for all repository operations
 
 - [ ] 5. Unit Conversion System
   - [ ] 5.1 Implement UnitConverter class
