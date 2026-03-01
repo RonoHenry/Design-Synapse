@@ -25,13 +25,13 @@ This task list implements the Engineering Service following Test-Driven Developm
   - [x] 2.7 Generate and test initial database migration
   - [x] 2.8 Write property test for data persistence round-trip (Property 12)
 
-- [ ] 3. Pydantic Request/Response Schemas
-  - [ ] 3.1 Create structural calculation request/response schemas
-  - [ ] 3.2 Create MEP design request/response schemas
-  - [ ] 3.3 Create civil engineering request/response schemas
-  - [ ] 3.4 Create code validation request/response schemas
-  - [ ] 3.5 Create document management schemas
-  - [ ] 3.6 Add schema validation tests
+- [x] 3. Pydantic Request/Response Schemas
+  - [x] 3.1 Create structural calculation request/response schemas
+  - [x] 3.2 Create MEP design request/response schemas
+  - [x] 3.3 Create civil engineering request/response schemas
+  - [x] 3.4 Create code validation request/response schemas
+  - [x] 3.5 Create document management schemas
+  - [x] 3.6 Add schema validation tests
 
 - [ ] 4. Repository Layer
   - [ ] 4.1 Create CalculationSheetRepository with CRUD operations
