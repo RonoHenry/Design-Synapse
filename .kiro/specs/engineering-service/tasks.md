@@ -55,12 +55,12 @@ This task list implements the Engineering Service following Test-Driven Developm
   - [x] 6.2 Implement LoadCalculator for live loads (ASCE 7)
   - [x] 6.3 Implement LoadCalculator for wind loads (ASCE 7)
   - [x] 6.4 Implement LoadCalculator for seismic loads (ASCE 7)
-  - [-] 6.5 Implement beam design calculations
-  - [ ] 6.6 Implement column design calculations
-  - [ ] 6.7 Implement foundation design calculations
-  - [ ] 6.8 Write unit tests for all structural calculations
-  - [ ] 6.9 Write property test for load calculation reasonableness (Property 1)
-  - [ ] 6.10 Write property test for structural design validity (Property 2)
+  - [x] 6.5 Implement beam design calculations
+  - [x] 6.6 Implement column design calculations
+  - [x] 6.7 Implement foundation design calculations
+  - [x] 6.8 Write unit tests for all structural calculations
+  - [x] 6.9 Write property test for load calculation reasonableness (Property 1)
+  - [x] 6.10 Write property test for structural design validity (Property 2)
 
 - [ ] 7. MEP Systems Calculations
   - [ ] 7.1 Implement HVACCalculator for heating loads (ASHRAE)
