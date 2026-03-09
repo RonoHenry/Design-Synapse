@@ -62,26 +62,26 @@ This task list implements the Engineering Service following Test-Driven Developm
   - [x] 6.9 Write property test for load calculation reasonableness (Property 1)
   - [x] 6.10 Write property test for structural design validity (Property 2)
 
-- [ ] 7. MEP Systems Calculations
-  - [ ] 7.1 Implement HVACCalculator for heating loads (ASHRAE)
-  - [ ] 7.2 Implement HVACCalculator for cooling loads (ASHRAE)
-  - [ ] 7.3 Implement HVACCalculator for equipment sizing
-  - [ ] 7.4 Implement ElectricalCalculator for load calculations
-  - [ ] 7.5 Implement ElectricalCalculator for panel sizing (NEC)
-  - [ ] 7.6 Implement ElectricalCalculator for circuit sizing (NEC)
-  - [ ] 7.7 Implement PlumbingCalculator for fixture units (IPC)
-  - [ ] 7.8 Implement PlumbingCalculator for pipe sizing
-  - [ ] 7.9 Implement FireProtectionCalculator (NFPA 13)
-  - [ ] 7.10 Write unit tests for all MEP calculations
-  - [ ] 7.11 Write property test for MEP system sizing (Property 3)
+- [-] 7. MEP Systems Calculations
+  - [x] 7.1 Implement HVACCalculator for heating loads (ASHRAE)
+  - [x] 7.2 Implement HVACCalculator for cooling loads (ASHRAE)
+  - [x] 7.3 Implement HVACCalculator for equipment sizing
+  - [x] 7.4 Implement ElectricalCalculator for load calculations
+  - [x] 7.5 Implement ElectricalCalculator for panel sizing (NEC)
+  - [x] 7.6 Implement ElectricalCalculator for circuit sizing (NEC)
+  - [x] 7.7 Implement PlumbingCalculator for fixture units (IPC)
+  - [x] 7.8 Implement PlumbingCalculator for pipe sizing
+  - [x] 7.9 Implement FireProtectionCalculator (NFPA 13)
+  - [x] 7.10 Write unit tests for all MEP calculations
+  - [x] 7.11 Write property test for MEP system sizing (Property 3)
 
-- [ ] 8. Civil Engineering Calculations
-  - [ ] 8.1 Implement grading design with cut/fill calculations
-  - [ ] 8.2 Implement stormwater runoff calculations
-  - [ ] 8.3 Implement detention pond sizing
-  - [ ] 8.4 Implement utility load calculations
-  - [ ] 8.5 Write unit tests for civil calculations
-  - [ ] 8.6 Write property test for cut/fill volume conservation (Property 4)
+- [x] 8. Civil Engineering Calculations
+  - [x] 8.1 Implement grading design with cut/fill calculations
+  - [x] 8.2 Implement stormwater runoff calculations
+  - [x] 8.3 Implement detention pond sizing
+  - [x] 8.4 Implement utility load calculations
+  - [x] 8.5 Write unit tests for civil calculations
+  - [x] 8.6 Write property test for cut/fill volume conservation (Property 4)
 
 - [ ] 9. Structural Engineering Service Layer
   - [ ] 9.1 Implement StructuralCalculationService.calculate_loads
