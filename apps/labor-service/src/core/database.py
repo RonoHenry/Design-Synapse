@@ -57,13 +57,26 @@ else:
 # Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 # Async engine and session for FastAPI
+# Build the async URL by replacing the sync driver with an async one.
+# The DATABASE_URL may already include a driver (e.g. mysql+pymysql://),
+# so we normalise to the base scheme first before substituting.
+def _make_async_url(url: str) -> str:
+    """Convert a sync SQLAlchemy URL to its async equivalent."""
+    if url.startswith("mysql"):
+        # Strip any existing driver (e.g. +pymysql, +mysqlconnector) and
+        # replace with the async aiomysql driver.
+        base = url.split("://", 1)[1]
+        return f"mysql+aiomysql://{base}"
+    if url.startswith("sqlite"):
+        # sqlite:// → sqlite+aiosqlite://
+        return url.replace("sqlite://", "sqlite+aiosqlite://", 1)
+    return url
+
+
 async_engine = create_async_engine(
-    settings.database_url.replace("mysql://", "mysql+aiomysql://")
-    if settings.database_url.startswith("mysql")
-    else settings.database_url.replace("sqlite://", "sqlite+aiosqlite://")
-    if settings.database_url.startswith("sqlite")
-    else settings.database_url,
+    _make_async_url(settings.database_url),
     echo=settings.debug,
     pool_pre_ping=True if not settings.database_url.startswith("sqlite") else False,
 )

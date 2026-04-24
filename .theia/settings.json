@@ -1,0 +1,24 @@
+{
+    "java.saveActions.organizeImports": false,
+    "java.saveActions.cleanup": false,
+    "java.cleanup.actions": [],
+    "java.sources.organizeImports.starThreshold": 1,
+    "java.sources.organizeImports.staticStarThreshold": 1,
+    "java.format.onType.enabled": false,
+    "editor.formatOnType": false,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": false
+    },
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "[java]": {
+        "java.saveActions.organizeImports": false,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": false
+        },
+        "editor.formatOnSave": false
+    }
+}

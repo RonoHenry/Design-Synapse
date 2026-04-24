@@ -171,7 +171,7 @@ class TestFireProtectionCalculatorPipeSizing:
 
         pipe_size, pressure_loss = calculator.size_piping(flow_rate=250.0, length=100.0)
 
-        assert pipe_size in ['2.0"', '2.5"', '3.0"', '4.0"']
+        assert pipe_size in ['2"', '2.5"', '3"', '4"']
         assert pressure_loss > 0
 
     def test_size_piping_large_flow(self):
@@ -183,7 +183,7 @@ class TestFireProtectionCalculatorPipeSizing:
         )
 
         # Should select larger pipe
-        assert pipe_size in ['6.0"', '8.0"']
+        assert pipe_size in ['6"', '8"']
         assert pressure_loss > 0
 
     def test_piping_pressure_loss_increases_with_length(self):

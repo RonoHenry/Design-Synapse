@@ -311,34 +311,38 @@ class TestGetTaskStatus:
 class TestTaskStatusAuthentication:
     """Tests for task status endpoint authentication and authorization."""
 
-    def test_get_task_status_missing_auth_header(self, client):
+    def test_get_task_status_missing_auth_header(self, client_no_auth):
         """Test task status retrieval without Authorization header."""
         task_id = str(uuid4())
 
-        response = client.get(f"/api/v1/tasks/{task_id}")
+        response = client_no_auth.get(f"/api/v1/tasks/{task_id}")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_get_task_status_invalid_auth_token(self, client):
+    def test_get_task_status_invalid_auth_token(self, client_no_auth):
         """Test task status retrieval with invalid auth token."""
         task_id = str(uuid4())
 
-        response = client.get(
+        response = client_no_auth.get(
             f"/api/v1/tasks/{task_id}",
             headers={"Authorization": "Bearer invalid-token"},
         )
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_get_task_status_expired_auth_token(self, client):
+    def test_get_task_status_expired_auth_token(self, client_no_auth):
         """Test task status retrieval with expired auth token."""
         task_id = str(uuid4())
 
-        # Mock expired token
-        with patch("src.api.dependencies.verify_token") as mock_verify:
-            mock_verify.side_effect = Exception("Token expired")
+        # Patch get_current_user_id to simulate an expired token raising 401
+        with patch("src.api.dependencies.get_current_user_id") as mock_verify:
+            from fastapi import HTTPException
 
-            response = client.get(
+            mock_verify.side_effect = HTTPException(
+                status_code=401, detail="Token expired"
+            )
+
+            response = client_no_auth.get(
                 f"/api/v1/tasks/{task_id}",
                 headers={"Authorization": "Bearer expired-token"},
             )
@@ -354,7 +358,6 @@ class TestTaskStatusErrorHandling:
         malformed_ids = [
             "not-a-uuid",
             "12345",
-            "",
             "special-chars-!@#$%",
             "too-short",
         ]

@@ -10,9 +10,9 @@ from src.repositories.calculation_sheet_repository import \
 class TestCalculationSheetRepository:
     """Test suite for CalculationSheetRepository."""
 
-    async def test_get_by_project_id(self, db_session: AsyncSession):
+    async def test_get_by_project_id(self, test_db_session: AsyncSession):
         """Test retrieving calculation sheets by project ID."""
-        repo = CalculationSheetRepository(db_session)
+        repo = CalculationSheetRepository(test_db_session)
 
         # Create sheets for different projects
         await repo.create(
@@ -42,9 +42,9 @@ class TestCalculationSheetRepository:
         assert len(results) >= 1
         assert all(r.project_id == "project-1" for r in results)
 
-    async def test_get_by_calculation_type(self, db_session: AsyncSession):
+    async def test_get_by_calculation_type(self, test_db_session: AsyncSession):
         """Test retrieving sheets by calculation type."""
-        repo = CalculationSheetRepository(db_session)
+        repo = CalculationSheetRepository(test_db_session)
 
         # Create sheets of different types
         await repo.create(
@@ -74,9 +74,9 @@ class TestCalculationSheetRepository:
         assert len(results) >= 1
         assert all(r.calculation_type == "structural" for r in results)
 
-    async def test_get_by_project_and_type(self, db_session: AsyncSession):
+    async def test_get_by_project_and_type(self, test_db_session: AsyncSession):
         """Test retrieving sheets by project and type."""
-        repo = CalculationSheetRepository(db_session)
+        repo = CalculationSheetRepository(test_db_session)
 
         # Create sheets
         await repo.create(
@@ -119,9 +119,9 @@ class TestCalculationSheetRepository:
             for r in results
         )
 
-    async def test_get_version_history(self, db_session: AsyncSession):
+    async def test_get_version_history(self, test_db_session: AsyncSession):
         """Test retrieving version history for a sheet."""
-        repo = CalculationSheetRepository(db_session)
+        repo = CalculationSheetRepository(test_db_session)
 
         # Create original sheet
         original = await repo.create(
@@ -156,9 +156,9 @@ class TestCalculationSheetRepository:
         assert len(history) >= 1
         assert any(h.version == 2 for h in history)
 
-    async def test_get_latest_version(self, db_session: AsyncSession):
+    async def test_get_latest_version(self, test_db_session: AsyncSession):
         """Test retrieving the latest version of a sheet."""
-        repo = CalculationSheetRepository(db_session)
+        repo = CalculationSheetRepository(test_db_session)
 
         # Create original sheet
         original = await repo.create(
@@ -194,9 +194,9 @@ class TestCalculationSheetRepository:
         assert latest.version == 2
         assert latest.id == v2.id
 
-    async def test_search_by_title(self, db_session: AsyncSession):
+    async def test_search_by_title(self, test_db_session: AsyncSession):
         """Test searching sheets by title."""
-        repo = CalculationSheetRepository(db_session)
+        repo = CalculationSheetRepository(test_db_session)
 
         # Create sheets with different titles
         await repo.create(
@@ -226,9 +226,9 @@ class TestCalculationSheetRepository:
         assert len(results) >= 1
         assert any("Beam" in r.title for r in results)
 
-    async def test_get_by_status(self, db_session: AsyncSession):
+    async def test_get_by_status(self, test_db_session: AsyncSession):
         """Test retrieving sheets by status."""
-        repo = CalculationSheetRepository(db_session)
+        repo = CalculationSheetRepository(test_db_session)
 
         # Create sheets with different statuses
         await repo.create(
@@ -260,9 +260,9 @@ class TestCalculationSheetRepository:
         assert len(results) >= 1
         assert all(r.status == "draft" for r in results)
 
-    async def test_get_by_created_by(self, db_session: AsyncSession):
+    async def test_get_by_created_by(self, test_db_session: AsyncSession):
         """Test retrieving sheets by creator."""
-        repo = CalculationSheetRepository(db_session)
+        repo = CalculationSheetRepository(test_db_session)
 
         # Create sheets by different users
         await repo.create(
@@ -292,9 +292,9 @@ class TestCalculationSheetRepository:
         assert len(results) >= 1
         assert all(r.created_by == "user-1" for r in results)
 
-    async def test_get_recent(self, db_session: AsyncSession):
+    async def test_get_recent(self, test_db_session: AsyncSession):
         """Test retrieving recent sheets."""
-        repo = CalculationSheetRepository(db_session)
+        repo = CalculationSheetRepository(test_db_session)
 
         # Create sheets
         for i in range(5):
