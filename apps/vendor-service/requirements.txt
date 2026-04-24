@@ -44,14 +44,14 @@ isort==5.12.0
 python-json-logger==2.0.7
 
 # File handling
-pillow==10.1.0
-python-magic==0.4.27
+# pillow==10.4.0  # Temporarily disabled - build issues on Windows
+# python-magic==0.4.27  # Temporarily disabled - requires libmagic
 
 # Payment processing (Stripe)
 stripe==7.7.0
 
 # Search (optional)
-elasticsearch==8.11.0
+# elasticsearch==8.11.0  # Temporarily disabled - optional dependency
 
 # Common packages (local)
 -e ../../packages/common/config

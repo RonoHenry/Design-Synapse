@@ -1,20 +1,22 @@
 """Alembic migration environment configuration for Engineering Service."""
 
 import asyncio
+import os
+import ssl
 import sys
 from logging.config import fileConfig
 from pathlib import Path
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # Import all models so Alembic can detect them  # noqa: E402
-from src.core.config import settings  # noqa: E402
 from src.core.database import Base  # noqa: E402
 from src.models import audit_log  # noqa: E402, F401
 from src.models import calculation_sheet  # noqa: E402, F401
@@ -32,33 +34,69 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Set the database URL from settings
-config.set_main_option("sqlalchemy.url", settings.database_url)
-
 # add your model's MetaData object here
 # for 'autogenerate' support
 target_metadata = Base.metadata
 
 
-def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
+def _build_asyncmy_url_and_connect_args(database_url: str):
+    """Parse a DATABASE_URL and return (clean_url, connect_args) for asyncmy.
 
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
+    asyncmy does not accept ssl_verify_cert / ssl_verify_identity as URL
+    query parameters — it only accepts an ``ssl`` dict via connect_args.
+    This helper strips those params from the URL and builds the correct
+    connect_args dict instead.
     """
+    parsed = urlparse(database_url)
+    query_params = parse_qs(parsed.query, keep_blank_values=True)
+
+    ssl_ca = None
+    # Extract SSL-related query params that asyncmy doesn't understand
+    for key in ("ssl_ca", "ssl_verify_cert", "ssl_verify_identity"):
+        val = query_params.pop(key, None)
+        if key == "ssl_ca" and val:
+            ssl_ca = val[0]
+
+    # Rebuild the URL without the stripped SSL params
+    new_query = urlencode({k: v[0] for k, v in query_params.items()}, doseq=False)
+    clean_parsed = parsed._replace(query=new_query)
+    clean_url = urlunparse(clean_parsed)
+
+    connect_args = {}
+    if ssl_ca:
+        ssl_ctx = ssl.create_default_context(cafile=ssl_ca)
+        connect_args["ssl"] = ssl_ctx
+
+    return clean_url, connect_args
+
+
+# Read DATABASE_URL from environment (injected by setup_services.py) or fall
+# back to the value in alembic.ini / settings.
+_raw_url = os.environ.get("DATABASE_URL")
+if not _raw_url:
+    # Fall back to app settings when running alembic manually
+    from src.core.config import settings as app_settings  # noqa: E402
+
+    _raw_url = app_settings.database_url
+
+if _raw_url.startswith("mysql+asyncmy://"):
+    _db_url, _connect_args = _build_asyncmy_url_and_connect_args(_raw_url)
+else:
+    _db_url = _raw_url
+    _connect_args = {}
+
+# Set the SQLAlchemy URL (cleaned of asyncmy-incompatible params)
+config.set_main_option("sqlalchemy.url", _db_url)
+
+
+def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        # TiDB/MySQL specific settings
         render_as_batch=False,
         compare_type=True,
         compare_server_default=True,
@@ -73,7 +111,6 @@ def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
-        # TiDB/MySQL specific settings
         render_as_batch=False,
         compare_type=True,
         compare_server_default=True,
@@ -85,10 +122,10 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """Run migrations in async mode."""
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    connectable = create_async_engine(
+        _db_url,
         poolclass=pool.NullPool,
+        connect_args=_connect_args,
     )
 
     async with connectable.connect() as connection:
@@ -100,10 +137,11 @@ async def run_async_migrations() -> None:
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
+    On Windows, asyncio defaults to ProactorEventLoop which does not support
+    SSL with asyncmy. We switch to SelectorEventLoop for the migration run.
     """
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     asyncio.run(run_async_migrations())
 
 

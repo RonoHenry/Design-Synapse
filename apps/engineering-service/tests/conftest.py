@@ -1,12 +1,14 @@
 """Pytest configuration and fixtures for Engineering Service tests."""
 
 import asyncio
+import os
 from typing import AsyncGenerator
 
 import pytest
 from hypothesis import Verbosity, settings
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 from src.core.config import settings as app_settings
 from src.core.database import Base
 
@@ -30,13 +32,13 @@ def event_loop():
 @pytest.fixture(scope="function")
 async def test_db_engine():
     """Create a test database engine."""
-    # Use SQLite for testing (in-memory)
-    test_db_url = "sqlite+aiosqlite:///:memory:"
+    test_db_url = os.environ.get("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
-    engine = create_async_engine(
-        test_db_url,
-        echo=False,
-    )
+    engine_kwargs = {"echo": False}
+    if test_db_url != "sqlite+aiosqlite:///:memory:":
+        engine_kwargs["poolclass"] = NullPool
+
+    engine = create_async_engine(test_db_url, **engine_kwargs)
 
     # Create all tables
     async with engine.begin() as conn:

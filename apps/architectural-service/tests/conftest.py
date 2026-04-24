@@ -1,7 +1,10 @@
 """Pytest configuration and fixtures."""
 
 import asyncio
+import os
+import ssl
 from typing import AsyncGenerator, Generator
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import httpx
 import pytest
@@ -19,6 +22,31 @@ from src.main import app
 hypothesis_settings.register_profile("dev", max_examples=10)
 hypothesis_settings.register_profile("ci", max_examples=100, deadline=10000)
 hypothesis_settings.load_profile("dev")
+
+
+def _prepare_test_engine_args(database_url: str) -> tuple[str, dict]:
+    """Return (clean_url, connect_args) for asyncmy SSL handling."""
+    if not database_url.startswith("mysql+asyncmy://"):
+        return database_url, {}
+
+    parsed = urlparse(database_url)
+    query_params = parse_qs(parsed.query, keep_blank_values=True)
+
+    ssl_ca = None
+    for key in ("ssl_ca", "ssl_verify_cert", "ssl_verify_identity"):
+        val = query_params.pop(key, None)
+        if key == "ssl_ca" and val:
+            ssl_ca = val[0]
+
+    new_query = urlencode({k: v[0] for k, v in query_params.items()}, doseq=False)
+    clean_url = urlunparse(parsed._replace(query=new_query))
+
+    connect_args = {}
+    if ssl_ca:
+        ssl_ctx = ssl.create_default_context(cafile=ssl_ca)
+        connect_args["ssl"] = ssl_ctx
+
+    return clean_url, connect_args
 
 
 @pytest.fixture(scope="session")
@@ -39,13 +67,19 @@ async def test_engine():
                             MaterialSpecification, SpacePlanning,
                             StructuralAnalysis)
 
-    # Use file-based SQLite for tests (async in-memory has issues)
-    test_database_url = "sqlite+aiosqlite:///test_architectural.db"
+    # Use TEST_DATABASE_URL if set (e.g. TiDB), otherwise fall back to SQLite
+    test_database_url = os.environ.get(
+        "TEST_DATABASE_URL", "sqlite+aiosqlite:///test_architectural.db"
+    )
+    using_sqlite = test_database_url.startswith("sqlite")
+
+    clean_url, connect_args = _prepare_test_engine_args(test_database_url)
 
     engine = create_async_engine(
-        test_database_url,
+        clean_url,
         echo=False,
         poolclass=NullPool,
+        connect_args=connect_args,
     )
 
     async with engine.begin() as conn:
@@ -58,10 +92,8 @@ async def test_engine():
 
     await engine.dispose()
 
-    # Clean up test database file
-    import os
-
-    if os.path.exists("test_architectural.db"):
+    # Clean up test database file only when using SQLite
+    if using_sqlite and os.path.exists("test_architectural.db"):
         os.remove("test_architectural.db")
 
 

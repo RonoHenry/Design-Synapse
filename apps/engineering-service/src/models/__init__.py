@@ -2,6 +2,7 @@
 
 # Import all models here for Alembic to discover them
 from .audit_log import AuditLog
+from .calculation_dependency import CalculationDependency
 from .calculation_sheet import CalculationSheet
 from .civil_design import CivilDesign
 from .compliance_report import ComplianceReport
@@ -10,6 +11,7 @@ from .structural_design import StructuralDesign
 
 __all__ = [
     "CalculationSheet",
+    "CalculationDependency",
     "StructuralDesign",
     "MEPDesign",
     "CivilDesign",

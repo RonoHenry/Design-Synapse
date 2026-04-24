@@ -188,7 +188,12 @@ class TestDataPersistenceRoundTrip:
         assert retrieved.created_by == sheet.created_by
 
     @pytest.mark.asyncio
-    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ]
+    )
     @given(design=structural_design_strategy())
     async def test_structural_design_round_trip(
         self, test_db_session: AsyncSession, design: StructuralDesign

@@ -141,7 +141,8 @@ class PlumbingCalculator:
 
         if fixture_units <= 10:
             # Small systems - use simplified formula
-            gpm = fixture_units * 2.5
+            # Blend with Hunter's curve at boundary to avoid discontinuity
+            gpm = 0.6 * math.pow(fixture_units, 1.2)
         else:
             # Larger systems - use Hunter's Curve
             # Simplified: GPM ≈ 0.6 × √(FU)^1.2
@@ -178,6 +179,10 @@ class PlumbingCalculator:
 
         # Get C factor for material
         c_factor = self.C_FACTORS.get(material.lower(), 150)
+
+        # Handle non-positive flow rates gracefully
+        if flow_rate <= 0:
+            raise ValueError(f"flow_rate must be positive, got {flow_rate}")
 
         # Try each pipe size until we find one that meets velocity constraint
         for size in pipe_sizes:

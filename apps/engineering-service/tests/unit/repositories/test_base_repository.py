@@ -30,9 +30,9 @@ class TestBaseRepository:
         assert result.title == "Test Calculation"
         assert result.calculation_type == "structural"
 
-    async def test_get_by_id(self, db_session: AsyncSession):
+    async def test_get_by_id(self, test_db_session: AsyncSession):
         """Test retrieving a record by ID."""
-        repo = BaseRepository(CalculationSheet, db_session)
+        repo = BaseRepository(CalculationSheet, test_db_session)
 
         # Create a record first
         data = {
@@ -52,17 +52,17 @@ class TestBaseRepository:
         assert result.id == created.id
         assert result.title == "Test Calculation"
 
-    async def test_get_by_id_not_found(self, db_session: AsyncSession):
+    async def test_get_by_id_not_found(self, test_db_session: AsyncSession):
         """Test retrieving a non-existent record."""
-        repo = BaseRepository(CalculationSheet, db_session)
+        repo = BaseRepository(CalculationSheet, test_db_session)
 
         result = await repo.get_by_id(99999)
 
         assert result is None
 
-    async def test_list_all(self, db_session: AsyncSession):
+    async def test_list_all(self, test_db_session: AsyncSession):
         """Test listing all records with pagination."""
-        repo = BaseRepository(CalculationSheet, db_session)
+        repo = BaseRepository(CalculationSheet, test_db_session)
 
         # Create multiple records
         for i in range(5):
@@ -82,9 +82,9 @@ class TestBaseRepository:
 
         assert len(results) >= 5
 
-    async def test_list_all_with_pagination(self, db_session: AsyncSession):
+    async def test_list_all_with_pagination(self, test_db_session: AsyncSession):
         """Test pagination in list_all."""
-        repo = BaseRepository(CalculationSheet, db_session)
+        repo = BaseRepository(CalculationSheet, test_db_session)
 
         # Create records
         for i in range(5):
@@ -108,9 +108,9 @@ class TestBaseRepository:
         assert len(page2) == 2
         assert page1[0].id != page2[0].id
 
-    async def test_update(self, db_session: AsyncSession):
+    async def test_update(self, test_db_session: AsyncSession):
         """Test updating a record."""
-        repo = BaseRepository(CalculationSheet, db_session)
+        repo = BaseRepository(CalculationSheet, test_db_session)
 
         # Create a record
         data = {
@@ -131,17 +131,17 @@ class TestBaseRepository:
         assert result.id == created.id
         assert result.title == "Updated Title"
 
-    async def test_update_not_found(self, db_session: AsyncSession):
+    async def test_update_not_found(self, test_db_session: AsyncSession):
         """Test updating a non-existent record."""
-        repo = BaseRepository(CalculationSheet, db_session)
+        repo = BaseRepository(CalculationSheet, test_db_session)
 
         result = await repo.update(99999, {"title": "New Title"})
 
         assert result is None
 
-    async def test_delete(self, db_session: AsyncSession):
+    async def test_delete(self, test_db_session: AsyncSession):
         """Test deleting a record (soft delete)."""
-        repo = BaseRepository(CalculationSheet, db_session)
+        repo = BaseRepository(CalculationSheet, test_db_session)
 
         # Create a record
         data = {
@@ -160,21 +160,21 @@ class TestBaseRepository:
         assert success is True
 
         # Verify soft delete
-        deleted = await repo.get_by_id(created.id)
+        deleted = await repo.get_by_id(created.id, include_deleted=True)
         assert deleted is not None
         assert deleted.deleted_at is not None
 
-    async def test_delete_not_found(self, db_session: AsyncSession):
+    async def test_delete_not_found(self, test_db_session: AsyncSession):
         """Test deleting a non-existent record."""
-        repo = BaseRepository(CalculationSheet, db_session)
+        repo = BaseRepository(CalculationSheet, test_db_session)
 
         success = await repo.delete(99999)
 
         assert success is False
 
-    async def test_count(self, db_session: AsyncSession):
+    async def test_count(self, test_db_session: AsyncSession):
         """Test counting records."""
-        repo = BaseRepository(CalculationSheet, db_session)
+        repo = BaseRepository(CalculationSheet, test_db_session)
 
         initial_count = await repo.count()
 
@@ -195,9 +195,9 @@ class TestBaseRepository:
 
         assert final_count == initial_count + 3
 
-    async def test_filter_by(self, db_session: AsyncSession):
+    async def test_filter_by(self, test_db_session: AsyncSession):
         """Test filtering records."""
-        repo = BaseRepository(CalculationSheet, db_session)
+        repo = BaseRepository(CalculationSheet, test_db_session)
 
         # Create records with different types
         await repo.create(
@@ -227,9 +227,9 @@ class TestBaseRepository:
         assert len(results) >= 1
         assert all(r.calculation_type == "structural" for r in results)
 
-    async def test_filter_by_multiple_criteria(self, db_session: AsyncSession):
+    async def test_filter_by_multiple_criteria(self, test_db_session: AsyncSession):
         """Test filtering with multiple criteria."""
-        repo = BaseRepository(CalculationSheet, db_session)
+        repo = BaseRepository(CalculationSheet, test_db_session)
 
         # Create records
         await repo.create(

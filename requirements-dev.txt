@@ -36,4 +36,4 @@ debugpy==1.8.0             # Debug adapter protocol
 
 # Security
 bandit==1.7.5              # Security linting
-safety==2.3.5              # Dependency security checks
+safety>=3.0.0              # Dependency security checks (2.x has packaging conflict)

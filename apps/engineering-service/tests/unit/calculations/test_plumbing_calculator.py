@@ -292,9 +292,9 @@ class TestPlumbingCalculatorEdgeCases:
         """Test handling of negative flow rate."""
         calculator = PlumbingCalculator()
 
-        # Should handle gracefully
-        pipe = calculator.size_pipe(-10.0, 100.0, "copper")
-        # Implementation should handle this appropriately
+        # Should raise ValueError for negative flow rate
+        with pytest.raises(ValueError):
+            calculator.size_pipe(-10.0, 100.0, "copper")
 
     def test_zero_length_pipe(self):
         """Test pipe sizing with zero length."""

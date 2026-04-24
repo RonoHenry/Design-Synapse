@@ -20,7 +20,8 @@ from sqlalchemy.pool import StaticPool
 
 # Set test environment before importing app modules
 os.environ["ENVIRONMENT"] = "testing"
-os.environ["DATABASE_URL"] = "sqlite:///./test_labor_service.db"
+if "DATABASE_URL" not in os.environ:
+    os.environ["DATABASE_URL"] = "sqlite:///./test_labor_service.db"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-labor-service-testing-only"
 
 from src.core.config import get_settings
@@ -88,15 +89,19 @@ async def mock_require_seeker():
     }
 
 
-# Test database configuration
-TEST_DATABASE_URL = "sqlite:///./test_labor_service.db"
+# Test database configuration — use injected DATABASE_URL if present (e.g. TiDB),
+# otherwise fall back to local SQLite for standalone test runs.
+TEST_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./test_labor_service.db")
 
-# Create test engine with SQLite in-memory database
-test_engine = create_engine(
-    TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
+# Build engine kwargs based on the driver in use
+_is_sqlite = TEST_DATABASE_URL.startswith("sqlite")
+_engine_kwargs = (
+    {"connect_args": {"check_same_thread": False}, "poolclass": StaticPool}
+    if _is_sqlite
+    else {}
 )
+
+test_engine = create_engine(TEST_DATABASE_URL, **_engine_kwargs)
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
@@ -115,13 +120,16 @@ def db_session():
     Create a fresh database session for each test.
 
     This fixture:
-    1. Creates all tables
+    1. Creates all tables (SQLite only; TiDB tables are managed by Alembic)
     2. Provides a clean database session
     3. Rolls back all changes after the test
-    4. Drops all tables for cleanup
+    4. Drops all tables for cleanup (SQLite only)
     """
-    # Create tables
-    Base.metadata.create_all(bind=test_engine, checkfirst=True)
+    is_sqlite = TEST_DATABASE_URL.startswith("sqlite")
+
+    # Create tables only for SQLite (TiDB tables already exist via Alembic)
+    if is_sqlite:
+        Base.metadata.create_all(bind=test_engine, checkfirst=True)
 
     # Create session
     session = TestingSessionLocal()
@@ -129,9 +137,11 @@ def db_session():
     try:
         yield session
     finally:
+        session.rollback()
         session.close()
-        # Drop all tables for clean state
-        Base.metadata.drop_all(bind=test_engine)
+        # Drop all tables for clean state (SQLite only)
+        if is_sqlite:
+            Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.fixture(scope="function")
