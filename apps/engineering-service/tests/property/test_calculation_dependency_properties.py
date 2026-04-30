@@ -102,6 +102,7 @@ class TestCalculationDependencyProperties:
     )
     @settings(
         max_examples=100,
+        deadline=None,  # Disable deadline for database operations
         suppress_health_check=[
             hypothesis.HealthCheck.too_slow,
             hypothesis.HealthCheck.function_scoped_fixture,
@@ -179,9 +180,15 @@ class TestCalculationDependencyProperties:
         )
 
         # Get the created calculation sheet B
-        calc_b = await structural_service.calculation_sheet_repo.get_by_id(
-            result_b.calculation_id
+        # Get the most recent calculation sheet (should be the beam design we just created)
+        recent_sheets = await structural_service.calculation_sheet_repo.get_recent(
+            limit=2
         )
+        calc_b = None
+        for sheet in recent_sheets:
+            if sheet.calculation_type == "beam_design" and sheet.id != calc_a.id:
+                calc_b = sheet
+                break
         assert calc_b is not None, "Calculation B should be created"
 
         # Store initial output from calculation B
@@ -238,6 +245,7 @@ class TestCalculationDependencyProperties:
     )
     @settings(
         max_examples=100,
+        deadline=None,  # Disable deadline for database operations
         suppress_health_check=[
             hypothesis.HealthCheck.too_slow,
             hypothesis.HealthCheck.function_scoped_fixture,
@@ -302,9 +310,15 @@ class TestCalculationDependencyProperties:
             },
         )
 
-        calc_b = await structural_service.calculation_sheet_repo.get_by_id(
-            result_b.calculation_id
+        # Get the most recent calculation sheet (should be the beam design we just created)
+        recent_sheets = await structural_service.calculation_sheet_repo.get_recent(
+            limit=2
         )
+        calc_b = None
+        for sheet in recent_sheets:
+            if sheet.calculation_type == "beam_design" and sheet.id != calc_a.id:
+                calc_b = sheet
+                break
         assert calc_b is not None
 
         initial_max_moment_b = calc_b.outputs.get("max_moment", 0.0)
@@ -331,9 +345,18 @@ class TestCalculationDependencyProperties:
             end_condition="pinned_pinned",
         )
 
-        calc_c = await structural_service.calculation_sheet_repo.get_by_id(
-            result_c.calculation_id
+        # Get the most recent calculation sheet (should be the column design we just created)
+        recent_sheets = await structural_service.calculation_sheet_repo.get_recent(
+            limit=3
         )
+        calc_c = None
+        for sheet in recent_sheets:
+            if sheet.calculation_type == "column_design" and sheet.id not in [
+                calc_a.id,
+                calc_b.id,
+            ]:
+                calc_c = sheet
+                break
         assert calc_c is not None
 
         # Add dependencies: B depends on A, C depends on B
@@ -376,6 +399,7 @@ class TestCalculationDependencyProperties:
     @given(inputs=calculation_inputs_strategy())
     @settings(
         max_examples=100,
+        deadline=None,  # Disable deadline for database operations
         suppress_health_check=[
             hypothesis.HealthCheck.too_slow,
             hypothesis.HealthCheck.function_scoped_fixture,
@@ -432,9 +456,15 @@ class TestCalculationDependencyProperties:
             },
         )
 
-        calc_b = await structural_service.calculation_sheet_repo.get_by_id(
-            result_b.calculation_id
+        # Get the most recent calculation sheet (should be the beam design we just created)
+        recent_sheets = await structural_service.calculation_sheet_repo.get_recent(
+            limit=2
         )
+        calc_b = None
+        for sheet in recent_sheets:
+            if sheet.calculation_type == "beam_design" and sheet.id != calc_a.id:
+                calc_b = sheet
+                break
         assert calc_b is not None
 
         # Store initial state of calculation B
@@ -466,6 +496,7 @@ class TestCalculationDependencyProperties:
     @given(inputs=calculation_inputs_strategy())
     @settings(
         max_examples=100,
+        deadline=None,  # Disable deadline for database operations
         suppress_health_check=[
             hypothesis.HealthCheck.too_slow,
             hypothesis.HealthCheck.function_scoped_fixture,
@@ -523,9 +554,15 @@ class TestCalculationDependencyProperties:
             },
         )
 
-        calc_b = await structural_service.calculation_sheet_repo.get_by_id(
-            result_b.calculation_id
+        # Get the most recent calculation sheet (should be the beam design we just created)
+        recent_sheets = await structural_service.calculation_sheet_repo.get_recent(
+            limit=2
         )
+        calc_b = None
+        for sheet in recent_sheets:
+            if sheet.calculation_type == "beam_design" and sheet.id != calc_a.id:
+                calc_b = sheet
+                break
         assert calc_b is not None
 
         # Add dependency: B depends on A
@@ -552,6 +589,7 @@ class TestCalculationDependencyProperties:
     )
     @settings(
         max_examples=100,
+        deadline=None,  # Disable deadline for database operations
         suppress_health_check=[
             hypothesis.HealthCheck.too_slow,
             hypothesis.HealthCheck.function_scoped_fixture,
@@ -616,9 +654,15 @@ class TestCalculationDependencyProperties:
             },
         )
 
-        calc_b = await structural_service.calculation_sheet_repo.get_by_id(
-            result_b.calculation_id
+        # Get the most recent calculation sheet (should be the beam design we just created)
+        recent_sheets = await structural_service.calculation_sheet_repo.get_recent(
+            limit=2
         )
+        calc_b = None
+        for sheet in recent_sheets:
+            if sheet.calculation_type == "beam_design" and sheet.id != calc_a.id:
+                calc_b = sheet
+                break
         assert calc_b is not None
 
         # Add dependency

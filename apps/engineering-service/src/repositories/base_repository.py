@@ -1,7 +1,7 @@
 """Base repository with common CRUD operations."""
 
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,16 +32,21 @@ class BaseRepository(Generic[T]):
         self.model = model
         self.db_session = db_session
 
-    async def create(self, data: Dict[str, Any]) -> T:
+    async def create(self, data: Union[Dict[str, Any], T]) -> T:
         """Create a new record.
 
         Args:
-            data: Dictionary of field values
+            data: Dictionary of field values or model instance
 
         Returns:
             Created model instance
         """
-        instance = self.model(**data)
+        if isinstance(data, dict):
+            instance = self.model(**data)
+        else:
+            # Assume it's already a model instance
+            instance = data
+
         self.db_session.add(instance)
         await self.db_session.commit()
         await self.db_session.refresh(instance)
