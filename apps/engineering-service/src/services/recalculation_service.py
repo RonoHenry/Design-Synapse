@@ -243,10 +243,12 @@ class RecalculationService:
                     )
             else:
                 # Mark as needing recalculation
-                sheet.status = "draft"
-                sheet.updated_by = user_id
-                sheet.updated_at = datetime.utcnow()
-                await self.calculation_sheet_repo.update(sheet)
+                update_data = {
+                    "status": "draft",
+                    "updated_by": user_id,
+                    "updated_at": datetime.utcnow(),
+                }
+                await self.calculation_sheet_repo.update(sheet.id, update_data)
                 recalculated.append(dep_id)
                 logger.info(f"Marked calculation {dep_id} for recalculation")
 
@@ -286,14 +288,15 @@ class RecalculationService:
             raise ValueError(f"Calculation sheet {calculation_id} not found")
 
         # Update the calculation
+        update_data = {}
         for key, value in updates.items():
             if hasattr(sheet, key):
-                setattr(sheet, key, value)
+                update_data[key] = value
 
-        sheet.updated_by = user_id
-        sheet.updated_at = datetime.utcnow()
+        update_data["updated_by"] = user_id
+        update_data["updated_at"] = datetime.utcnow()
 
-        updated_sheet = await self.calculation_sheet_repo.update(sheet)
+        updated_sheet = await self.calculation_sheet_repo.update(sheet.id, update_data)
         await self.db_session.commit()
 
         logger.info(f"Updated calculation {calculation_id}")

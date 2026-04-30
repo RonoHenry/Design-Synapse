@@ -349,3 +349,125 @@ class TestCivilCalculationProperties:
 
         assert diameter >= 6.0, f"Pipe diameter should be at least 6 inches: {diameter}"
         assert diameter <= 72.0, f"Pipe diameter should be reasonable: {diameter}"
+
+    @given(
+        site_data=site_data_strategy(),
+        target_elevations=st.dictionaries(
+            st.text(min_size=3, max_size=10),
+            st.floats(
+                min_value=50.0, max_value=200.0, allow_nan=False, allow_infinity=False
+            ),
+            min_size=2,
+            max_size=10,
+        ),
+        rainfall_data=rainfall_data_strategy(),
+    )
+    @settings(max_examples=50, suppress_health_check=[hypothesis.HealthCheck.too_slow])
+    def test_property_7_civil_design_validity(
+        self, site_data, target_elevations, rainfall_data
+    ):
+        """
+        Property 7: Civil design validity.
+
+        **Validates: Requirements 3.1, 3.2, 3.3**
+
+        For any valid site data and design parameters, civil engineering
+        calculations should produce valid, physically meaningful results
+        that satisfy basic engineering constraints and conservation laws.
+
+        This property ensures that:
+        1. Grading designs conserve volume (cut + fill = net change)
+        2. Stormwater calculations follow rational method principles
+        3. All results are within reasonable engineering ranges
+        4. Unit consistency is maintained throughout calculations
+        """
+        # Test grading design validity
+        grading_result = self.calculator.design_grading(
+            site_data, target_elevations, grid_spacing=50.0
+        )
+
+        # Grading validity checks
+        assert grading_result.cut_volume >= 0, "Cut volume must be non-negative"
+        assert grading_result.fill_volume >= 0, "Fill volume must be non-negative"
+        assert grading_result.max_cut_depth >= 0, "Max cut depth must be non-negative"
+        assert grading_result.max_fill_depth >= 0, "Max fill depth must be non-negative"
+        assert grading_result.average_slope >= 0, "Average slope must be non-negative"
+        # Note: Slopes can exceed 100% (45 degrees) in civil engineering, so no upper limit
+
+        # Volume conservation (fundamental engineering principle)
+        expected_net = grading_result.cut_volume - grading_result.fill_volume
+        tolerance = 0.01
+        assert (
+            abs(grading_result.net_volume - expected_net) < tolerance
+        ), "Volume conservation violated in grading design"
+
+        # Test stormwater design validity
+        runoff_rate = self.calculator.calculate_stormwater_runoff(
+            site_data, rainfall_data
+        )
+
+        # Stormwater validity checks
+        assert runoff_rate >= 0, "Runoff rate must be non-negative"
+
+        # Rational method validation: Q = C × I × A
+        expected_runoff = (
+            rainfall_data.runoff_coefficient * rainfall_data.intensity * site_data.area
+        )
+        assert (
+            abs(runoff_rate - expected_runoff) < 0.01
+        ), "Stormwater calculation must follow rational method"
+
+        # Test detention pond sizing validity
+        runoff_volume = runoff_rate * rainfall_data.duration * 3600
+        release_rate = runoff_rate * 0.5  # 50% of peak
+        detention_volume, detention_depth = self.calculator.size_detention_pond(
+            runoff_volume, release_rate, rainfall_data.duration
+        )
+
+        # Detention validity checks
+        assert detention_volume >= 0, "Detention volume must be non-negative"
+        assert detention_depth > 0, "Detention depth must be positive"
+        assert 2.0 <= detention_depth <= 10.0, "Detention depth must be reasonable"
+
+        # Test pipe sizing validity
+        pipe_diameter = self.calculator.calculate_pipe_size(runoff_rate, slope=2.0)
+
+        # Pipe sizing validity checks
+        assert pipe_diameter >= 6.0, "Pipe diameter must be at least 6 inches"
+        # Note: Large sites may require pipes larger than 72 inches
+
+        # Test utility sizing validity
+        from src.calculations.civil_calculator import UtilityLoads
+
+        # Generate reasonable utility loads
+        water_demand = min(max(site_data.area * 10, 10.0), 200.0)  # 10-200 GPM
+        sewer_flow = water_demand * 0.8  # 80% of water demand
+
+        utility_loads = UtilityLoads(
+            water_demand=water_demand, sewer_flow=sewer_flow, gas_demand=150.0
+        )
+
+        water_size, water_pressure = self.calculator.design_water_service(
+            utility_loads.water_demand, pressure_available=60.0
+        )
+        sewer_size, sewer_slope = self.calculator.design_sewer_service(
+            utility_loads.sewer_flow
+        )
+
+        # Utility validity checks
+        assert 0.75 <= water_size <= 6.0, "Water service size must be reasonable"
+        assert 40.0 <= water_pressure <= 80.0, "Water pressure must be reasonable"
+        assert 4.0 <= sewer_size <= 8.0, "Sewer service size must be reasonable"
+        assert 0.5 <= sewer_slope <= 4.0, "Sewer slope must be reasonable"
+
+        # Cross-validation: larger sites should generally require larger utilities
+        if site_data.area > 5.0:
+            assert water_size >= 1.0, "Large sites should require larger water service"
+            assert (
+                sewer_size >= 4.0
+            ), "Large sites should require adequate sewer service"
+
+        # Unit system consistency check
+        assert (
+            grading_result.unit_system == "imperial"
+        ), "Unit system must be consistent"

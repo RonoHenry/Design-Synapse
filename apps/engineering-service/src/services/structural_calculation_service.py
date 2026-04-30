@@ -8,7 +8,6 @@ persistence, and handles automatic recalculation when inputs change.
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +36,7 @@ class LoadCalculationResult:
 
     def __init__(
         self,
-        calculation_id: UUID,
+        calculation_id: int,
         project_id: str,
         dead_load: float,
         live_load: float,
@@ -170,7 +169,6 @@ class StructuralCalculationService:
             seismic_load = seismic_result.base_shear
 
         # Create calculation sheet
-        calculation_id = uuid4()
         calculation_sheet = CalculationSheet(
             project_id=project_id,
             title=(
@@ -204,11 +202,11 @@ class StructuralCalculationService:
         )
 
         # Save to database
-        await self.calculation_sheet_repo.create(calculation_sheet)
+        saved_sheet = await self.calculation_sheet_repo.create(calculation_sheet)
         await self.db_session.commit()
 
         return LoadCalculationResult(
-            calculation_id=calculation_id,
+            calculation_id=saved_sheet.id,
             project_id=project_id,
             dead_load=dead_load,
             live_load=live_load,
@@ -783,11 +781,16 @@ class StructuralCalculationService:
 
         # Update inputs
         sheet.inputs.update(new_inputs)
-        sheet.updated_by = user_id
-        sheet.updated_at = datetime.utcnow()
-        sheet.status = "draft"  # Mark as draft since inputs changed
 
-        updated_sheet = await self.calculation_sheet_repo.update(sheet)
+        # Prepare update data
+        update_data = {
+            "inputs": sheet.inputs,
+            "updated_by": user_id,
+            "updated_at": datetime.utcnow(),
+            "status": "draft",  # Mark as draft since inputs changed
+        }
+
+        updated_sheet = await self.calculation_sheet_repo.update(sheet.id, update_data)
         await self.db_session.commit()
 
         # Trigger recalculation cascade if requested
@@ -829,19 +832,20 @@ class StructuralCalculationService:
                     user_id=user_id,
                     unit_system=sheet.units or "imperial",
                 )
-                # The calculate_loads method creates a new sheet, so we need to
-                # update the existing one instead
-                sheet.outputs = {
-                    "dead_load": result.dead_load,
-                    "live_load": result.live_load,
-                    "wind_load": result.wind_load,
-                    "seismic_load": result.seismic_load,
-                    "total_load": result.total_load,
+                # Update the existing sheet
+                update_data = {
+                    "outputs": {
+                        "dead_load": result.dead_load,
+                        "live_load": result.live_load,
+                        "wind_load": result.wind_load,
+                        "seismic_load": result.seismic_load,
+                        "total_load": result.total_load,
+                    },
+                    "updated_by": user_id,
+                    "updated_at": datetime.utcnow(),
+                    "status": "approved",
                 }
-                sheet.updated_by = user_id
-                sheet.updated_at = datetime.utcnow()
-                sheet.status = "approved"
-                return await self.calculation_sheet_repo.update(sheet)
+                return await self.calculation_sheet_repo.update(sheet.id, update_data)
 
             elif sheet.calculation_type == "beam_design":
                 # Recalculate beam design
@@ -856,23 +860,25 @@ class StructuralCalculationService:
                     trial_geometry=sheet.inputs.get("trial_geometry"),
                 )
                 # Update the existing sheet
-                sheet.outputs = {
-                    "is_adequate": result.is_adequate,
-                    "max_moment": result.max_moment,
-                    "max_shear": result.max_shear,
-                    "max_stress": result.max_stress,
-                    "allowable_stress": result.allowable_stress,
-                    "max_deflection": result.max_deflection,
-                    "allowable_deflection": result.allowable_deflection,
-                    "stress_ratio": result.stress_ratio,
-                    "deflection_ratio": result.deflection_ratio,
-                    "utilization_ratio": result.utilization_ratio,
-                    "warnings": result.warnings,
+                update_data = {
+                    "outputs": {
+                        "is_adequate": result.is_adequate,
+                        "max_moment": result.max_moment,
+                        "max_shear": result.max_shear,
+                        "max_stress": result.max_stress,
+                        "allowable_stress": result.allowable_stress,
+                        "max_deflection": result.max_deflection,
+                        "allowable_deflection": result.allowable_deflection,
+                        "stress_ratio": result.stress_ratio,
+                        "deflection_ratio": result.deflection_ratio,
+                        "utilization_ratio": result.utilization_ratio,
+                        "warnings": result.warnings,
+                    },
+                    "updated_by": user_id,
+                    "updated_at": datetime.utcnow(),
+                    "status": "approved",
                 }
-                sheet.updated_by = user_id
-                sheet.updated_at = datetime.utcnow()
-                sheet.status = "approved"
-                return await self.calculation_sheet_repo.update(sheet)
+                return await self.calculation_sheet_repo.update(sheet.id, update_data)
 
             elif sheet.calculation_type == "column_design":
                 # Recalculate column design
@@ -887,21 +893,23 @@ class StructuralCalculationService:
                     end_condition=sheet.inputs.get("end_condition", "pinned_pinned"),
                 )
                 # Update the existing sheet
-                sheet.outputs = {
-                    "is_adequate": result.is_adequate,
-                    "axial_capacity": result.axial_capacity,
-                    "buckling_capacity": result.buckling_capacity,
-                    "moment_capacity_x": result.moment_capacity_x,
-                    "moment_capacity_y": result.moment_capacity_y,
-                    "combined_stress_ratio": result.combined_stress_ratio,
-                    "slenderness_ratio": result.slenderness_ratio,
-                    "effective_length": result.effective_length,
-                    "warnings": result.warnings,
+                update_data = {
+                    "outputs": {
+                        "is_adequate": result.is_adequate,
+                        "axial_capacity": result.axial_capacity,
+                        "buckling_capacity": result.buckling_capacity,
+                        "moment_capacity_x": result.moment_capacity_x,
+                        "moment_capacity_y": result.moment_capacity_y,
+                        "combined_stress_ratio": result.combined_stress_ratio,
+                        "slenderness_ratio": result.slenderness_ratio,
+                        "effective_length": result.effective_length,
+                        "warnings": result.warnings,
+                    },
+                    "updated_by": user_id,
+                    "updated_at": datetime.utcnow(),
+                    "status": "approved",
                 }
-                sheet.updated_by = user_id
-                sheet.updated_at = datetime.utcnow()
-                sheet.status = "approved"
-                return await self.calculation_sheet_repo.update(sheet)
+                return await self.calculation_sheet_repo.update(sheet.id, update_data)
 
             elif sheet.calculation_type == "foundation_design":
                 # Recalculate foundation design
@@ -914,20 +922,22 @@ class StructuralCalculationService:
                     unit_system=sheet.units or "imperial",
                 )
                 # Update the existing sheet
-                sheet.outputs = {
-                    "is_adequate": result.is_adequate,
-                    "bearing_pressure": result.bearing_pressure,
-                    "allowable_bearing_capacity": result.allowable_bearing_capacity,
-                    "bearing_ratio": result.bearing_ratio,
-                    "settlement": result.settlement,
-                    "allowable_settlement": result.allowable_settlement,
-                    "reinforcement_area": result.reinforcement_area,
-                    "warnings": result.warnings,
+                update_data = {
+                    "outputs": {
+                        "is_adequate": result.is_adequate,
+                        "bearing_pressure": result.bearing_pressure,
+                        "allowable_bearing_capacity": result.allowable_bearing_capacity,
+                        "bearing_ratio": result.bearing_ratio,
+                        "settlement": result.settlement,
+                        "allowable_settlement": result.allowable_settlement,
+                        "reinforcement_area": result.reinforcement_area,
+                        "warnings": result.warnings,
+                    },
+                    "updated_by": user_id,
+                    "updated_at": datetime.utcnow(),
+                    "status": "approved",
                 }
-                sheet.updated_by = user_id
-                sheet.updated_at = datetime.utcnow()
-                sheet.status = "approved"
-                return await self.calculation_sheet_repo.update(sheet)
+                return await self.calculation_sheet_repo.update(sheet.id, update_data)
 
             else:
                 # Unknown calculation type

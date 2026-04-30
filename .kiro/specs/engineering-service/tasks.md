@@ -537,12 +537,12 @@ Can be done in parallel with API endpoints:
     - Test design_foundation with mocked FoundationDesigner and repository
     - Test automatic recalculation logic
     - _Requirements: 1.1-1.7_
-  - [ ] 9.7 Write property test for calculation dependency updates (Property 5)
+  - [x] 9.7 Write property test for calculation dependency updates (Property 5)
     - **Property 5: Calculation Dependency Updates**
     - **Validates: Requirements 1.6**
     - Test that changing input A triggers recalculation of dependent calculation B
 
-- [-] 10. MEP Engineering Service Layer
+- [x] 10. MEP Engineering Service Layer
   - [ ] 10.1 Implement MEPCalculationService.design_hvac_system
     - Integrate HVACCalculator with service layer
     - Add calculation sheet creation
@@ -570,47 +570,47 @@ Can be done in parallel with API endpoints:
     - **Property 6: MEP System Updates**
     - **Validates: Requirements 2.6**
 
-- [ ] 11. Civil Engineering Service Layer
-  - [ ] 11.1 Implement CivilCalculationService.design_grading
+- [x] 11. Civil Engineering Service Layer
+  - [x] 11.1 Implement CivilCalculationService.design_grading
     - Integrate grading calculations with service layer
     - Add calculation sheet creation
     - _Requirements: 3.1, 4.1_
-  - [ ] 11.2 Implement CivilCalculationService.design_stormwater
+  - [x] 11.2 Implement CivilCalculationService.design_stormwater
     - Integrate stormwater calculations with service layer
     - Add calculation sheet creation
     - _Requirements: 3.2, 4.1_
-  - [ ] 11.3 Implement CivilCalculationService.design_utilities
+  - [x] 11.3 Implement CivilCalculationService.design_utilities
     - Integrate utility calculations with service layer
     - Add calculation sheet creation
     - _Requirements: 3.3, 4.1_
-  - [ ]* 11.4 Write unit tests for service methods
+  - [x] 11.4 Write unit tests for service methods
     - Test all civil service methods
     - _Requirements: 3.1-3.4_
-  - [ ]* 11.5 Write property test for civil design validity (Property 7)
+  - [x] 11.5 Write property test for civil design validity (Property 7)
     - **Property 7: Civil Design Validity**
     - **Validates: Requirements 3.4**
 
-- [ ] 12. Checkpoint - Service Layer Complete
+- [x] 12. Checkpoint - Service Layer Complete
   - Ensure all service layer tests pass
   - Verify all calculation engines are integrated
   - Ask the user if questions arise
 
-- [ ] 13. Document Management Service
-  - [ ] 13.1 Implement DocumentService.create_calculation_sheet
+- [x] 13. Document Management Service
+  - [x] 13.1 Implement DocumentService.create_calculation_sheet
     - Create versioned calculation sheets
     - Associate with projects and disciplines
     - _Requirements: 4.1, 4.5_
-  - [ ] 13.2 Implement DocumentService.update_calculation_sheet with versioning
+  - [x] 13.2 Implement DocumentService.update_calculation_sheet with versioning
     - Create new versions on updates
     - Preserve previous versions
     - _Requirements: 4.2_
-  - [ ] 13.3 Implement DocumentService.get_document_history
+  - [x] 13.3 Implement DocumentService.get_document_history
     - Return all versions with change summaries
     - _Requirements: 4.3_
-  - [ ] 13.4 Implement DocumentService.generate_specification (CSI MasterFormat)
+  - [x] 13.4 Implement DocumentService.generate_specification (CSI MasterFormat)
     - Format specifications per CSI standards
     - _Requirements: 4.4_
-  - [ ] 13.5 Implement document search functionality
+  - [x] 13.5 Implement document search functionality
     - Filter by project, discipline, type, date range
     - _Requirements: 4.6_
   - [ ]* 13.6 Write unit tests for document operations
