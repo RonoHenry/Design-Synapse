@@ -1,14 +1,14 @@
 """Unit tests for DocumentService."""
 
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
 import pytest
 from src.api.v1.schemas.document import (CalculationSheetCreateRequest,
                                          CalculationSheetUpdateRequest,
                                          DocumentSearchRequest, DocumentStatus,
-                                         DocumentType, SpecificationFormat,
+                                         SpecificationFormat,
                                          SpecificationGenerateRequest)
 from src.models.calculation_sheet import CalculationSheet
 from src.services.document_service import DocumentService
@@ -502,3 +502,440 @@ class TestDocumentService:
         assert response.inputs == sample_calculation_sheet.inputs
         assert response.results == sample_calculation_sheet.outputs
         assert response.unit_system == sample_calculation_sheet.units
+
+    @pytest.mark.asyncio
+    async def test_search_documents_multiple_filters(
+        self, document_service, mock_db_session, sample_calculation_sheet
+    ):
+        """Test searching documents with multiple filters combined."""
+        # Arrange
+        project_id = uuid4()
+        request = DocumentSearchRequest(
+            project_id=project_id,
+            discipline="structural",
+            search_text="load",
+            status=DocumentStatus.DRAFT,
+        )
+
+        # Mock database query result
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [sample_calculation_sheet]
+        mock_db_session.execute.return_value = mock_result
+
+        # Act
+        result = await document_service.search_documents(request)
+
+        # Assert
+        assert result.total_count == 1
+        assert len(result.documents) == 1
+        mock_db_session.execute.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_create_calculation_sheet_associates_project_and_discipline(
+        self, document_service, mock_calculation_sheet_repo, mock_db_session
+    ):
+        """
+        Test that created calculation sheet is associated.
+
+        With correct project and discipline.
+
+        Requirements: 4.5
+        """
+        # Arrange
+        project_id = uuid4()
+        user_id = uuid4()
+        discipline = "mep"
+
+        request = CalculationSheetCreateRequest(
+            project_id=project_id,
+            discipline=discipline,
+            calculation_type="hvac_design",
+            inputs={"cooling_load": 100.0},
+            results={"equipment_size": 5.0},
+            formulas={"formulas": ["Size = Load / Efficiency"]},
+            unit_system="imperial",
+        )
+
+        created_sheet = CalculationSheet(
+            id=1,
+            project_id=str(project_id),
+            title="Mep Calculation - Hvac Design",
+            calculation_type="hvac_design",
+            inputs=request.inputs,
+            outputs=request.results,
+            formulas=["Size = Load / Efficiency"],
+            units="imperial",
+            version=1,
+            created_by=str(user_id),
+            status="draft",
+            created_at=datetime(2024, 1, 1, 12, 0, 0),
+            updated_at=datetime(2024, 1, 1, 12, 0, 0),
+        )
+
+        mock_calculation_sheet_repo.create.return_value = created_sheet
+
+        # Act
+        result = await document_service.create_calculation_sheet(request, user_id)
+
+        # Assert
+        assert result.project_id == project_id
+        assert result.discipline == discipline
+        mock_calculation_sheet_repo.create.assert_called_once()
+
+        # Verify the created sheet has correct associations
+        created_call = mock_calculation_sheet_repo.create.call_args[0][0]
+        assert created_call.project_id == str(project_id)
+        assert discipline in created_call.title.lower()
+
+    @pytest.mark.asyncio
+    async def test_update_preserves_previous_versions(
+        self, document_service, mock_calculation_sheet_repo, sample_calculation_sheet
+    ):
+        """Test that updating creates new version while preserving previous versions.
+
+        Requirements: 4.2
+        """
+        # Arrange
+        user_id = uuid4()
+        request = CalculationSheetUpdateRequest(
+            inputs={"new_input": "value"},
+        )
+
+        # Mock repository to return original sheet
+        mock_calculation_sheet_repo.get_by_id.return_value = sample_calculation_sheet
+        mock_calculation_sheet_repo.get_latest_version.return_value = (
+            sample_calculation_sheet
+        )
+
+        new_version = CalculationSheet(
+            id=2,  # Different ID
+            project_id=sample_calculation_sheet.project_id,
+            title=sample_calculation_sheet.title,
+            calculation_type=sample_calculation_sheet.calculation_type,
+            inputs={
+                "building_height": 20.0,
+                "floor_area": 1000.0,
+                "new_input": "value",
+            },
+            outputs=sample_calculation_sheet.outputs,
+            version=2,
+            parent_id=1,  # Points to original
+            created_by=str(user_id),
+            status="draft",
+            created_at=datetime(2024, 1, 2, 12, 0, 0),
+            updated_at=datetime(2024, 1, 2, 12, 0, 0),
+        )
+
+        mock_calculation_sheet_repo.create.return_value = new_version
+
+        # Act
+        result = await document_service.update_calculation_sheet(1, request, user_id)
+
+        # Assert
+        # Verify new version was created
+        assert result.version == 2
+        assert result.id == UUID(int=2)
+
+        # Verify parent_id points to original
+        created_call = mock_calculation_sheet_repo.create.call_args[0][0]
+        assert created_call.parent_id == 1
+
+        # Verify original sheet was retrieved (not modified)
+        mock_calculation_sheet_repo.get_by_id.assert_called_once_with(1)
+
+    @pytest.mark.asyncio
+    async def test_get_document_history_multiple_versions(
+        self, document_service, mock_calculation_sheet_repo, sample_calculation_sheet
+    ):
+        """Test document history with multiple versions.
+
+        Requirements: 4.3
+        """
+        # Arrange - Create 4 versions
+        version_2 = CalculationSheet(
+            id=2,
+            project_id=sample_calculation_sheet.project_id,
+            title=sample_calculation_sheet.title,
+            calculation_type=sample_calculation_sheet.calculation_type,
+            inputs={"building_height": 25.0, "floor_area": 1000.0},
+            outputs=sample_calculation_sheet.outputs,
+            version=2,
+            parent_id=1,
+            created_by=sample_calculation_sheet.created_by,
+            status="draft",
+            created_at=datetime(2024, 1, 2, 12, 0, 0),
+            updated_at=datetime(2024, 1, 2, 12, 0, 0),
+        )
+
+        version_3 = CalculationSheet(
+            id=3,
+            project_id=sample_calculation_sheet.project_id,
+            title=sample_calculation_sheet.title,
+            calculation_type=sample_calculation_sheet.calculation_type,
+            inputs={"building_height": 25.0, "floor_area": 1200.0},
+            outputs={"dead_load": 60.0, "live_load": 48.0, "total_load": 108.0},
+            version=3,
+            parent_id=1,
+            created_by=sample_calculation_sheet.created_by,
+            status="approved",
+            created_at=datetime(2024, 1, 3, 12, 0, 0),
+            updated_at=datetime(2024, 1, 3, 12, 0, 0),
+        )
+
+        version_4 = CalculationSheet(
+            id=4,
+            project_id=sample_calculation_sheet.project_id,
+            title=sample_calculation_sheet.title,
+            calculation_type=sample_calculation_sheet.calculation_type,
+            inputs={"building_height": 25.0, "floor_area": 1200.0},
+            outputs={"dead_load": 60.0, "live_load": 48.0, "total_load": 108.0},
+            version=4,
+            parent_id=1,
+            created_by=sample_calculation_sheet.created_by,
+            status="approved",
+            created_at=datetime(2024, 1, 4, 12, 0, 0),
+            updated_at=datetime(2024, 1, 4, 12, 0, 0),
+        )
+
+        mock_calculation_sheet_repo.get_version_history.return_value = [
+            sample_calculation_sheet,
+            version_2,
+            version_3,
+            version_4,
+        ]
+
+        # Act
+        result = await document_service.get_document_history(1)
+
+        # Assert
+        assert result.current_version == 4
+        assert len(result.versions) == 4
+
+        # Verify each version has change information
+        assert result.versions[0].changes["action"] == "created"
+        assert result.versions[1].changes["action"] == "updated"
+        assert result.versions[2].changes["action"] == "updated"
+        assert result.versions[3].changes["action"] == "updated"
+
+    @pytest.mark.asyncio
+    async def test_generate_specification_hvac_section(self, document_service):
+        """Test generating HVAC specification section.
+
+        Requirements: 4.4
+        """
+        # Arrange
+        project_id = uuid4()
+        design_ids = [uuid4()]
+
+        request = SpecificationGenerateRequest(
+            project_id=project_id,
+            design_ids=design_ids,
+            format=SpecificationFormat.CSI_MASTERFORMAT,
+            sections=["23_00_00"],  # HVAC section
+        )
+
+        # Act
+        result = await document_service.generate_specification(request)
+
+        # Assert
+        assert "23_00_00" in result.sections
+        hvac_section = result.sections["23_00_00"]
+        assert hvac_section["title"] == "HVAC SYSTEMS"
+        assert hvac_section["section_number"] == "23 00 00"
+        assert "part_1_general" in hvac_section
+        assert "part_2_products" in hvac_section
+        assert "part_3_execution" in hvac_section
+
+        # Verify HVAC-specific content
+        assert "ASHRAE" in str(hvac_section["part_1_general"]["references"])
+        assert "ductwork" in hvac_section["part_2_products"]
+
+    @pytest.mark.asyncio
+    async def test_generate_specification_electrical_section(self, document_service):
+        """Test generating electrical specification section.
+
+        Requirements: 4.4
+        """
+        # Arrange
+        project_id = uuid4()
+        design_ids = [uuid4()]
+
+        request = SpecificationGenerateRequest(
+            project_id=project_id,
+            design_ids=design_ids,
+            format=SpecificationFormat.CSI_MASTERFORMAT,
+            sections=["26_00_00"],  # Electrical section
+        )
+
+        # Act
+        result = await document_service.generate_specification(request)
+
+        # Assert
+        assert "26_00_00" in result.sections
+        electrical_section = result.sections["26_00_00"]
+        assert electrical_section["title"] == "ELECTRICAL SYSTEMS"
+        assert electrical_section["section_number"] == "26 00 00"
+
+        # Verify electrical-specific content
+        assert "NEC" in str(electrical_section["part_1_general"]["references"])
+        assert "conductors" in electrical_section["part_2_products"]
+
+    @pytest.mark.asyncio
+    async def test_generate_specification_multiple_sections(self, document_service):
+        """Test generating specification with multiple sections.
+
+        Requirements: 4.4
+        """
+        # Arrange
+        project_id = uuid4()
+        design_ids = [uuid4()]
+
+        request = SpecificationGenerateRequest(
+            project_id=project_id,
+            design_ids=design_ids,
+            format=SpecificationFormat.CSI_MASTERFORMAT,
+            sections=["03_30_00", "05_12_00", "23_00_00", "26_00_00"],
+        )
+
+        # Act
+        result = await document_service.generate_specification(request)
+
+        # Assert
+        assert len(result.sections) == 4
+        assert all(
+            section in result.sections
+            for section in ["03_30_00", "05_12_00", "23_00_00", "26_00_00"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_create_calculation_sheet_with_timestamps(
+        self, document_service, mock_calculation_sheet_repo, mock_db_session
+    ):
+        """Test that created calculation sheet has proper timestamps.
+
+        Requirements: 4.1
+        """
+        # Arrange
+        project_id = uuid4()
+        user_id = uuid4()
+
+        request = CalculationSheetCreateRequest(
+            project_id=project_id,
+            discipline="structural",
+            calculation_type="load_calculation",
+            inputs={"test": "value"},
+            results={"result": 1.0},
+            formulas={"formulas": []},
+            unit_system="imperial",
+        )
+
+        created_sheet = CalculationSheet(
+            id=1,
+            project_id=str(project_id),
+            title="Structural Calculation - Load Calculation",
+            calculation_type="load_calculation",
+            inputs=request.inputs,
+            outputs=request.results,
+            formulas=[],
+            units="imperial",
+            version=1,
+            created_by=str(user_id),
+            status="draft",
+            created_at=datetime(2024, 1, 1, 12, 0, 0),
+            updated_at=datetime(2024, 1, 1, 12, 0, 0),
+        )
+
+        mock_calculation_sheet_repo.create.return_value = created_sheet
+
+        # Act
+        result = await document_service.create_calculation_sheet(request, user_id)
+
+        # Assert
+        assert result.created_at is not None
+        assert result.updated_at is not None
+        assert isinstance(result.created_at, datetime)
+        assert isinstance(result.updated_at, datetime)
+
+    def test_extract_discipline_civil(self, document_service):
+        """Test discipline extraction for civil engineering types."""
+        assert document_service._extract_discipline("civil_grading") == "civil"
+        assert document_service._extract_discipline("stormwater_design") == "civil"
+        assert document_service._extract_discipline("utility_planning") == "civil"
+        assert document_service._extract_discipline("site_development") == "civil"
+
+    def test_extract_discipline_mep_all_types(self, document_service):
+        """Test discipline extraction for all MEP types."""
+        # HVAC
+        assert document_service._extract_discipline("hvac_design") == "mep"
+        assert document_service._extract_discipline("hvac_load") == "mep"
+
+        # Electrical
+        assert document_service._extract_discipline("electrical_load") == "mep"
+        assert document_service._extract_discipline("electrical_design") == "mep"
+
+        # Plumbing
+        assert document_service._extract_discipline("plumbing_sizing") == "mep"
+        assert document_service._extract_discipline("plumbing_design") == "mep"
+
+        # Fire Protection
+        assert document_service._extract_discipline("fire_protection") == "mep"
+        assert document_service._extract_discipline("fire_sprinkler") == "mep"
+
+        # Generic MEP
+        assert document_service._extract_discipline("mep_coordination") == "mep"
+
+    def test_calculate_changes_no_changes(
+        self, document_service, sample_calculation_sheet
+    ):
+        """Test change calculation when there are no changes."""
+        # Create identical version
+        identical_sheet = CalculationSheet(
+            id=2,
+            project_id=sample_calculation_sheet.project_id,
+            title=sample_calculation_sheet.title,
+            calculation_type=sample_calculation_sheet.calculation_type,
+            inputs=sample_calculation_sheet.inputs.copy(),
+            outputs=sample_calculation_sheet.outputs.copy(),
+            formulas=sample_calculation_sheet.formulas.copy()
+            if sample_calculation_sheet.formulas
+            else [],
+            version=2,
+            parent_id=1,
+            created_by=sample_calculation_sheet.created_by,
+            status=sample_calculation_sheet.status,
+            created_at=datetime(2024, 1, 2, 12, 0, 0),
+            updated_at=datetime(2024, 1, 2, 12, 0, 0),
+        )
+
+        # Act
+        changes = document_service._calculate_changes(
+            sample_calculation_sheet, identical_sheet
+        )
+
+        # Assert
+        assert changes["action"] == "updated"
+        assert len(changes["fields_changed"]) == 0
+        assert changes["summary"] == "No significant changes"
+
+    def test_summarize_dict_changes_no_changes(self, document_service):
+        """Test dictionary change summarization with no changes."""
+        dict1 = {"a": 1, "b": 2, "c": 3}
+        dict2 = {"a": 1, "b": 2, "c": 3}
+
+        summary = document_service._summarize_dict_changes(dict1, dict2)
+
+        assert len(summary["added"]) == 0
+        assert len(summary["modified"]) == 0
+        assert len(summary["removed"]) == 0
+
+    def test_summarize_dict_changes_all_operations(self, document_service):
+        """Test dictionary change summarization with all types of changes."""
+        old_dict = {"keep": 1, "modify": 2, "remove": 3}
+        new_dict = {"keep": 1, "modify": 20, "add": 4}
+
+        summary = document_service._summarize_dict_changes(old_dict, new_dict)
+
+        assert "add" in summary["added"]
+        assert "modify" in summary["modified"]
+        assert "remove" in summary["removed"]
+        assert "keep" not in summary["modified"]

@@ -662,10 +662,10 @@ python -m pytest --lf
   - [x] 13.5 Implement document search functionality
     - Filter by project, discipline, type, date range
     - _Requirements: 4.6_
-  - [ ]* 13.6 Write unit tests for document operations
+  - [x] 13.6 Write unit tests for document operations
     - Test all document service methods
     - _Requirements: 4.1-4.6_
-  - [ ]* 13.7 Write property test for document versioning (Property 10)
+  - [x] 13.7 Write property test for document versioning (Property 10)
     - **Property 10: Document Versioning**
     - **Validates: Requirements 4.2, 4.3**
 

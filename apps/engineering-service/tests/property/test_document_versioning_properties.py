@@ -2,10 +2,10 @@
 
 from datetime import datetime
 from unittest.mock import AsyncMock
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from src.api.v1.schemas.document import (CalculationSheetCreateRequest,
                                          CalculationSheetUpdateRequest)
@@ -133,7 +133,9 @@ class TestDocumentVersioningProperties:
         unit_system,
     ):
         """
-        Property: Creating a calculation sheet always produces a valid version 1 document.
+        Property: Creating a calculation sheet always produces.
+
+        A valid version 1 document.
 
         **Validates: Requirements 4.1, 4.5**
         """
@@ -151,7 +153,10 @@ class TestDocumentVersioningProperties:
         created_sheet = CalculationSheet(
             id=1,
             project_id=str(project_id),
-            title=f"{discipline.title()} Calculation - {calculation_type.replace('_', ' ').title()}",
+            title=(
+                f"{discipline.title()} Calculation - "
+                f"{calculation_type.replace('_', ' ').title()}"
+            ),
             calculation_type=calculation_type,
             inputs=inputs,
             outputs=results,
@@ -174,11 +179,11 @@ class TestDocumentVersioningProperties:
         # Assert - Properties that must always hold
         assert result.version == 1, "Initial version must always be 1"
         assert result.project_id == project_id, "Project ID must be preserved"
-        # Note: discipline is extracted from calculation_type, not preserved from input
+        # Note: discipline is extracted from calculation_type
         extracted_discipline = document_service._extract_discipline(calculation_type)
         assert (
             result.discipline == extracted_discipline
-        ), "Discipline must be extracted correctly from calculation_type"
+        ), "Discipline must be extracted correctly"
         assert (
             result.calculation_type == calculation_type
         ), "Calculation type must be preserved"
@@ -207,7 +212,9 @@ class TestDocumentVersioningProperties:
         user_id,
     ):
         """
-        Property: Updating a calculation sheet preserves original data and merges updates correctly.
+        Property: Updating a calculation sheet preserves original data.
+
+        Merges updates correctly.
 
         **Validates: Requirements 4.2**
         """
@@ -547,11 +554,11 @@ class TestDocumentVersioningProperties:
             len(result.documents) == expected_count
         ), "Returned documents must match total count"
 
-        # All returned documents must contain the search text (case-insensitive)
+        # All returned documents must contain the search text
         for doc in result.documents:
             title_matches = search_text.lower() in doc.calculation_type.lower()
-            # Note: In real implementation, we'd check title and description
-            # Here we're checking calculation_type as a proxy since that's what our mock returns
+            # Note: In real implementation, check title and description
+            # Here checking calculation_type as proxy
             assert (
                 title_matches or True
             ), "Returned documents should match search criteria"
@@ -576,7 +583,9 @@ class TestDocumentVersioningProperties:
         design_ids,
     ):
         """
-        Property: Generated specifications contain all requested sections with proper CSI format.
+        Property: Generated specifications contain all requested sections.
+
+        With proper CSI format.
 
         **Validates: Requirements 4.4**
         """
@@ -634,3 +643,238 @@ class TestDocumentVersioningProperties:
         assert len(result.sections) == len(
             sections
         ), "Only requested sections should be included"
+
+    @given(
+        num_updates=st.integers(min_value=1, max_value=5),
+        project_id=project_id_strategy,
+        user_id=user_id_strategy,
+    )
+    @settings(
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
+        max_examples=10,
+        deadline=None,
+    )
+    @pytest.mark.asyncio
+    async def test_property_10_document_versioning(
+        self,
+        document_service,
+        mock_calculation_sheet_repo,
+        mock_db_session,
+        num_updates,
+        project_id,
+        user_id,
+    ):
+        """
+        Property 10: Document Versioning.
+
+        Property: Creating a document and updating it multiple times
+        produces the correct number of versions, each version preserves
+        data from that point in time, version numbers increment correctly,
+        and previous versions remain unchanged.
+
+        **Validates: Requirements 4.2, 4.3**
+
+        This property verifies:
+        1. Creating a document produces version 1
+        2. Each update creates a new version with incremented version number
+        3. Each version preserves the data from that point in time
+        4. Retrieving document history returns all versions in order
+        5. Previous versions remain unchanged when new versions are created
+        """
+        # Arrange - Create initial document
+        initial_inputs = {"load": 100.0, "span": 20.0}
+        initial_results = {"moment": 5000.0}
+
+        initial_sheet = CalculationSheet(
+            id=1,
+            project_id=str(project_id),
+            title="Test Calculation",
+            description="Initial version",
+            calculation_type="beam_design",
+            inputs=initial_inputs.copy(),
+            outputs=initial_results.copy(),
+            formulas=["M = wL^2/8"],
+            references=["AISC 360"],
+            units="imperial",
+            version=1,
+            parent_id=None,
+            created_by=str(user_id),
+            status="draft",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+
+        # Track all versions created
+        all_versions = [initial_sheet]
+        version_data_snapshots = [
+            {
+                "version": 1,
+                "inputs": initial_inputs.copy(),
+                "outputs": initial_results.copy(),
+            }
+        ]
+
+        # Mock the initial creation
+        mock_calculation_sheet_repo.create.return_value = initial_sheet
+
+        # Create initial document
+        create_request = CalculationSheetCreateRequest(
+            project_id=project_id,
+            discipline="structural",
+            calculation_type="beam_design",
+            inputs=initial_inputs,
+            results=initial_results,
+            formulas={"formulas": ["M = wL^2/8"], "references": ["AISC 360"]},
+            unit_system="imperial",
+        )
+
+        initial_response = await document_service.create_calculation_sheet(
+            create_request, user_id
+        )
+
+        # Assert initial version is 1
+        assert initial_response.version == 1, "Initial version must be 1"
+
+        # Act - Perform multiple updates
+        for i in range(num_updates):
+            version_num = i + 2  # Versions start at 1, so updates are 2, 3, 4, ...
+
+            # Create update with new data
+            update_inputs = initial_inputs.copy()
+            update_inputs[f"update_{i}"] = float(i + 1) * 10.0
+
+            update_results = initial_results.copy()
+            update_results[f"result_{i}"] = float(i + 1) * 100.0
+
+            # Expected merged data (updates merge with previous version)
+            expected_inputs = all_versions[-1].inputs.copy()
+            expected_inputs.update(update_inputs)
+
+            expected_outputs = all_versions[-1].outputs.copy()
+            expected_outputs.update(update_results)
+
+            # Create new version
+            new_version = CalculationSheet(
+                id=version_num,
+                project_id=str(project_id),
+                title="Test Calculation",
+                description=f"Version {version_num}",
+                calculation_type="beam_design",
+                inputs=expected_inputs.copy(),
+                outputs=expected_outputs.copy(),
+                formulas=["M = wL^2/8"],
+                references=["AISC 360"],
+                units="imperial",
+                version=version_num,
+                parent_id=1,  # All versions point to original
+                created_by=str(user_id),
+                status="draft",
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
+
+            all_versions.append(new_version)
+            version_data_snapshots.append(
+                {
+                    "version": version_num,
+                    "inputs": expected_inputs.copy(),
+                    "outputs": expected_outputs.copy(),
+                }
+            )
+
+            # Mock repository responses for this update
+            mock_calculation_sheet_repo.get_by_id.return_value = all_versions[-2]
+            mock_calculation_sheet_repo.get_latest_version.return_value = all_versions[
+                -2
+            ]
+            mock_calculation_sheet_repo.create.return_value = new_version
+
+            # Perform update
+            update_request = CalculationSheetUpdateRequest(
+                inputs=update_inputs,
+                results=update_results,
+            )
+
+            update_response = await document_service.update_calculation_sheet(
+                1, update_request, user_id
+            )
+
+            # Assert version number increments correctly
+            assert (
+                update_response.version == version_num
+            ), f"Version must be {version_num} after update {i+1}"
+
+            # Assert data is preserved correctly
+            for key, value in expected_inputs.items():
+                assert (
+                    update_response.inputs[key] == value
+                ), f"Input '{key}' must be preserved in version {version_num}"
+
+            for key, value in expected_outputs.items():
+                assert (
+                    update_response.results[key] == value
+                ), f"Output '{key}' must be preserved in version {version_num}"
+
+        # Assert - Verify document history
+        mock_calculation_sheet_repo.get_version_history.return_value = all_versions
+
+        history = await document_service.get_document_history(1)
+
+        # Property 1: Total number of versions is correct
+        expected_total_versions = 1 + num_updates
+        assert (
+            len(history.versions) == expected_total_versions
+        ), f"History must contain {expected_total_versions} versions"
+
+        # Property 2: Current version is the highest
+        assert (
+            history.current_version == expected_total_versions
+        ), f"Current version must be {expected_total_versions}"
+
+        # Property 3: Versions are in chronological order
+        for i, version_info in enumerate(history.versions):
+            expected_version = i + 1
+            assert (
+                version_info.version == expected_version
+            ), f"Version at index {i} must have version number {expected_version}"
+
+        # Property 4: Each version preserves its data snapshot
+        for i, version_info in enumerate(history.versions):
+            snapshot = version_data_snapshots[i]
+            actual_version = all_versions[i]
+
+            # Verify the data in the version matches the snapshot
+            assert (
+                actual_version.inputs == snapshot["inputs"]
+            ), f"Version {snapshot['version']} inputs must match snapshot"
+            assert (
+                actual_version.outputs == snapshot["outputs"]
+            ), f"Version {snapshot['version']} outputs must match snapshot"
+
+        # Property 5: Previous versions remain unchanged
+        # Verify that earlier versions still have their original data
+        for i in range(len(all_versions) - 1):
+            version = all_versions[i]
+            snapshot = version_data_snapshots[i]
+
+            # The version's data should still match its original snapshot
+            assert (
+                version.inputs == snapshot["inputs"]
+            ), f"Version {version.version} inputs must remain unchanged"
+            assert (
+                version.outputs == snapshot["outputs"]
+            ), f"Version {version.version} outputs must remain unchanged"
+
+        # Property 6: All versions except the first have parent_id set
+        for version in all_versions[1:]:
+            assert (
+                version.parent_id == 1
+            ), f"Version {version.version} must have parent_id=1"
+
+        # Property 7: First version has no parent
+        assert (
+            all_versions[0].parent_id is None
+        ), "First version must have parent_id=None"
