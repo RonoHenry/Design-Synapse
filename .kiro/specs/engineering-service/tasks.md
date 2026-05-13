@@ -690,47 +690,47 @@ python -m pytest --lf
     - Format reports with code references
     - Include recommended corrections
     - _Requirements: 5.4, 5.5_
-  - [ ]* 14.6 Write unit tests for validation logic
+  - [x] 14.6 Write unit tests for validation logic
     - Test all validation methods
     - _Requirements: 5.1-5.6_
-  - [ ]* 14.7 Write property test for code compliance checks (Property 8)
+  - [x] 14.7 Write property test for code compliance checks (Property 8)
     - **Property 8: Code Compliance Checks**
     - **Validates: Requirements 5.1-5.3**
-  - [ ]* 14.8 Write property test for violation reporting (Property 9)
+  - [x] 14.8 Write property test for violation reporting (Property 9)
     - **Property 9: Violation Reporting**
     - **Validates: Requirements 5.5**
 
-- [ ] 15. Checkpoint - Core Services Complete
+- [x] 15. Checkpoint - Core Services Complete
   - Ensure all core service tests pass
   - Verify document management and code validation work
   - Ask the user if questions arise
 
-- [ ] 16. External Service Integration Clients
-  - [ ] 16.1 Implement ArchitecturalServiceClient
+- [x] 16. External Service Integration Clients
+  - [x] 16.1 Implement ArchitecturalServiceClient
     - Get architectural designs
     - Subscribe to design changes
     - _Requirements: 6.1_
-  - [ ] 16.2 Implement DesignServiceClient
+  - [x] 16.2 Implement DesignServiceClient
     - Update technical requirements
     - Get technical drawings
     - _Requirements: 6.2_
-  - [ ] 16.3 Implement KnowledgeServiceClient
+  - [x] 16.3 Implement KnowledgeServiceClient
     - Retrieve engineering standards
     - Search formulas and references
     - _Requirements: 6.3_
-  - [ ] 16.4 Implement ProjectServiceClient
+  - [x] 16.4 Implement ProjectServiceClient
     - Update milestone status
     - Get project information
     - _Requirements: 6.4_
-  - [ ] 16.5 Add retry logic with exponential backoff
+  - [x] 16.5 Add retry logic with exponential backoff
     - Implement retry decorator
     - Configure backoff parameters
     - _Requirements: 6.5_
-  - [ ] 16.6 Add circuit breaker pattern
+  - [x] 16.6 Add circuit breaker pattern
     - Implement circuit breaker for each client
     - Configure failure thresholds
     - _Requirements: 6.5_
-  - [ ] 16.7 Add response caching
+  - [x] 16.7 Add response caching
     - Cache external service responses
     - Implement cache invalidation
     - _Requirements: 6.6_

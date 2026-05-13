@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock
 import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
-from src.api.v1.schemas.compliance import ViolationSchema, ViolationSeverity
+from src.api.v1.schemas.compliance import ViolationSeverity
 from src.models.structural_design import StructuralDesign
 from src.services.code_validator_service import CodeValidatorService
 
@@ -86,7 +86,11 @@ class TestViolationReportingProperties:
     # Property 9: Violation Structure and Completeness
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=violation_inducing_design_strategy())
     @pytest.mark.asyncio
@@ -147,7 +151,11 @@ class TestViolationReportingProperties:
             assert len(violation["affected_elements"]) > 0
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=violation_inducing_design_strategy())
     @pytest.mark.asyncio
@@ -209,7 +217,11 @@ class TestViolationReportingProperties:
             ), f"Invalid code reference: {code_section}"
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=violation_inducing_design_strategy())
     @pytest.mark.asyncio
@@ -269,7 +281,11 @@ class TestViolationReportingProperties:
                 assert severity == ViolationSeverity.MAJOR.value
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=violation_inducing_design_strategy())
     @pytest.mark.asyncio
@@ -335,7 +351,11 @@ class TestViolationReportingProperties:
             ), f"Recommendation lacks action verb: {recommendation}"
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=violation_inducing_design_strategy())
     @pytest.mark.asyncio
@@ -393,7 +413,11 @@ class TestViolationReportingProperties:
     # Property: Violation Count Consistency
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(
         stress_ratio=st.floats(min_value=1.1, max_value=2.0),
@@ -469,7 +493,11 @@ class TestViolationReportingProperties:
         assert len(violations) >= expected_violations
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=violation_inducing_design_strategy())
     @pytest.mark.asyncio
@@ -521,7 +549,11 @@ class TestViolationReportingProperties:
     # Property: Violation Descriptions are Clear
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=violation_inducing_design_strategy())
     @pytest.mark.asyncio
