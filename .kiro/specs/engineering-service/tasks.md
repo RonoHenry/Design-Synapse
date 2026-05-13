@@ -662,31 +662,31 @@ python -m pytest --lf
   - [x] 13.5 Implement document search functionality
     - Filter by project, discipline, type, date range
     - _Requirements: 4.6_
-  - [ ]* 13.6 Write unit tests for document operations
+  - [x] 13.6 Write unit tests for document operations
     - Test all document service methods
     - _Requirements: 4.1-4.6_
-  - [ ]* 13.7 Write property test for document versioning (Property 10)
+  - [x] 13.7 Write property test for document versioning (Property 10)
     - **Property 10: Document Versioning**
     - **Validates: Requirements 4.2, 4.3**
 
-- [ ] 14. Code Compliance Validation
-  - [ ] 14.1 Implement CodeValidatorService.validate_structural_code (IBC, ASCE 7)
+- [x] 14. Code Compliance Validation
+  - [x] 14.1 Implement CodeValidatorService.validate_structural_code (IBC, ASCE 7)
     - Check structural code compliance
     - Generate violation reports
     - _Requirements: 5.1, 5.4, 5.5_
-  - [ ] 14.2 Implement CodeValidatorService.validate_mep_code (NEC, IPC, IMC, NFPA)
+  - [x] 14.2 Implement CodeValidatorService.validate_mep_code (NEC, IPC, IMC, NFPA)
     - Check MEP code compliance
     - Generate violation reports
     - _Requirements: 5.2, 5.4, 5.5_
-  - [ ] 14.3 Implement CodeValidatorService.validate_energy_code (IECC, ASHRAE 90.1)
+  - [x] 14.3 Implement CodeValidatorService.validate_energy_code (IECC, ASHRAE 90.1)
     - Check energy code compliance
     - Generate violation reports
     - _Requirements: 5.3, 5.4, 5.5_
-  - [ ] 14.4 Implement code requirement retrieval from Knowledge Service
+  - [x] 14.4 Implement code requirement retrieval from Knowledge Service
     - Fetch latest code versions
     - Cache code requirements
     - _Requirements: 5.6_
-  - [ ] 14.5 Implement compliance report generation
+  - [x] 14.5 Implement compliance report generation
     - Format reports with code references
     - Include recommended corrections
     - _Requirements: 5.4, 5.5_
