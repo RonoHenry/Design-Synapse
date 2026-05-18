@@ -15,6 +15,9 @@ from src.core.config import settings
 from src.core.exceptions import EngineeringServiceException
 from starlette.exceptions import HTTPException
 
+# Import authentication middleware
+from packages.common.auth.middleware import AuthMiddleware
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO if not settings.debug else logging.DEBUG,
@@ -51,6 +54,21 @@ app.add_middleware(
     allow_credentials=settings.cors_allow_credentials,
     allow_methods=settings.cors_allow_methods,
     allow_headers=settings.cors_allow_headers,
+)
+
+# Add authentication middleware
+app.add_middleware(
+    AuthMiddleware,
+    secret_key=settings.secret_key,
+    service_secret_key=settings.service_secret_key,
+    excluded_paths=[
+        "/health",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+        "/api/v1/health",
+    ],
+    require_auth=True,
 )
 
 

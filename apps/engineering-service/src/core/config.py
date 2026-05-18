@@ -67,6 +67,15 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 30
 
+    # Secret keys for auth middleware
+    secret_key: str = Field(
+        default="your-secret-key-change-in-production", alias="SECRET_KEY"
+    )
+    service_secret_key: str = Field(
+        default="your-service-secret-key-change-in-production",
+        alias="SERVICE_SECRET_KEY",
+    )
+
     # CORS
     cors_origins: List[str] = ["http://localhost:3000"]
     cors_allow_credentials: bool = True

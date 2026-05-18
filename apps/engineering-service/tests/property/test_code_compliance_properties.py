@@ -14,8 +14,7 @@ from unittest.mock import AsyncMock
 import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
-from src.api.v1.schemas.compliance import CodeType, ComplianceStatus
-from src.models.compliance_report import ComplianceReport
+from src.api.v1.schemas.compliance import ComplianceStatus
 from src.models.mep_design import MEPDesign
 from src.models.structural_design import StructuralDesign
 from src.services.code_validator_service import CodeValidatorService
@@ -136,7 +135,10 @@ class TestCodeComplianceProperties:
                 "max_deflection_ratio": 360,
                 "load_combinations": ["1.4D", "1.2D + 1.6L"],
                 "electrical": {"max_voltage_drop": 3.0},
-                "hvac": {"min_ventilation_rate": 15, "max_duct_velocity": 2000},
+                "hvac": {
+                    "min_ventilation_rate": 15,
+                    "max_duct_velocity": 2000,
+                },
             },
         }
 
@@ -145,19 +147,24 @@ class TestCodeComplianceProperties:
     # Property 8: Code Compliance Checks - Determinism
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=structural_design_strategy())
     @pytest.mark.asyncio
     async def test_property_structural_compliance_determinism(
         self, design, mock_repos_and_client
     ):
-        """Property: Same structural design always produces same compliance status.
+        """Property: Same structural design produces same compliance status.
 
         **Validates: Requirements 5.1, 5.4**
 
-        This property ensures that code compliance validation is deterministic:
-        - Running validation twice on the same design produces identical results
+        This property ensures that code compliance validation is
+        deterministic:
+        - Running validation twice on same design produces identical results
         - Compliance status is consistent
         - Violation detection is reproducible
         """
@@ -200,18 +207,23 @@ class TestCodeComplianceProperties:
         assert len(violations1) == len(violations2)
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=structural_design_strategy())
     @pytest.mark.asyncio
     async def test_property_stress_ratio_violation_detection(
         self, design, mock_repos_and_client
     ):
-        """Property: Designs with stress ratio > 1.0 are flagged as non-compliant.
+        """Property: Designs with stress ratio > 1.0 are non-compliant.
 
         **Validates: Requirements 5.1, 5.5**
 
-        This property ensures that stress ratio violations are correctly detected:
+        This property ensures that stress ratio violations are correctly
+        detected:
         - Stress ratios exceeding code limits trigger violations
         - Violation severity is appropriate (CRITICAL for stress ratio)
         - Recommendations are provided
@@ -257,7 +269,11 @@ class TestCodeComplianceProperties:
             ]
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=mep_design_hvac_strategy())
     @pytest.mark.asyncio
@@ -268,7 +284,8 @@ class TestCodeComplianceProperties:
 
         **Validates: Requirements 5.2, 5.5**
 
-        This property ensures that ventilation violations are correctly detected:
+        This property ensures that ventilation violations are correctly
+        detected:
         - Ventilation rates below code minimum trigger violations
         - Appropriate code sections are referenced
         - Recommendations are provided
@@ -299,7 +316,8 @@ class TestCodeComplianceProperties:
 
         result = await service.validate_mep_code(design.id, "Test", "test_user")
 
-        # Property: If ventilation rate < 15 CFM/person, should have violation
+        # Property: If ventilation rate < 15 CFM/person, should have
+        # violation
         ventilation_rate = design.sizing_results.get("ventilation_rate", 0)
         violations = result.violations.get("violations", [])
 
@@ -309,18 +327,23 @@ class TestCodeComplianceProperties:
             assert any("IMC" in str(v) for v in violations)
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=mep_design_electrical_strategy())
     @pytest.mark.asyncio
     async def test_property_electrical_voltage_drop_violation(
         self, design, mock_repos_and_client
     ):
-        """Property: Electrical designs with excessive voltage drop are flagged.
+        """Property: Electrical designs with excessive voltage drop flagged.
 
         **Validates: Requirements 5.2, 5.5**
 
-        This property ensures that voltage drop violations are correctly detected:
+        This property ensures that voltage drop violations are correctly
+        detected:
         - Voltage drops exceeding code limits trigger violations
         - NEC code sections are referenced
         - Recommendations include corrective actions
@@ -363,7 +386,11 @@ class TestCodeComplianceProperties:
     # Property 8: Compliance Status Consistency
 
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(
         stress_ratio=st.floats(min_value=0.1, max_value=2.0),
@@ -373,12 +400,12 @@ class TestCodeComplianceProperties:
     async def test_property_compliance_status_consistency(
         self, stress_ratio, deflection_ratio, mock_repos_and_client
     ):
-        """Property: Compliance status is consistent with violation severity.
+        """Property: Compliance status consistent with violation severity.
 
         **Validates: Requirements 5.4**
 
-        This property ensures that overall compliance status correctly reflects
-        the severity of violations found:
+        This property ensures that overall compliance status correctly
+        reflects the severity of violations found:
         - CRITICAL violations → NON_COMPLIANT status
         - MAJOR violations → REVIEW_REQUIRED status
         - No violations → COMPLIANT status
@@ -427,8 +454,6 @@ class TestCodeComplianceProperties:
         result = await service.validate_structural_code(1, "Test", "test_user")
 
         # Property: Status consistency with violations
-        violations = result.violations.get("violations", [])
-
         if stress_ratio > 1.0:
             # Critical violation expected
             assert result.overall_status == ComplianceStatus.NON_COMPLIANT.value
@@ -445,10 +470,12 @@ class TestCodeComplianceProperties:
                 ComplianceStatus.REVIEW_REQUIRED.value,
             ]
 
-    # Property: Recommendations are always provided
-
     @settings(
-        max_examples=10, suppress_health_check=[HealthCheck.function_scoped_fixture]
+        max_examples=10,
+        suppress_health_check=[
+            HealthCheck.function_scoped_fixture,
+            HealthCheck.too_slow,
+        ],
     )
     @given(design=structural_design_strategy())
     @pytest.mark.asyncio

@@ -1,8 +1,7 @@
 """Unit tests for CodeValidatorService."""
 
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
+from unittest.mock import AsyncMock
 
 import pytest
 from src.api.v1.schemas.compliance import (CodeType, ComplianceStatus,
@@ -704,3 +703,691 @@ class TestCodeValidatorService:
         assert len(recommendations) > 0
         assert any("critical" in rec.lower() for rec in recommendations)
         assert any("major" in rec.lower() for rec in recommendations)
+
+    # Test structural validation helper methods
+
+    def test_check_load_combinations_missing(self, code_validator_service):
+        """Test load combinations check with missing combinations."""
+        # Arrange
+        design = StructuralDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Test Design",
+            design_type="beam",
+            loads={"dead_load": 50.0},  # Missing load_combinations
+            material_properties={},
+            geometry={},
+            design_results={},
+            stress_ratios={},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {
+            "requirements": {
+                "load_combinations": ["1.4D", "1.2D + 1.6L"],
+            }
+        }
+
+        # Act
+        result = code_validator_service._check_load_combinations(
+            design, code_requirements
+        )
+
+        # Assert
+        assert result["check_name"] == "Load Combinations (ASCE 7)"
+        assert len(result["violations"]) == 1
+        assert result["violations"][0].severity == ViolationSeverity.CRITICAL
+
+    def test_check_load_combinations_present(self, code_validator_service):
+        """Test load combinations check with valid combinations."""
+        # Arrange
+        design = StructuralDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Test Design",
+            design_type="beam",
+            loads={
+                "dead_load": 50.0,
+                "load_combinations": ["1.4D", "1.2D + 1.6L"],
+            },
+            material_properties={},
+            geometry={},
+            design_results={},
+            stress_ratios={},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {
+            "requirements": {
+                "load_combinations": ["1.4D", "1.2D + 1.6L"],
+            }
+        }
+
+        # Act
+        result = code_validator_service._check_load_combinations(
+            design, code_requirements
+        )
+
+        # Assert
+        assert result["check_name"] == "Load Combinations (ASCE 7)"
+        assert len(result["violations"]) == 0
+
+    def test_check_stress_ratios_exceeds_limit(self, code_validator_service):
+        """Test stress ratios check with exceeded limits."""
+        # Arrange
+        design = StructuralDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Test Design",
+            design_type="beam",
+            loads={},
+            material_properties={},
+            geometry={},
+            design_results={},
+            stress_ratios={"bending": 1.2, "shear": 0.8},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"max_stress_ratio": 1.0}}
+
+        # Act
+        result = code_validator_service._check_stress_ratios(design, code_requirements)
+
+        # Assert
+        assert result["check_name"] == "Stress Ratios"
+        assert len(result["violations"]) == 1
+        assert "bending" in result["violations"][0].affected_elements
+
+    def test_check_stress_ratios_within_limit(self, code_validator_service):
+        """Test stress ratios check with acceptable values."""
+        # Arrange
+        design = StructuralDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Test Design",
+            design_type="beam",
+            loads={},
+            material_properties={},
+            geometry={},
+            design_results={},
+            stress_ratios={"bending": 0.85, "shear": 0.45},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"max_stress_ratio": 1.0}}
+
+        # Act
+        result = code_validator_service._check_stress_ratios(design, code_requirements)
+
+        # Assert
+        assert result["check_name"] == "Stress Ratios"
+        assert len(result["violations"]) == 0
+
+    def test_check_deflection_limits_exceeds(self, code_validator_service):
+        """Test deflection limits check with excessive deflection."""
+        # Arrange
+        design = StructuralDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Test Design",
+            design_type="beam",
+            loads={},
+            material_properties={},
+            geometry={},
+            design_results={"deflection_ratio": 300},  # L/300 exceeds L/360
+            stress_ratios={},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"max_deflection_ratio": 360}}
+
+        # Act
+        result = code_validator_service._check_deflection_limits(
+            design, code_requirements
+        )
+
+        # Assert
+        assert result["check_name"] == "Deflection Limits"
+        assert len(result["violations"]) == 1
+        assert result["violations"][0].severity == ViolationSeverity.MAJOR
+
+    def test_check_deflection_limits_acceptable(self, code_validator_service):
+        """Test deflection limits check with acceptable deflection."""
+        # Arrange
+        design = StructuralDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Test Design",
+            design_type="beam",
+            loads={},
+            material_properties={},
+            geometry={},
+            design_results={"deflection_ratio": 400},  # L/400 is better than L/360
+            stress_ratios={},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"max_deflection_ratio": 360}}
+
+        # Act
+        result = code_validator_service._check_deflection_limits(
+            design, code_requirements
+        )
+
+        # Assert
+        assert result["check_name"] == "Deflection Limits"
+        assert len(result["violations"]) == 0
+
+    def test_check_seismic_requirements_missing_category(self, code_validator_service):
+        """Test seismic requirements check with missing category."""
+        # Arrange
+        design = StructuralDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Test Design",
+            design_type="beam",
+            loads={},
+            material_properties={},
+            geometry={},
+            design_results={},  # Missing seismic_design_category
+            stress_ratios={},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {}}
+
+        # Act
+        result = code_validator_service._check_seismic_requirements(
+            design, code_requirements
+        )
+
+        # Assert
+        assert result["check_name"] == "Seismic Requirements"
+        assert len(result["violations"]) == 1
+        assert result["violations"][0].severity == ViolationSeverity.MAJOR
+
+    def test_check_seismic_requirements_with_category(self, code_validator_service):
+        """Test seismic requirements check with valid category."""
+        # Arrange
+        design = StructuralDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Test Design",
+            design_type="beam",
+            loads={},
+            material_properties={},
+            geometry={},
+            design_results={"seismic_design_category": "D"},
+            stress_ratios={},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {}}
+
+        # Act
+        result = code_validator_service._check_seismic_requirements(
+            design, code_requirements
+        )
+
+        # Assert
+        assert result["check_name"] == "Seismic Requirements"
+        assert len(result["violations"]) == 0
+
+    # Test MEP validation helper methods
+
+    def test_check_hvac_code_low_ventilation(self, code_validator_service):
+        """Test HVAC code check with insufficient ventilation."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="HVAC Design",
+            system_type="hvac",
+            loads={},
+            equipment={},
+            distribution={},
+            sizing_results={"ventilation_rate": 10},  # Below 15 CFM/person
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"hvac": {"min_ventilation_rate": 15}}}
+
+        # Act
+        result = code_validator_service._check_hvac_code(design, code_requirements)
+
+        # Assert
+        assert "HVAC Ventilation Rates (IMC)" in result["checks"]
+        assert len(result["violations"]) == 1
+        assert result["violations"][0].severity == ViolationSeverity.CRITICAL
+
+    def test_check_hvac_code_adequate_ventilation(self, code_validator_service):
+        """Test HVAC code check with adequate ventilation."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="HVAC Design",
+            system_type="hvac",
+            loads={},
+            equipment={},
+            distribution={},
+            sizing_results={"ventilation_rate": 20},  # Above 15 CFM/person
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"hvac": {"min_ventilation_rate": 15}}}
+
+        # Act
+        result = code_validator_service._check_hvac_code(design, code_requirements)
+
+        # Assert
+        assert "HVAC Ventilation Rates (IMC)" in result["checks"]
+        assert len(result["violations"]) == 0
+
+    def test_check_electrical_code_high_voltage_drop(self, code_validator_service):
+        """Test electrical code check with excessive voltage drop."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Electrical Design",
+            system_type="electrical",
+            loads={},
+            equipment={},
+            distribution={},
+            sizing_results={"voltage_drop": 4.5},  # Exceeds 3.0%
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"electrical": {"max_voltage_drop": 3.0}}}
+
+        # Act
+        result = code_validator_service._check_electrical_code(
+            design, code_requirements
+        )
+
+        # Assert
+        assert "Voltage Drop (NEC)" in result["checks"]
+        assert len(result["violations"]) == 1
+        assert result["violations"][0].severity == ViolationSeverity.MAJOR
+
+    def test_check_electrical_code_acceptable_voltage_drop(
+        self, code_validator_service
+    ):
+        """Test electrical code check with acceptable voltage drop."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Electrical Design",
+            system_type="electrical",
+            loads={},
+            equipment={},
+            distribution={},
+            sizing_results={"voltage_drop": 2.5},  # Within 3.0%
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"electrical": {"max_voltage_drop": 3.0}}}
+
+        # Act
+        result = code_validator_service._check_electrical_code(
+            design, code_requirements
+        )
+
+        # Assert
+        assert "Voltage Drop (NEC)" in result["checks"]
+        assert len(result["violations"]) == 0
+
+    def test_check_plumbing_code_high_velocity(self, code_validator_service):
+        """Test plumbing code check with excessive water velocity."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Plumbing Design",
+            system_type="plumbing",
+            loads={},
+            equipment={},
+            distribution={},
+            sizing_results={"water_velocity": 10.0},  # Exceeds 8.0 ft/s
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"plumbing": {"max_velocity": 8.0}}}
+
+        # Act
+        result = code_validator_service._check_plumbing_code(design, code_requirements)
+
+        # Assert
+        assert "Water Velocity (IPC)" in result["checks"]
+        assert len(result["violations"]) == 1
+        assert result["violations"][0].severity == ViolationSeverity.MAJOR
+
+    def test_check_plumbing_code_acceptable_velocity(self, code_validator_service):
+        """Test plumbing code check with acceptable water velocity."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Plumbing Design",
+            system_type="plumbing",
+            loads={},
+            equipment={},
+            distribution={},
+            sizing_results={"water_velocity": 6.0},  # Within 8.0 ft/s
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"plumbing": {"max_velocity": 8.0}}}
+
+        # Act
+        result = code_validator_service._check_plumbing_code(design, code_requirements)
+
+        # Assert
+        assert "Water Velocity (IPC)" in result["checks"]
+        assert len(result["violations"]) == 0
+
+    def test_check_fire_protection_code_missing_coverage(self, code_validator_service):
+        """Test fire protection code check with missing sprinkler coverage."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Fire Protection Design",
+            system_type="fire",
+            loads={},
+            equipment={},
+            distribution={},
+            sizing_results={},  # Missing sprinkler_coverage
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {}}
+
+        # Act
+        result = code_validator_service._check_fire_protection_code(
+            design, code_requirements
+        )
+
+        # Assert
+        assert "Sprinkler Coverage (NFPA 13)" in result["checks"]
+        assert len(result["violations"]) == 1
+        assert result["violations"][0].severity == ViolationSeverity.CRITICAL
+
+    def test_check_fire_protection_code_with_coverage(self, code_validator_service):
+        """Test fire protection code check with valid sprinkler coverage."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Fire Protection Design",
+            system_type="fire",
+            loads={},
+            equipment={},
+            distribution={},
+            sizing_results={"sprinkler_coverage": 130},  # sq ft per head
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {}}
+
+        # Act
+        result = code_validator_service._check_fire_protection_code(
+            design, code_requirements
+        )
+
+        # Assert
+        assert "Sprinkler Coverage (NFPA 13)" in result["checks"]
+        assert len(result["violations"]) == 0
+
+    # Test energy validation helper methods
+
+    def test_check_building_envelope(self, code_validator_service):
+        """Test building envelope check."""
+        # Arrange
+        design = StructuralDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Test Design",
+            design_type="building",
+            loads={},
+            material_properties={},
+            geometry={},
+            design_results={},
+            stress_ratios={},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {
+            "requirements": {
+                "max_u_value_wall": 0.057,
+                "max_u_value_roof": 0.048,
+            }
+        }
+
+        # Act
+        result = code_validator_service._check_building_envelope(
+            design, code_requirements
+        )
+
+        # Assert
+        assert result["check_name"] == "Building Envelope (IECC)"
+        assert isinstance(result["violations"], list)
+
+    def test_check_hvac_efficiency_low(self, code_validator_service):
+        """Test HVAC efficiency check with low efficiency."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="HVAC Design",
+            system_type="hvac",
+            loads={},
+            equipment={"efficiency": 12.0},  # Below 13.0 SEER
+            distribution={},
+            sizing_results={},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"min_hvac_efficiency": 13.0}}
+
+        # Act
+        result = code_validator_service._check_hvac_efficiency(
+            design, code_requirements
+        )
+
+        # Assert
+        assert result["check_name"] == "HVAC Efficiency (ASHRAE 90.1)"
+        assert len(result["violations"]) == 1
+        assert result["violations"][0].severity == ViolationSeverity.MAJOR
+
+    def test_check_hvac_efficiency_adequate(self, code_validator_service):
+        """Test HVAC efficiency check with adequate efficiency."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="HVAC Design",
+            system_type="hvac",
+            loads={},
+            equipment={"efficiency": 14.0},  # Above 13.0 SEER
+            distribution={},
+            sizing_results={},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"min_hvac_efficiency": 13.0}}
+
+        # Act
+        result = code_validator_service._check_hvac_efficiency(
+            design, code_requirements
+        )
+
+        # Assert
+        assert result["check_name"] == "HVAC Efficiency (ASHRAE 90.1)"
+        assert len(result["violations"]) == 0
+
+    def test_check_lighting_power_density_high(self, code_validator_service):
+        """Test lighting power density check with excessive density."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Electrical Design",
+            system_type="electrical",
+            loads={"lighting_power_density": 1.5},  # Exceeds 1.0 W/sq ft
+            equipment={},
+            distribution={},
+            sizing_results={},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"max_lighting_power_density": 1.0}}
+
+        # Act
+        result = code_validator_service._check_lighting_power_density(
+            design, code_requirements
+        )
+
+        # Assert
+        assert result["check_name"] == "Lighting Power Density (ASHRAE 90.1)"
+        assert len(result["violations"]) == 1
+        assert result["violations"][0].severity == ViolationSeverity.MAJOR
+
+    def test_check_lighting_power_density_acceptable(self, code_validator_service):
+        """Test lighting power density check with acceptable density."""
+        # Arrange
+        design = MEPDesign(
+            id=1,
+            project_id="test-project",
+            calculation_sheet_id=1,
+            title="Electrical Design",
+            system_type="electrical",
+            loads={"lighting_power_density": 0.8},  # Within 1.0 W/sq ft
+            equipment={},
+            distribution={},
+            sizing_results={},
+            status="draft",
+            created_by="user1",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        code_requirements = {"requirements": {"max_lighting_power_density": 1.0}}
+
+        # Act
+        result = code_validator_service._check_lighting_power_density(
+            design, code_requirements
+        )
+
+        # Assert
+        assert result["check_name"] == "Lighting Power Density (ASHRAE 90.1)"
+        assert len(result["violations"]) == 0
+
+    # Test default requirements
+
+    def test_get_default_requirements_structural(self, code_validator_service):
+        """Test getting default structural requirements."""
+        # Act
+        result = code_validator_service._get_default_requirements(
+            CodeType.STRUCTURAL, "California"
+        )
+
+        # Assert
+        assert result["version"] == "2021"
+        assert result["jurisdiction"] == "California"
+        assert result["code_type"] == "structural"
+        assert "max_stress_ratio" in result["requirements"]
+        assert "max_deflection_ratio" in result["requirements"]
+        assert "load_combinations" in result["requirements"]
+
+    def test_get_default_requirements_mep(self, code_validator_service):
+        """Test getting default MEP requirements."""
+        # Act
+        result = code_validator_service._get_default_requirements(
+            CodeType.MEP, "California"
+        )
+
+        # Assert
+        assert result["version"] == "2021"
+        assert result["jurisdiction"] == "California"
+        assert result["code_type"] == "mep"
+        assert "electrical" in result["requirements"]
+        assert "plumbing" in result["requirements"]
+        assert "hvac" in result["requirements"]
+
+    def test_get_default_requirements_energy(self, code_validator_service):
+        """Test getting default energy requirements."""
+        # Act
+        result = code_validator_service._get_default_requirements(
+            CodeType.ENERGY, "California"
+        )
+
+        # Assert
+        assert result["version"] == "2021"
+        assert result["jurisdiction"] == "California"
+        assert result["code_type"] == "energy"
+        assert "max_u_value_wall" in result["requirements"]
+        assert "max_u_value_roof" in result["requirements"]
+        assert "min_hvac_efficiency" in result["requirements"]
+        assert "max_lighting_power_density" in result["requirements"]

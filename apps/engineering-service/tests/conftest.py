@@ -2,6 +2,8 @@
 
 import asyncio
 import os
+import sys
+from pathlib import Path
 from typing import AsyncGenerator
 
 import pytest
@@ -9,8 +11,11 @@ from hypothesis import Verbosity, settings
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
-from src.core.config import settings as app_settings
 from src.core.database import Base
+
+# Add project root to Python path for packages imports
+project_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 # Configure Hypothesis settings
 settings.register_profile("dev", max_examples=10, verbosity=Verbosity.verbose)
