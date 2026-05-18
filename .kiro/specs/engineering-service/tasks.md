@@ -734,26 +734,26 @@ python -m pytest --lf
     - Cache external service responses
     - Implement cache invalidation
     - _Requirements: 6.6_
-  - [ ]* 16.8 Write unit tests with mocked responses
+  - [x] 16.8 Write unit tests with mocked responses
     - Test all client methods
     - _Requirements: 6.1-6.4_
-  - [ ]* 16.9 Write property test for integration resilience (Property 11)
+  - [x] 16.9 Write property test for integration resilience (Property 11)
     - **Property 11: Integration Resilience**
     - **Validates: Requirements 6.5, 6.6**
 
-- [ ] 17. Authentication and Authorization
-  - [ ] 17.1 Implement JWT token validation middleware
+- [x] 17. Authentication and Authorization
+  - [x] 17.1 Implement JWT token validation middleware
     - Validate tokens from User Service
     - Extract user information
     - _Requirements: 10.1_
-  - [ ] 17.2 Implement role-based access control (RBAC)
+  - [x] 17.2 Implement role-based access control (RBAC)
     - Verify engineer role permissions
     - Check document modification permissions
     - _Requirements: 10.2, 10.3_
-  - [ ] 17.3 Implement project membership verification
+  - [x] 17.3 Implement project membership verification
     - Verify user-project associations
     - _Requirements: 10.4_
-  - [ ] 17.4 Add permission checks for engineering operations
+  - [x] 17.4 Add permission checks for engineering operations
     - Protect all sensitive endpoints
     - Return appropriate error responses
     - _Requirements: 10.5, 10.6_

@@ -329,6 +329,63 @@ class ProjectServiceClient:
             logger.error(f"Failed to fetch team for {project_id}: {e}")
             raise
 
+    async def verify_project_membership(
+        self, project_id: UUID, user_id: UUID, use_cache: bool = True
+    ) -> bool:
+        """Verify if a user is a member of a project.
+
+        Args:
+            project_id: Project UUID
+            user_id: User UUID
+            use_cache: Whether to use cached response
+
+        Returns:
+            True if user is a project member, False otherwise
+        """
+        logger.info(f"Verifying membership for user {user_id} in project {project_id}")
+
+        cache_key = f"project_membership:{project_id}:{user_id}"
+
+        # Check cache first
+        if use_cache:
+            cached = await self._get_cached(cache_key)
+            if cached is not None:
+                logger.debug("Cache hit for membership check")
+                return cached.get("is_member", False)
+
+        client = self._get_client()
+
+        try:
+            response = await client.get(
+                f"/api/v1/projects/{project_id}/members/{user_id}"
+            )
+
+            # If we get a 200, user is a member
+            if response.status_code == 200:
+                result = {"is_member": True}
+                await self._set_cache(cache_key, result, ttl=300)  # Cache for 5 min
+                return True
+
+            # If we get a 404, user is not a member
+            if response.status_code == 404:
+                result = {"is_member": False}
+                await self._set_cache(cache_key, result, ttl=60)  # Cache for 1 min
+                return False
+
+            # For other status codes, raise an error
+            response.raise_for_status()
+            return False
+
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return False
+            logger.error(f"Failed to verify membership: {e}")
+            raise
+        except httpx.HTTPError as e:
+            logger.error(f"Failed to verify membership: {e}")
+            # On error, default to False for security
+            return False
+
     async def close(self):
         """Close the HTTP client."""
         if self._client:
