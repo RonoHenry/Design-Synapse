@@ -1,49 +1,37 @@
 # DesignSynapse
 
-Quantity takeoff and material pricing for houses in Kenya, computed directly from the building design.
+**An integrated platform for the built environment, connecting design, cost management and procurement through a single building data model.**
 
 ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 ![Status: early development](https://img.shields.io/badge/status-early%20development-orange)
 
-DesignSynapse turns a description of a building into a bill of quantities (BOQ) and a material schedule, and is adding supplier prices in Kenyan shillings. Every quantity is measured from the building's geometry and records how it was measured, so the professional reviewing it can check each line.
+DesignSynapse is a modern platform that bridges the fragmentation of the built-environment value chain. Design, measurement, cost planning and procurement are typically carried out by separate parties in separate tools and documents, and project information is re-keyed at every hand-off. DesignSynapse replaces those hand-offs with one structured building model from which every downstream deliverable is derived.
 
-It is built to work alongside architects and quantity surveyors, not to replace them. The software does the repetitive measuring; the professional keeps the judgement and the sign-off.
+The first module delivers design-to-cost for residential construction in Kenya: automated quantity takeoff, material scheduling and supplier pricing, with every measured quantity traceable to its source geometry.
 
-## Why
-
-Costing a house in Kenya passes through several hands. An architect draws it, a quantity surveyor measures the drawings into a bill of quantities, prices come from calls to hardware stores, and the contractor works from the result. Much of that is repetitive measuring and re-pricing done by hand, and it has to be redone whenever the design changes.
-
-DesignSynapse keeps one building model and derives everything else from it. Change a wall, and the quantities, the material list and, once pricing lands, the cost change with it.
-
-It is aimed at two groups:
-
-- **Quantity surveyors, architects and contractors**, who get a traceable first-pass bill to check and adjust instead of measuring from scratch.
-- **Homeowners and small developers**, who get a clear picture of what a design needs, to take to a professional.
-
-## What it does today
-
-DesignSynapse is currently a Python library. A web app is on the roadmap.
-
-- **Building model.** Single-storey masonry houses: walls drawn on their centrelines, doors and windows, rooms, strip foundations, ground slab, ring beam, and gable or hip roofs. Input is validated: external walls must close into a loop, and openings must fit within their walls.
-- **Quantity takeoff.** A bill in ten sections, from substructure to painting, measured by the centreline (girth) method. Each item records how it was measured.
-- **Material schedule.** Converts the bill into what is actually bought, with wastage: bags of cement, tonnes of sand and ballast, stones, roofing sheets and steel bars.
-- **Price collection.** Snapshots prices from the public catalogues of three Kenyan online building-supply shops: about 1,600 products on the first run in November 2026.
+The platform is built to augment professional practice. It automates measurement and data handling, while design authority, professional judgement and certification remain with the architect and the quantity surveyor.
 
 > [!IMPORTANT]
-> The default rate table behind the takeoff is **unverified** until a practising quantity surveyor has reviewed it. Treat the quantities as a first pass for a professional to check.
+> The default rate table is pending review by a practising quantity surveyor. Until that review is complete, outputs should be treated as a preliminary takeoff for professional verification.
 
-## How it works
+## The problem
+
+Residential project delivery in Kenya depends on manual coordination between disciplines. Architectural drawings are measured by hand into a bill of quantities, material prices are obtained supplier by supplier, and estimates are rebuilt each time the design changes. The result is duplicated effort, slow feedback on the cost of design decisions, and project documents that drift out of step with one another.
+
+## Approach
+
+DesignSynapse treats the building model as the single source of truth. Quantities, material schedules and priced estimates are computed from the model rather than transcribed, so they remain consistent with the design through every revision.
 
 ```mermaid
 flowchart LR
-    input["Building description<br/>walls, openings, rooms, roof"] --> model["Building model"]
-    model --> boq["Bill of quantities<br/>with measurement traces"]
-    boq --> materials["Material schedule<br/>with wastage"]
-    materials --> priced["Priced bill in KES"]
-    shops[("Supplier prices<br/>Kenyan online shops")] --> priced
-    model --> drawings["Drawings and schedules<br/>plan, doors, windows, PDF"]
-    brief["Written brief"] -.->|suggested layout| input
+    input["Building input<br/>walls, openings, rooms, roof"] --> model["Building data model"]
+    model --> boq["Bill of quantities<br/>with measurement audit trail"]
+    boq --> materials["Material schedule<br/>with wastage allowances"]
+    materials --> priced["Priced bill of quantities<br/>KES"]
+    shops[("Supplier price data<br/>public catalogues")] --> priced
+    model --> drawings["Drawings and schedules"]
+    brief["Design brief"] -.->|AI-assisted layout| input
 
     classDef built stroke-width:2px
     classDef next stroke-width:2px,stroke-dasharray:6 4
@@ -53,18 +41,43 @@ flowchart LR
     class drawings,brief planned
 ```
 
-Solid outline: built. Dashed: in progress. Dotted: planned.
+*Solid outline: implemented. Dashed: in development. Dotted: planned.*
 
-- **One model, everything derived.** The building model is the single source of truth. Quantities, materials and prices are computed from it, never re-typed.
-- **Deterministic quantities.** The same design always gives the same bill. AI will only ever suggest layouts; it does not produce quantities or prices.
-- **Rates are data, not code.** Specifications, material constants (stones per m², bags of cement per m³ of concrete) and wastage live in a TOML rate table, [`kenya_default.toml`](apps/platform/src/designsynapse/quantities/rate_tables/kenya_default.toml). A quantity surveyor can review and change it without touching the code.
-- **Nothing is guessed.** A building the takeoff does not yet support raises an error instead of an estimate, and a material with no matched supplier price is reported as unpriced.
+### Design principles
 
-## Example
+- **Single source of truth.** Every output is derived from one building model; nothing is re-keyed.
+- **Deterministic and auditable.** Identical inputs always produce identical bills of quantities, and each item records how it was measured. AI is reserved for design assistance, such as layout suggestions, and is never used to produce quantities or prices.
+- **Configuration over code.** Specifications, material constants and wastage factors are maintained in a version-controlled rate table, [`kenya_default.toml`](apps/platform/src/designsynapse/quantities/rate_tables/kenya_default.toml), which domain experts can review and adjust without modifying code.
+- **Explicit scope.** Geometry outside the supported scope raises an error rather than an approximation, and materials without a verified supplier match are reported as unpriced.
 
-The test suite takes off a 10 × 8 m two-room bungalow: 200 mm external stone walls, a 150 mm partition, two doors, three windows and a 25° gable roof. The result is a 38-item bill in ten sections and a 32-line material schedule. An excerpt:
+## Capabilities
 
-| Item | Description | Unit | Qty | Measured as |
+DesignSynapse is in early development and is currently distributed as a Python library. A web application is on the roadmap.
+
+| Capability | Description | Status |
+|---|---|---|
+| Building data model | Object-based model of single-storey masonry buildings: centreline wall geometry, openings, rooms, strip foundations, ground-floor slab, ring beam, and gable or hip roofs, with geometric validation on input | Implemented |
+| Quantity takeoff | Bill of quantities in ten sections, from substructure to painting, measured by the centreline (girth) method with adjustments at wall junctions; every item carries its measurement trace | Implemented |
+| Material scheduling | Conversion of measured work into procurement quantities (cement, aggregates, masonry units, roofing and reinforcement) with configurable wastage allowances | Implemented |
+| Supplier price data | Automated collection of building-material prices from public supplier catalogues in Kenya: about 1,600 products across three suppliers as of November 2026 | Implemented |
+| Priced bill of quantities | Material schedule priced in KES against matched supplier products | In development |
+
+### Intended users
+
+| User | Value |
+|---|---|
+| Quantity surveyors and cost consultants | Automated preliminary takeoff with a full measurement audit trail, leaving review, adjustment and certification to the professional |
+| Architects and designers | Rapid feedback on the quantity and material implications of design options |
+| Contractors | Consistent material schedules for estimating and procurement |
+| Clients and developers | A structured, traceable basis for engaging professionals |
+
+## Example output
+
+The reference test case is a 10 × 8 m two-room bungalow with 200 mm external stone walls, a 150 mm internal partition, two doors, three windows and a 25° gable roof. The takeoff produces a 38-item bill of quantities in ten sections and a 32-line material schedule.
+
+Bill of quantities (extract):
+
+| Item | Description | Unit | Qty | Measurement trace |
 |---|---|---|---:|---|
 | A2 | Excavate foundation trench not exceeding 1.5 m deep | m³ | 26.04 | external walls 36.00 m × 0.6 × 1.0 = 21.60; internal walls 7.40 m × 0.6 × 1.0 = 4.44 |
 | A12 | Concrete class 20 (1:2:4) in 150 mm ground floor slab | m³ | 11.29 | inside external walls 76.44 m² − internal wall footprint 1.17 m² = 75.27 m² × 0.15 |
@@ -73,7 +86,7 @@ The test suite takes off a 10 × 8 m two-room bungalow: 200 mm external stone wa
 | D1 | Gauge 30 box profile roofing sheets, measured on slope | m² | 118.24 | plan 11.40 × 9.40 = 107.16 m² ÷ cos 25° |
 | G1 | 12 mm cement-sand (1:4) plaster to internal walls | m² | 141.93 | Living 27.25 m × 3.00 − openings 5.01; Bedroom 23.25 m × 3.00 − openings 4.56 |
 
-The material schedule turns those items into what you would buy, with wastage:
+Material schedule (extract, including wastage):
 
 | Material | Unit | Qty |
 |---|---|---:|
@@ -84,11 +97,11 @@ The material schedule turns those items into what you would buy, with wastage:
 | Box profile roofing sheet, gauge 30 | m² | 136.0 |
 | Y12 high yield bar, 12 m | pc | 15.3 |
 
-Every quantity for this house is checked in [`test_takeoff_two_room_house.py`](apps/platform/tests/test_takeoff_two_room_house.py) against a hand calculation written out as arithmetic.
+Each quantity in the reference case is verified in [`test_takeoff_two_room_house.py`](apps/platform/tests/test_takeoff_two_room_house.py) against an independent hand calculation.
 
-## Getting started
+## Quick start
 
-Requires Python 3.12 or newer.
+Requires Python 3.12 or later.
 
 ```bash
 git clone https://github.com/RonoHenry/Design-Synapse.git
@@ -99,7 +112,9 @@ pip install -e ".[dev]"
 pytest
 ```
 
-### Take off a building
+### Running a takeoff
+
+The example below models a 5 × 4 m single-room building and reports one bill item with its measurement trace.
 
 ```python
 from designsynapse.model import Building
@@ -140,71 +155,68 @@ C1 200 mm machine-cut natural stone walling in cement-sand (1:4) mortar
 Cement: 66.8 bags
 ```
 
-Foundations, slab, ring beam and roof take default values when omitted. [`tests/conftest.py`](apps/platform/tests/conftest.py) shows a complete house with every setting spelled out.
+Foundation, slab, ring beam and roof parameters fall back to defaults when omitted. [`tests/conftest.py`](apps/platform/tests/conftest.py) defines a fully specified reference building.
 
-### Collect supplier prices
+### Collecting supplier prices
 
 ```bash
 cd apps/price-scraper
 python -m price_scraper          # writes data/prices-YYYY-MM-DD.csv
 ```
 
-The scraper reads each shop's public product feed over HTTPS, one request at a time. Shops are listed in [`stores.py`](apps/price-scraper/price_scraper/stores.py) after checking their robots.txt; sites that block automated access are left out.
+The collector reads each supplier's public product catalogue over HTTPS at a conservative request rate. Suppliers are registered in [`stores.py`](apps/price-scraper/price_scraper/stores.py) only after their robots.txt has been reviewed; sites that restrict automated access are excluded.
 
 ## Roadmap
 
-| Stage | Status |
-|---|---|
-| Building model | Done |
-| Quantity takeoff and material schedule | Done; rate table awaiting review by a quantity surveyor |
-| Supplier price collection from online shops | Done; sand, ballast, stone, steel, iron sheets and timber need another source |
-| Priced bill in KES | In progress |
-| Drawings and schedules: floor plan, door and window schedules, BOQ as PDF | Planned |
-| Layout suggested from a written brief | Planned |
-| Web app and deployment | Planned |
+- Review of the default rate table by a practising quantity surveyor
+- Priced bill of quantities in KES, based on a reviewed mapping from supplier products to materials
+- Price coverage for bulk materials not sold through online catalogues: aggregates, masonry, reinforcement, roofing sheets and timber
+- Drawing production: floor plans, door and window schedules, and export of the bill of quantities to PDF
+- AI-assisted layout from a written design brief
+- Web application and hosted deployment
 
-## The bigger picture
+## Platform vision
 
-Delivering a house involves a site survey, design, architecture, engineering, quantities, materials, labour and project management. Today these sit with separate tools, firms and trades, and information is re-entered at every hand-off. The long-term aim is one project model that each stage reads from and adds to, with professionals doing the work that needs their judgement.
+The long-term objective is an integrated platform spanning the building lifecycle, from site survey and design through engineering, cost management, procurement, labour and project delivery, connected by a common project data model.
 
-This repository holds early prototypes of several of those stages, from an earlier multi-service design. They are paused while the first chain, from design to a priced bill, is made to work end to end, and will be brought back one at a time.
+The repository contains early prototypes of several of these modules from a previous service-oriented architecture. They are paused while the design-to-cost chain is completed, and will be integrated one at a time.
 
-| Stage | In this repository | State |
+| Lifecycle stage | Repository location | Status |
 |---|---|---|
-| Site survey and geodata | `.kiro/specs/survey-service` | Specification only |
-| Design | `apps/design-service` | Prototype: AI-generated design specifications |
-| Architecture and documentation | `apps/architectural-service` | Prototype, paused |
-| Engineering checks | `apps/engineering-service` | Prototype, paused: structural, MEP and civil calculations |
-| Quantities and materials | `apps/platform` | Active |
-| Suppliers and pricing | `apps/price-scraper`, `apps/vendor-service` | Active; vendor catalogue prototype paused |
-| Labour | `apps/labor-service` | Prototype, paused |
-| Project delivery | `apps/project-service` | Prototype, paused |
-| Building codes and standards | `apps/knowledge-service` | Prototype, paused |
-| Accounts and access | `apps/user-service`, `apps/api-gateway` | Prototype, paused |
+| Site survey and geospatial data | `.kiro/specs/survey-service` | Specification |
+| Design | `apps/design-service` | Prototype (paused): AI-generated design specifications |
+| Architecture and documentation | `apps/architectural-service` | Prototype (paused) |
+| Engineering | `apps/engineering-service` | Prototype (paused): structural, MEP and civil calculations |
+| Cost management | `apps/platform` | Active development |
+| Procurement and pricing | `apps/price-scraper`, `apps/vendor-service` | Active development; vendor catalogue prototype paused |
+| Labour | `apps/labor-service` | Prototype (paused) |
+| Project delivery | `apps/project-service` | Prototype (paused) |
+| Codes and standards | `apps/knowledge-service` | Prototype (paused) |
+| Identity and access | `apps/user-service`, `apps/api-gateway` | Prototype (paused) |
 
-## Repository layout
+## Repository structure
 
 ```
 apps/
-  platform/            Building model, quantity takeoff and material schedule (active)
-  price-scraper/       Supplier price collection (active)
-  *-service/           Earlier FastAPI prototypes of other stages (paused, see above)
+  platform/            Building data model, quantity takeoff and material scheduling (active)
+  price-scraper/       Supplier price data collection (active)
+  *-service/           Prototype modules from the previous architecture (paused)
   analytics-service/   Placeholder (no code yet)
-  frontend/            Placeholder for a web app (no code yet)
-docs/                  Original product and design notes
-.kiro/specs/           Feature specifications: requirements, design and tasks
+  frontend/            Placeholder for the web application (no code yet)
+docs/                  Original product and design documentation
+.kiro/specs/           Feature specifications: requirements, design and implementation tasks
 ```
 
 ## Development
 
-- **Tests:** run `pytest` inside each active app. The takeoff tests compare every quantity with a hand calculation.
-- **Checks:** formatting, linting and security scans run as pre-commit hooks (black, isort, flake8 with docstring rules, bandit). Install them with `pip install pre-commit` and `pre-commit install`.
-- **Specifications:** features are written up in `.kiro/specs/` as requirements, design and tasks before they are built.
+- **Testing:** run `pytest` within each active package. Takeoff tests assert every quantity against an independent hand calculation.
+- **Quality gates:** formatting, linting and static security analysis run as pre-commit hooks (black, isort, flake8 with docstring rules, and bandit). Enable them with `pip install pre-commit` and `pre-commit install`.
+- **Specification-driven development:** each feature is specified in `.kiro/specs/` as requirements, design and implementation tasks before it is built.
 
-## Feedback
+## Contributing
 
-The most useful contribution right now is review from people who build. If you are a quantity surveyor, architect, contractor or builder in Kenya, please [open an issue](https://github.com/RonoHenry/Design-Synapse/issues): challenge an assumption in the [rate table](apps/platform/src/designsynapse/quantities/rate_tables/kenya_default.toml), or point out what a bill like the example above is missing.
+Domain review is the most valuable contribution at this stage. Quantity surveyors, architects, engineers and contractors working in Kenya are invited to [open an issue](https://github.com/RonoHenry/Design-Synapse/issues) to challenge an assumption in the [rate table](apps/platform/src/designsynapse/quantities/rate_tables/kenya_default.toml) or to identify items a professional bill of quantities would require.
 
 ## License
 
-[MIT](LICENSE). Copyright (c) 2026 Henry Rono.
+Released under the [MIT License](LICENSE). Copyright (c) 2026 Henry Rono.
