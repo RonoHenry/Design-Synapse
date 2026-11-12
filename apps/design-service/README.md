@@ -1,5 +1,8 @@
 # Design Service
 
+> [!NOTE]
+> **Status: paused prototype.** This service comes from DesignSynapse's earlier service-oriented architecture and is not under active development. It corresponds to the **Design** stage of the [platform vision](../../README.md#platform-vision) and will be integrated into the platform in a later phase. See the [main README](../../README.md) for the project's current scope.
+
 AI-powered architectural design generation, validation, and optimization service for DesignSynapse.
 
 ## Overview
