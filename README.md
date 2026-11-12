@@ -8,7 +8,7 @@ Quantity takeoff and material pricing for houses in Kenya, computed directly fro
 
 DesignSynapse turns a description of a building into a bill of quantities (BOQ) and a material schedule, and is adding supplier prices in Kenyan shillings. Every quantity is measured from the building's geometry and records how it was measured, so the professional reviewing it can check each line.
 
-It is built to work alongside architects and quantity surveyors, not to replace them. The software does the repetitive measuring; the professional keeps the judgement and the sign-off. A tractor instead of a jembe.
+It is built to work alongside architects and quantity surveyors, not to replace them. The software does the repetitive measuring; the professional keeps the judgement and the sign-off.
 
 ## Why
 
