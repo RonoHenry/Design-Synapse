@@ -1,0 +1,3 @@
+# Price snapshots are generated; keep them out of git until we decide where
+# price history should live.
+data/

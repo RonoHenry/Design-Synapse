@@ -1,0 +1,13 @@
+[project]
+name = "designsynapse-price-scraper"
+version = "0.1.0"
+description = "Collect building-material prices from Kenyan online shops"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
