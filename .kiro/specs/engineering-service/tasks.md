@@ -10,24 +10,26 @@ This task list implements the Engineering Service following Test-Driven Developm
 
 ### Current Status Assessment
 - **Foundation:** ✅ Complete (Models, schemas, basic structure)
-- **Tests Created:** 544+ tests exist across all layers
-- **Implementation Gap:** Many test files exist but implementations are incomplete
-- **Priority:** Focus on completing existing implementations rather than creating new components
+- **Tests Created:** 984 tests exist across all layers
+- **Current Coverage:** 40% overall (needs improvement to 80%+)
+- **Implementation Gap:** Core logic exists but many methods are incomplete
+- **Priority:** Complete existing implementations to achieve 80%+ coverage
 
 ### 🎯 IMMEDIATE ACTION PLAN
 
 #### Phase 1: Complete Core Calculation Engines (1-2 weeks)
+**Current Status:** 28-50% coverage, implementations partially complete
 **Why First:** All other layers depend on these calculations being correct
 
 **High Priority Files to Complete:**
-1. `src/calculations/load_calculator.py` - Structural load calculations
-2. `src/calculations/beam_designer.py` - Beam design algorithms
-3. `src/calculations/column_designer.py` - Column design algorithms
-4. `src/calculations/foundation_designer.py` - Foundation design
-5. `src/calculations/hvac_calculator.py` - HVAC load calculations
-6. `src/calculations/electrical_calculator.py` - Electrical load calculations
-7. `src/calculations/plumbing_calculator.py` - Plumbing calculations
-8. `src/calculations/fire_protection_calculator.py` - Fire protection calculations
+1. `src/calculations/load_calculator.py` - 42% coverage, needs completion
+2. `src/calculations/beam_designer.py` - 38% coverage, needs completion
+3. `src/calculations/column_designer.py` - 44% coverage, needs completion
+4. `src/calculations/foundation_designer.py` - 42% coverage, needs completion
+5. `src/calculations/hvac_calculator.py` - 35% coverage, needs completion
+6. `src/calculations/electrical_calculator.py` - 28% coverage, needs completion
+7. `src/calculations/plumbing_calculator.py` - 44% coverage, needs completion
+8. `src/calculations/fire_protection_calculator.py` - 50% coverage, needs completion
 
 **Action Steps:**
 ```bash
@@ -46,34 +48,50 @@ python -m pytest --cov=src/calculations --cov-report=term-missing
 ```
 
 #### Phase 2: Complete Repository Layer (3-5 days)
+**Current Status:** 17-45% coverage, CRUD operations partially implemented
 **Why Second:** Services need working repositories to persist data
 
 **Files to Complete:**
-1. `src/repositories/calculation_sheet_repository.py`
-2. `src/repositories/structural_design_repository.py`
-3. `src/repositories/mep_design_repository.py`
-4. `src/repositories/civil_design_repository.py`
-5. `src/repositories/compliance_report_repository.py`
-6. `src/repositories/audit_log_repository.py`
+1. `src/repositories/calculation_sheet_repository.py` - 41% coverage
+2. `src/repositories/structural_design_repository.py` - 45% coverage
+3. `src/repositories/mep_design_repository.py` - 45% coverage
+4. `src/repositories/civil_design_repository.py` - 45% coverage
+5. `src/repositories/compliance_report_repository.py` - 45% coverage
+6. `src/repositories/audit_log_repository.py` - 26% coverage
 
 #### Phase 3: Complete Service Layer (1 week)
+**Current Status:** 13-21% coverage, business logic partially implemented
 **Why Third:** Business logic layer that orchestrates calculations and data
 
 **Files to Complete:**
-1. `src/services/structural_calculation_service.py` (partially done)
-2. Create `src/services/mep_calculation_service.py`
-3. Create `src/services/civil_calculation_service.py`
-4. Create `src/services/document_service.py`
+1. `src/services/structural_calculation_service.py` - 20% coverage (partially done)
+2. `src/services/mep_calculation_service.py` - 17% coverage (exists, needs completion)
+3. `src/services/civil_calculation_service.py` - 21% coverage (exists, needs completion)
+4. `src/services/document_service.py` - 17% coverage (exists, needs completion)
+5. `src/services/code_validator_service.py` - 13% coverage (exists, needs completion)
+6. `src/services/recalculation_service.py` - 19% coverage (exists, needs completion)
 
-#### Phase 4: API Endpoints (1 week)
+#### Phase 4: Complete API Endpoints (1 week)
+**Current Status:** 24% coverage, basic structure exists but endpoints incomplete
 **Why Fourth:** Expose functionality via REST API
 
-**Create API Routes:**
-1. `src/api/v1/routes/structural.py`
-2. `src/api/v1/routes/mep.py`
-3. `src/api/v1/routes/civil.py`
-4. `src/api/v1/routes/documents.py`
-5. `src/api/v1/routes/health.py`
+**Files to Complete:**
+1. `src/api/v1/routes/structural.py` - 24% coverage (exists, needs completion)
+2. `src/api/v1/routes/mep.py` - Not created yet
+3. `src/api/v1/routes/civil.py` - Not created yet
+4. `src/api/v1/routes/documents.py` - Not created yet
+5. `src/api/v1/routes/compliance.py` - Not created yet
+6. `src/api/v1/routes/health.py` - 56% coverage (exists, needs completion)
+
+#### Phase 5: Complete Integration Clients (3-5 days)
+**Current Status:** 13-18% coverage, client structure exists but methods incomplete
+**Why Fifth:** External service integration for platform connectivity
+
+**Files to Complete:**
+1. `src/integrations/architectural_service_client.py` - 18% coverage
+2. `src/integrations/design_service_client.py` - 16% coverage
+3. `src/integrations/knowledge_service_client.py` - 14% coverage
+4. `src/integrations/project_service_client.py` - 13% coverage
 
 ### 🔧 Development Workflow
 
@@ -85,46 +103,43 @@ python -m pytest --cov=src/calculations --cov-report=term-missing
 
 ### 📊 Success Metrics
 
-- **Calculation Engines:** 80%+ coverage each
-- **Repositories:** 80%+ coverage each
-- **Services:** 80%+ coverage each
-- **API Endpoints:** 80%+ coverage each
-- **All Tests Passing:** 100% pass rate
+- **Overall Coverage:** Improve from 40% to 80%+
+- **Calculation Engines:** 80%+ coverage each (currently 28-50%)
+- **Repositories:** 80%+ coverage each (currently 17-45%)
+- **Services:** 80%+ coverage each (currently 13-21%)
+- **API Endpoints:** 80%+ coverage each (currently 24-56%)
+- **All Tests Passing:** 100% pass rate (984 tests)
 - **Property Tests:** All 12 properties validated
 
 ### 🚨 Critical Dependencies
 
 **Before starting API work, ensure:**
-- All calculation engines are complete and tested
-- All repositories are complete and tested
-- All services are complete and tested
+- All calculation engines are complete and tested (80%+ coverage)
+- All repositories are complete and tested (80%+ coverage)
+- All services are complete and tested (80%+ coverage)
 - Database migrations are applied
-- External service clients are implemented
+- External service clients are implemented (80%+ coverage)
 
 ### 📁 File Status Overview
 
-#### ✅ COMPLETE
-- Database models and migrations
-- Pydantic schemas
-- Project structure and configuration
-- Test framework setup
-- Unit conversion utilities
+#### ✅ COMPLETE (90%+ Coverage)
+- Database models (89-93% coverage)
+- Pydantic schemas (97-100% coverage)
+- Project structure and configuration (100% coverage)
+- Test framework setup (984 tests created)
+- Unit conversion utilities (65% coverage - needs improvement)
 
 #### ⚠️ NEEDS COMPLETION (Priority Order)
-1. **Calculation Engines** - Tests exist, implementations incomplete
-2. **Repositories** - Tests exist, CRUD operations incomplete
-3. **Services** - Structural service started, others need creation
-4. **API Routes** - None created yet
-5. **Validators** - None created yet
-6. **Integration Clients** - None created yet
+1. **Calculation Engines** - 28-50% coverage, core algorithms partially implemented
+2. **Repositories** - 17-45% coverage, CRUD operations partially implemented
+3. **Services** - 13-21% coverage, business logic partially implemented
+4. **API Routes** - 24-56% coverage, endpoints partially implemented
+5. **Integration Clients** - 13-18% coverage, external service calls partially implemented
 
-#### ❌ NOT STARTED
-- Code compliance validators
-- External service integration clients
-- API endpoint implementations
-- Health check endpoints
-- Audit logging implementation
-- Caching and performance optimization
+#### ❌ NEEDS SIGNIFICANT WORK
+- Core infrastructure components (26-33% coverage)
+- Authentication and authorization (0% coverage)
+- Caching and performance optimization (26% coverage)
 
 ---
 
@@ -304,30 +319,28 @@ python -m pytest --cov=src/calculations --cov-report=term-missing
     - Include bearing capacity and settlement results
     - _Requirements: 1.4, 4.1_
 
-- [ ] **PRIORITY 3B: Create MEPCalculationService**
-  - [ ] 3B.1 Create MEPCalculationService class structure
-  - [ ] 3B.2 Implement `design_hvac_system()` method
-  - [ ] 3B.3 Implement `design_electrical_system()` method
-  - [ ] 3B.4 Implement `design_plumbing_system()` method
-  - [ ] 3B.5 Implement `design_fire_protection()` method
-  - [ ]* 3B.6 Write unit tests for all MEP service methods
+- [ ] **PRIORITY 3B: Complete MEPCalculationService (17% → 80%+ coverage)**
+  - [ ] 3B.1 Complete `design_hvac_system()` method implementation
+  - [ ] 3B.2 Complete `design_electrical_system()` method implementation
+  - [ ] 3B.3 Complete `design_plumbing_system()` method implementation
+  - [ ] 3B.4 Complete `design_fire_protection()` method implementation
+  - [ ]* 3B.5 Improve unit test coverage for all MEP service methods
 
-- [ ] **PRIORITY 3C: Create CivilCalculationService**
-  - [ ] 3C.1 Create CivilCalculationService class structure
-  - [ ] 3C.2 Implement `design_grading()` method
-  - [ ] 3C.3 Implement `design_stormwater()` method
-  - [ ] 3C.4 Implement `design_utilities()` method
-  - [ ]* 3C.5 Write unit tests for all civil service methods
+- [ ] **PRIORITY 3C: Complete CivilCalculationService (21% → 80%+ coverage)**
+  - [ ] 3C.1 Complete `design_grading()` method implementation
+  - [ ] 3C.2 Complete `design_stormwater()` method implementation
+  - [ ] 3C.3 Complete `design_utilities()` method implementation
+  - [ ]* 3C.4 Improve unit test coverage for all civil service methods
 
 #### Phase 4: Create API Endpoints
 
-- [ ] **PRIORITY 4A: Create Structural API Endpoints**
-  - [ ] 4A.1 Create `src/api/v1/routes/structural.py`
-  - [ ] 4A.2 Implement POST /api/v1/structural/loads endpoint
-  - [ ] 4A.3 Implement POST /api/v1/structural/beams endpoint
-  - [ ] 4A.4 Implement POST /api/v1/structural/columns endpoint
-  - [ ] 4A.5 Implement POST /api/v1/structural/foundations endpoint
-  - [ ] 4A.6 Implement GET/PUT/DELETE endpoints for designs
+- [ ] **PRIORITY 4A: Complete Structural API Endpoints (24% → 80%+ coverage)**
+  - [ ] 4A.1 Complete `src/api/v1/routes/structural.py` implementation
+  - [ ] 4A.2 Fix POST /api/v1/structural/loads endpoint
+  - [ ] 4A.3 Fix POST /api/v1/structural/beams endpoint
+  - [ ] 4A.4 Fix POST /api/v1/structural/columns endpoint
+  - [ ] 4A.5 Fix POST /api/v1/structural/foundations endpoint
+  - [ ] 4A.6 Fix GET/PUT/DELETE endpoints for designs
   - [ ]* 4A.7 Write API integration tests
 
 - [ ] **PRIORITY 4B: Create MEP API Endpoints**
@@ -349,33 +362,46 @@ python -m pytest --cov=src/calculations --cov-report=term-missing
 
 ### 🔮 FUTURE TASKS (Lower Priority)
 
-#### Phase 5: Document Management & Code Compliance
-- [ ] 10. MEP Engineering Service Layer (create from scratch)
-- [ ] 11. Civil Engineering Service Layer (create from scratch)
-- [ ] 13. Document Management Service (create from scratch)
-- [ ] 14. Code Compliance Validation (create from scratch)
+#### Phase 6: Document Management & Code Compliance
+- [ ] 6A. Complete DocumentService Implementation (17% → 80%+ coverage)
+  - [ ] 6A.1 Complete document management method implementations
+  - [ ] 6A.2 Complete version control functionality
+  - [ ] 6A.3 Complete search and filtering capabilities
 
-#### Phase 6: Integration & Security
-- [ ] 16. External Service Integration Clients (create from scratch)
-- [ ] 17. Authentication and Authorization (create from scratch)
+- [ ] 6B. Complete CodeValidatorService Implementation (13% → 80%+ coverage)
+  - [ ] 6B.1 Complete code validation method implementations
+  - [ ] 6B.2 Complete compliance report generation
+  - [ ] 6B.3 Complete integration with Knowledge Service
 
-#### Phase 7: Cross-Cutting Concerns
-- [ ] 24. Audit Logging (create from scratch)
-- [ ] 25. Input Validation and Error Handling (enhance existing)
-- [ ] 26. Caching and Performance Optimization (create from scratch)
-- [ ] 27. Health Checks and Monitoring (create from scratch)
+#### Phase 7: Infrastructure Improvements
+- [ ] 7A. Improve Core Infrastructure Coverage (26-33% → 80%+)
+  - [ ] 7A.1 Complete caching implementation (26% → 80%+)
+  - [ ] 7A.2 Complete database utilities (33% → 80%+)
+  - [ ] 7A.3 Complete logging configuration (32% → 80%+)
 
-#### Phase 8: Testing & Documentation
-- [ ] 28. Integration Testing (create comprehensive tests)
-- [ ] 29. Documentation (create API docs and guides)
-- [ ] 30. Deployment Configuration (create deployment configs)
+- [ ] 7B. Implement Authentication and Authorization (0% → 80%+)
+  - [ ] 7B.1 Create JWT authentication middleware
+  - [ ] 7B.2 Create role-based authorization
+  - [ ] 7B.3 Create permission checking decorators
+
+#### Phase 8: Performance and Monitoring
+- [ ] 8A. Performance Optimization
+  - [ ] 8A.1 Implement advanced caching strategies
+  - [ ] 8A.2 Optimize database queries
+  - [ ] 8A.3 Add performance monitoring
+
+- [ ] 8B. Comprehensive Testing
+  - [ ] 8B.1 Add end-to-end integration tests
+  - [ ] 8B.2 Add load testing
+  - [ ] 8B.3 Add security testing
 
 ---
 
 ## 🧪 TESTING STRATEGY
 
 ### Current Test Status
-- **544+ tests created** across all layers
+- **984 tests created** across all layers
+- **Current Coverage:** 40% overall (needs improvement to 80%+)
 - **Property-based tests** implemented for core algorithms
 - **Unit tests** exist for most components
 - **Integration tests** framework ready
@@ -383,6 +409,147 @@ python -m pytest --cov=src/calculations --cov-report=term-missing
 ### Testing Workflow
 1. **Run existing tests** to identify failures
 2. **Fix implementations** to make tests pass
+3. **Verify coverage** reaches 80%+ per component
+4. **Add missing tests** only if gaps identified
+
+### Key Test Commands
+```bash
+# Run all tests
+python -m pytest
+
+# Run specific layer tests
+python -m pytest tests/unit/calculations/ -v
+python -m pytest tests/unit/repositories/ -v
+python -m pytest tests/unit/services/ -v
+
+# Run with coverage
+python -m pytest --cov=src --cov-report=term-missing
+
+# Run property tests only
+python -m pytest tests/property/ -v
+
+# Run failing tests only
+python -m pytest --lf
+```
+
+---
+
+## 📈 SUCCESS METRICS
+
+### Phase 1 Success Criteria
+- [ ] All calculation engine tests passing (100%)
+- [ ] Calculation engine coverage > 80% each (currently 28-50%)
+- [ ] All property tests passing (12 properties)
+- [ ] No critical test failures
+
+### Phase 2 Success Criteria
+- [ ] All repository tests passing (100%)
+- [ ] Repository coverage > 80% each (currently 17-45%)
+- [ ] Database operations working correctly
+- [ ] Transaction handling implemented
+
+### Phase 3 Success Criteria
+- [ ] All service tests passing (100%)
+- [ ] Service coverage > 80% each (currently 13-21%)
+- [ ] Business logic correctly implemented
+- [ ] Integration between layers working
+
+### Phase 4 Success Criteria
+- [ ] All API tests passing (100%)
+- [ ] API coverage > 80% each (currently 24-56%)
+- [ ] All endpoints functional
+- [ ] Request/response validation working
+
+### Overall Success Criteria
+- [ ] **Overall coverage > 80%** (currently 40%)
+- [ ] **All 984 tests passing**
+- [ ] **All 12 property tests validated**
+- [ ] **No critical bugs or failures**
+- [ ] **API endpoints fully functional**
+
+---
+
+## 🚨 CRITICAL NOTES
+
+### Before Starting Development
+1. **Ensure database is running** (TiDB/MySQL)
+2. **Apply all migrations** (`alembic upgrade head`)
+3. **Install all dependencies** (`pip install -r requirements.txt`)
+4. **Set up environment variables** (copy `.env.example` to `.env`)
+
+### Development Best Practices
+- **Test-Driven Development:** Fix tests before adding new features
+- **One Component at a Time:** Complete each calculation engine fully before moving to next
+- **Coverage Monitoring:** Check coverage after each fix
+- **Property Test Validation:** Ensure all property tests pass
+- **Code Quality:** Follow existing patterns and conventions
+
+### Integration Dependencies
+- **Calculation Engines** → **Services** → **API Endpoints**
+- **Repositories** → **Services** → **API Endpoints**
+- **Models/Schemas** → **All Layers**
+
+### Performance Targets
+- Simple calculations: < 500ms response time
+- Complex calculations: < 3 seconds response time
+- Concurrent requests: 100+ requests/second
+- Database queries: Optimized with proper indexes
+
+---
+
+# Implementation Plan: Engineering Service
+
+## Overview
+
+This implementation plan focuses on completing the existing Engineering Service implementations to achieve 80%+ test coverage and full functionality. The service currently has 984 tests with 40% coverage, indicating that the foundation is solid but implementations need completion.
+
+## Tasks
+
+The tasks are organized into phases based on priority and dependencies. Each phase builds upon the previous one, ensuring a systematic approach to completing the service.
+
+### Phase 1: Core Calculation Engines (Weeks 1-2)
+Complete the fundamental calculation algorithms that all other layers depend on.
+
+### Phase 2: Repository Layer (Week 3)
+Complete the data access layer to enable proper persistence and retrieval.
+
+### Phase 3: Service Layer (Week 4)
+Complete the business logic layer that orchestrates calculations and data operations.
+
+### Phase 4: API Layer (Week 5)
+Complete the REST API endpoints to expose functionality to clients.
+
+### Phase 5: Integration Layer (Week 6)
+Complete external service integrations for platform connectivity.
+
+## Task Dependency Graph
+
+```json
+{
+  "waves": [
+    { "id": 0, "tasks": ["1A.1", "1A.2", "1A.3", "1A.4"] },
+    { "id": 1, "tasks": ["1B.1", "1B.2", "1B.3", "1C.1", "1C.2"] },
+    { "id": 2, "tasks": ["1D.1", "1D.2", "1E.1", "1E.2"] },
+    { "id": 3, "tasks": ["1E.3", "1E.4", "2A.1", "2A.2"] },
+    { "id": 4, "tasks": ["2A.3", "2A.4", "2B.1", "2B.2"] },
+    { "id": 5, "tasks": ["2B.3", "2B.4", "2B.5", "3A.1"] },
+    { "id": 6, "tasks": ["3A.2", "3A.3", "3A.4", "3B.1"] },
+    { "id": 7, "tasks": ["3B.2", "3B.3", "3B.4", "3C.1"] },
+    { "id": 8, "tasks": ["3C.2", "3C.3", "3D.1", "3D.2"] },
+    { "id": 9, "tasks": ["3D.3", "3E.1", "3E.2", "3E.3"] },
+    { "id": 10, "tasks": ["4A.1", "4A.2", "4A.3", "4A.4"] },
+    { "id": 11, "tasks": ["4A.5", "4A.6", "4B.1", "4B.2"] },
+    { "id": 12, "tasks": ["4B.3", "4B.4", "4B.5", "4B.6"] },
+    { "id": 13, "tasks": ["4C.1", "4C.2", "4C.3", "4C.4"] },
+    { "id": 14, "tasks": ["4C.5", "4D.1", "4D.2", "4D.3"] },
+    { "id": 15, "tasks": ["4D.4", "4E.1", "4E.2", "4E.3"] },
+    { "id": 16, "tasks": ["4E.4", "5A.1", "5A.2", "5A.3"] },
+    { "id": 17, "tasks": ["5A.4"] }
+  ]
+}
+```
+
+---
 3. **Verify coverage** reaches 80%+ per component
 4. **Add missing tests** only if gaps identified
 
@@ -757,7 +924,7 @@ python -m pytest --lf
     - Protect all sensitive endpoints
     - Return appropriate error responses
     - _Requirements: 10.5, 10.6_
-  - [ ]* 17.5 Write unit tests for auth/authz logic
+  - [x]* 17.5 Write unit tests for auth/authz logic
     - Test authentication and authorization
     - _Requirements: 10.1-10.6_
   - [ ]* 17.6 Write integration tests for protected endpoints

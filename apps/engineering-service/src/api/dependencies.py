@@ -100,6 +100,9 @@ async def verify_project_access(
 
         return user
 
+    except HTTPException:
+        # Re-raise HTTP exceptions (e.g. access denied) without falling back
+        raise
     except Exception:
         # If project service is unavailable, fall back to role check
         if not any(

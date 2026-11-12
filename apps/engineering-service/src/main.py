@@ -11,6 +11,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, OperationalError
+from src.api.v1 import router as api_v1_router
 from src.core.config import settings
 from src.core.exceptions import EngineeringServiceException
 from starlette.exceptions import HTTPException
@@ -152,8 +153,27 @@ async def operational_error_handler(
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Handle unexpected exceptions."""
-    logger.exception(f"Unexpected error: {exc}")
+    """Handle unexpected exceptions.
+
+    Note: Starlette's BaseHTTPMiddleware wraps HTTPException in an
+    ExceptionGroup when raised inside dispatch(). We unwrap it here
+    so auth errors (401/403) are propagated correctly instead of
+    being swallowed as 500s.
+    """
+    # Unwrap ExceptionGroup (Python 3.11+) — middleware wraps HTTPException
+    unwrapped = exc
+    if isinstance(exc, BaseExceptionGroup):
+        http_excs = [e for e in exc.exceptions if isinstance(e, HTTPException)]
+        if http_excs:
+            raise http_excs[0]
+        # Re-raise the first non-HTTP exception for normal 500 handling
+        unwrapped = exc.exceptions[0]
+
+    # Let FastAPI's own handler deal with HTTPException
+    if isinstance(unwrapped, HTTPException):
+        raise unwrapped
+
+    logger.exception(f"Unexpected error: {unwrapped}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
@@ -176,6 +196,5 @@ async def health_check() -> dict:
     }
 
 
-# TODO: Include API routers
-# from src.api.v1 import router as api_v1_router
-# app.include_router(api_v1_router, prefix=settings.api_v1_prefix)
+# Include API routers
+app.include_router(api_v1_router, prefix=settings.api_v1_prefix)
