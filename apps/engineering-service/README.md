@@ -1,5 +1,8 @@
 # Engineering Service
 
+> [!NOTE]
+> **Status: paused prototype.** This service comes from DesignSynapse's earlier service-oriented architecture and is not under active development. It corresponds to the **Engineering** stage of the [platform vision](../../README.md#platform-vision) and will be integrated into the platform in a later phase. See the [main README](../../README.md) for the project's current scope.
+
 Comprehensive engineering analysis, calculations, and design capabilities for structural, MEP, and civil engineering disciplines.
 
 ## Features
