@@ -85,3 +85,7 @@ To take off your own building, describe it as a `Building` (see [`tests/conftest
 ## Author
 
 Henry Rono · [github.com/RonoHenry](https://github.com/RonoHenry)
+
+## License
+
+[MIT](LICENSE)
