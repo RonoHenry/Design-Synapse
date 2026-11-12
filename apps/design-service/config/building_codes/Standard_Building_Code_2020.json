@@ -1,0 +1,259 @@
+{
+  "metadata": {
+    "name": "Standard Building Code 2020",
+    "version": "2020.1",
+    "jurisdiction": "Kenya",
+    "effective_date": "2020-01-01",
+    "description": "Standard building code rules for residential and commercial construction in Kenya",
+    "last_updated": "2020-12-31"
+  },
+  "rule_categories": {
+    "structural": {
+      "name": "Structural Requirements",
+      "description": "Rules for structural integrity and safety"
+    },
+    "fire_safety": {
+      "name": "Fire Safety",
+      "description": "Fire prevention and safety requirements"
+    },
+    "accessibility": {
+      "name": "Accessibility",
+      "description": "Accessibility and universal design requirements"
+    },
+    "environmental": {
+      "name": "Environmental",
+      "description": "Environmental and sustainability requirements"
+    },
+    "zoning": {
+      "name": "Zoning and Setbacks",
+      "description": "Zoning compliance and setback requirements"
+    }
+  },
+  "rules": [
+    {
+      "id": "SETBACK_FRONT",
+      "category": "zoning",
+      "name": "Front Setback Requirement",
+      "description": "Minimum distance from front property boundary",
+      "severity": "critical",
+      "building_types": ["residential", "commercial"],
+      "condition": {
+        "type": "minimum_distance",
+        "field": "setbacks.front",
+        "operator": ">=",
+        "value": 5.0,
+        "unit": "meters"
+      },
+      "violation_message": "Front setback must be at least {required_value} {unit}. Current value: {current_value} {unit}",
+      "suggestion": "Increase front setback to meet minimum requirement"
+    },
+    {
+      "id": "SETBACK_REAR",
+      "category": "zoning",
+      "name": "Rear Setback Requirement",
+      "description": "Minimum distance from rear property boundary",
+      "severity": "critical",
+      "building_types": ["residential", "commercial"],
+      "condition": {
+        "type": "minimum_distance",
+        "field": "setbacks.rear",
+        "operator": ">=",
+        "value": 3.0,
+        "unit": "meters"
+      },
+      "violation_message": "Rear setback must be at least {required_value} {unit}. Current value: {current_value} {unit}",
+      "suggestion": "Increase rear setback to meet minimum requirement"
+    },
+    {
+      "id": "SETBACK_SIDE",
+      "category": "zoning",
+      "name": "Side Setback Requirement",
+      "description": "Minimum distance from side property boundaries",
+      "severity": "critical",
+      "building_types": ["residential", "commercial"],
+      "condition": {
+        "type": "minimum_distance",
+        "field": "setbacks.side",
+        "operator": ">=",
+        "value": 2.0,
+        "unit": "meters"
+      },
+      "violation_message": "Side setback must be at least {required_value} {unit}. Current value: {current_value} {unit}",
+      "suggestion": "Increase side setback to meet minimum requirement"
+    },
+    {
+      "id": "MAX_HEIGHT_RESIDENTIAL",
+      "category": "zoning",
+      "name": "Maximum Building Height - Residential",
+      "description": "Maximum allowed height for residential buildings",
+      "severity": "critical",
+      "building_types": ["residential"],
+      "condition": {
+        "type": "maximum_value",
+        "field": "building_info.height",
+        "operator": "<=",
+        "value": 12.0,
+        "unit": "meters"
+      },
+      "violation_message": "Residential building height cannot exceed {required_value} {unit}. Current height: {current_value} {unit}",
+      "suggestion": "Reduce building height or apply for height variance"
+    },
+    {
+      "id": "MAX_FLOORS_RESIDENTIAL",
+      "category": "zoning",
+      "name": "Maximum Floors - Residential",
+      "description": "Maximum number of floors for residential buildings",
+      "severity": "critical",
+      "building_types": ["residential"],
+      "condition": {
+        "type": "maximum_value",
+        "field": "building_info.num_floors",
+        "operator": "<=",
+        "value": 4,
+        "unit": "floors"
+      },
+      "violation_message": "Residential buildings cannot exceed {required_value} {unit}. Current floors: {current_value}",
+      "suggestion": "Reduce number of floors to comply with zoning requirements"
+    },
+    {
+      "id": "MIN_ROOM_AREA_BEDROOM",
+      "category": "structural",
+      "name": "Minimum Bedroom Area",
+      "description": "Minimum floor area for bedrooms",
+      "severity": "warning",
+      "building_types": ["residential"],
+      "condition": {
+        "type": "minimum_area",
+        "field": "spaces[?(@.type=='bedroom')].area",
+        "operator": ">=",
+        "value": 9.0,
+        "unit": "square_meters"
+      },
+      "violation_message": "Bedrooms should have minimum area of {required_value} {unit}. Found bedroom with {current_value} {unit}",
+      "suggestion": "Consider increasing bedroom size for better livability"
+    },
+    {
+      "id": "MIN_CEILING_HEIGHT",
+      "category": "structural",
+      "name": "Minimum Ceiling Height",
+      "description": "Minimum ceiling height for habitable rooms",
+      "severity": "critical",
+      "building_types": ["residential", "commercial"],
+      "condition": {
+        "type": "minimum_value",
+        "field": "spaces[*].dimensions.height",
+        "operator": ">=",
+        "value": 2.4,
+        "unit": "meters"
+      },
+      "violation_message": "Ceiling height must be at least {required_value} {unit}. Found room with {current_value} {unit}",
+      "suggestion": "Increase ceiling height to meet minimum requirements"
+    },
+    {
+      "id": "FOUNDATION_TYPE_REQUIRED",
+      "category": "structural",
+      "name": "Foundation Type Specification",
+      "description": "Foundation type must be specified and appropriate",
+      "severity": "critical",
+      "building_types": ["residential", "commercial"],
+      "condition": {
+        "type": "required_field",
+        "field": "structure.foundation_type",
+        "allowed_values": ["slab", "strip", "pad", "pile"]
+      },
+      "violation_message": "Foundation type must be specified and be one of: {allowed_values}",
+      "suggestion": "Specify appropriate foundation type based on soil conditions"
+    },
+    {
+      "id": "FIRE_EXIT_ACCESS",
+      "category": "fire_safety",
+      "name": "Fire Exit Access",
+      "description": "Buildings must have adequate fire exit access",
+      "severity": "critical",
+      "building_types": ["residential", "commercial"],
+      "condition": {
+        "type": "minimum_count",
+        "field": "fire_safety.exits",
+        "operator": ">=",
+        "value": 2,
+        "applies_when": {
+          "field": "building_info.num_floors",
+          "operator": ">",
+          "value": 1
+        }
+      },
+      "violation_message": "Multi-story buildings must have at least {required_value} fire exits. Current exits: {current_value}",
+      "suggestion": "Add additional fire exit to meet safety requirements"
+    },
+    {
+      "id": "ACCESSIBLE_ENTRANCE",
+      "category": "accessibility",
+      "name": "Accessible Entrance",
+      "description": "At least one entrance must be accessible",
+      "severity": "warning",
+      "building_types": ["commercial"],
+      "condition": {
+        "type": "required_field",
+        "field": "accessibility.accessible_entrance",
+        "value": true
+      },
+      "violation_message": "Commercial buildings should have at least one accessible entrance",
+      "suggestion": "Provide ramp or level entrance for accessibility compliance"
+    },
+    {
+      "id": "ENERGY_EFFICIENCY",
+      "category": "environmental",
+      "name": "Energy Efficiency Requirements",
+      "description": "Buildings should meet minimum energy efficiency standards",
+      "severity": "warning",
+      "building_types": ["residential", "commercial"],
+      "condition": {
+        "type": "minimum_value",
+        "field": "environmental.energy_rating",
+        "operator": ">=",
+        "value": 3,
+        "unit": "stars"
+      },
+      "violation_message": "Building should achieve minimum {required_value} {unit} energy rating. Current rating: {current_value} {unit}",
+      "suggestion": "Improve insulation, windows, or HVAC systems to increase energy efficiency"
+    },
+    {
+      "id": "NATURAL_VENTILATION",
+      "category": "environmental",
+      "name": "Natural Ventilation",
+      "description": "Habitable rooms should have natural ventilation",
+      "severity": "warning",
+      "building_types": ["residential"],
+      "condition": {
+        "type": "minimum_percentage",
+        "field": "spaces[?(@.type in ['bedroom', 'living_room', 'kitchen'])].ventilation.natural",
+        "operator": ">=",
+        "value": 80,
+        "unit": "percent"
+      },
+      "violation_message": "At least {required_value}% of habitable rooms should have natural ventilation",
+      "suggestion": "Add windows or vents to improve natural air circulation"
+    }
+  ],
+  "validation_config": {
+    "timeout_seconds": 10,
+    "max_violations_per_rule": 10,
+    "severity_levels": {
+      "critical": {
+        "blocks_approval": true,
+        "color": "red",
+        "priority": 1
+      },
+      "warning": {
+        "blocks_approval": false,
+        "color": "orange",
+        "priority": 2
+      },
+      "info": {
+        "blocks_approval": false,
+        "color": "blue",
+        "priority": 3
+      }
+    }
+  }
+}

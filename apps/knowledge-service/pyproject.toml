@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "knowledge-service"
+version = "0.1.0"
+authors = [
+  { name="DesignSynapse", email="info@designsynapse.com" },
+]
+description = "Knowledge Service for DesignSynapse"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]

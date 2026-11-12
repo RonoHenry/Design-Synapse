@@ -1,0 +1,13 @@
+SERVICE ENVIRONMENT SETUP REPORT
+================================================================================================
++----------------+------+------+------+-----------+---------+-------------+----------+---------+
+| Service        | Venv | Deps | Env  | Migration | Startup | Integration | Property | Overall |
++----------------+------+------+------+-----------+---------+-------------+----------+---------+
+| vendor-service | OK   | FAIL | SKIP | SKIP      | SKIP    | SKIP        | SKIP     | FAILED  |
++----------------+------+------+------+-----------+---------+-------------+----------+---------+
+
+ERRORS:
+  vendor-service:
+    - deps: installation failed
+
+Summary: 0/1 services READY, 1 FAILED
