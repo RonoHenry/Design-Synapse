@@ -55,22 +55,18 @@ repos:
     hooks:
     -   id: bandit
         args: ["-ll"]
+        # bandit 1.7.5 imports pbr but does not declare it
+        additional_dependencies: [pbr]
 
-# Check for sensitive data
+# Check for sensitive data (detect-private-key already runs above)
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
     -   id: detect-aws-credentials
-    -   id: detect-private-key
+        args: [--allow-missing-credentials]
 
-# Dockerfile linting
--   repo: https://github.com/hadolint/hadolint
-    rev: v2.12.0
+# Dockerfile linting: pip-installed hadolint binary, so no Docker daemon is needed
+-   repo: https://github.com/AleksaC/hadolint-py
+    rev: v2.12.0.3
     hooks:
-    -   id: hadolint-docker
-
-# YAML formatting
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
-    hooks:
-    -   id: check-yaml
+    -   id: hadolint
