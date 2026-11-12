@@ -1,0 +1,147 @@
+# Docker Compose configuration for integration testing
+# This file defines the infrastructure needed for workspace-level integration tests
+
+version: '3.8'
+
+services:
+  # Test database - PostgreSQL for all services
+  test-postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_MULTIPLE_DATABASES: test_user_service,test_project_service,test_knowledge_service
+    ports:
+      - "5433:5432"  # Use different port to avoid conflicts
+    volumes:
+      - ./scripts/create-multiple-databases.sh:/docker-entrypoint-initdb.d/create-multiple-databases.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - integration-test
+
+  # User Service for testing
+  test-user-service:
+    build:
+      context: ../apps/user-service
+      dockerfile: Dockerfile
+    environment:
+      ENVIRONMENT: testing
+      DB_HOST: test-postgres
+      DB_PORT: 5432
+      DB_USERNAME: test
+      DB_PASSWORD: test
+      DB_DATABASE: test_user_service
+      JWT_SECRET_KEY: test-secret-key-for-integration-tests
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRE_MINUTES: 30
+    ports:
+      - "8001:8000"
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - integration-test
+
+  # Project Service for testing
+  test-project-service:
+    build:
+      context: ../apps/project-service
+      dockerfile: Dockerfile
+    environment:
+      ENVIRONMENT: testing
+      DB_HOST: test-postgres
+      DB_PORT: 5432
+      DB_USERNAME: test
+      DB_PASSWORD: test
+      DB_DATABASE: test_project_service
+      USER_SERVICE_URL: http://test-user-service:8000
+    ports:
+      - "8002:8000"
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+      test-user-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - integration-test
+
+  # Knowledge Service for testing
+  test-knowledge-service:
+    build:
+      context: ../apps/knowledge-service
+      dockerfile: Dockerfile
+    environment:
+      ENVIRONMENT: testing
+      DB_HOST: test-postgres
+      DB_PORT: 5432
+      DB_USERNAME: test
+      DB_PASSWORD: test
+      DB_DATABASE: test_knowledge_service
+      LLM_PROVIDER: mock
+      LLM_API_KEY: mock-key-for-testing
+      VECTOR_PROVIDER: mock
+      VECTOR_API_KEY: mock-key-for-testing
+      USER_SERVICE_URL: http://test-user-service:8000
+      PROJECT_SERVICE_URL: http://test-project-service:8000
+    ports:
+      - "8003:8000"
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+      test-user-service:
+        condition: service_healthy
+      test-project-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - integration-test
+
+  # Mock external services for testing
+  mock-llm-service:
+    image: wiremock/wiremock:2.35.0
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./mocks/llm:/home/wiremock/mappings
+    command: ["--global-response-templating", "--verbose"]
+    networks:
+      - integration-test
+
+  mock-vector-service:
+    image: wiremock/wiremock:2.35.0
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./mocks/vector:/home/wiremock/mappings
+    command: ["--global-response-templating", "--verbose"]
+    networks:
+      - integration-test
+
+networks:
+  integration-test:
+    driver: bridge
+
+volumes:
+  postgres-test-data:

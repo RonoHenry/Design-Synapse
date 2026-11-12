@@ -1,0 +1,69 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/vectors/upsert"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "upsertedCount": "{{jsonPath request.body '$.vectors.length'}}"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/query"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "matches": [
+            {
+              "id": "test-vector-1",
+              "score": 0.95,
+              "values": [],
+              "metadata": {
+                "title": "Mock Test Resource 1",
+                "content_type": "pdf",
+                "source_url": "https://example.com/test1.pdf"
+              }
+            },
+            {
+              "id": "test-vector-2",
+              "score": 0.87,
+              "values": [],
+              "metadata": {
+                "title": "Mock Test Resource 2",
+                "content_type": "article",
+                "source_url": "https://example.com/test2.html"
+              }
+            }
+          ],
+          "namespace": "test"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "urlPathPattern": "/vectors/delete.*"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {}
+      }
+    }
+  ]
+}

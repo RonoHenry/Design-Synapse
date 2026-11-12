@@ -1,7 +1,7 @@
 # DesignSynapse System Architecture
 
 ## 1. System Overview
-DesignSynapse is an AI-driven platform for the DAEC (Design, Architecture, Engineering, Construction) industry, aimed at streamlining the built environment workflow in Africa.
+DesignSynapse is an AI-driven platform for the global DAEC (Design, Architecture, Engineering, Construction) industry, aimed at streamlining built environment workflows worldwide.
 
 ## 2. High-Level Architecture
 ```
@@ -13,15 +13,28 @@ Web App (Next.js) ←→ Mobile PWA
          ↓
 [Service Layer]
 ┌─────────────────┬──────────────────┬────────────────┬────────────────┐
-│  User Service   │  Design Service  │ Project Service│ Marketplace    │
-│  (Node.js/TS)   │   (FastAPI/ML)   │  (Node.js/TS)  │  Service      │
+│  User Service   │  Design Service  │ Project Service│ Knowledge      │
+│  (FastAPI)      │   (FastAPI/ML)   │  (FastAPI)     │  Service       │
 └─────────────────┴──────────────────┴────────────────┴────────────────┘
          ↓                 ↓                 ↓                ↓
 [Data Layer]
-┌─────────────────┬──────────────────┬────────────────┬────────────────┐
-│   PostgreSQL    │    MinIO/S3      │    MongoDB     │    Redis       │
-│  (User Data)    │  (Design Files)  │  (Projects)    │   (Cache)      │
-└─────────────────┴──────────────────┴────────────────┴────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                    TiDB Serverless Cluster                           │
+│                  (EU Central 1 - Frankfurt)                          │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌──────────────────┐│
+│  │design_synapse_user_db│  │design_synapse_project│  │design_synapse_   ││
+│  │- Users & Auth       │  │_db                  │  │knowledge_db      ││
+│  │- Roles & Permissions│  │- Projects & Tasks   │  │- Resources       ││
+│  │- User Profiles      │  │- Comments & Collab  │  │- Bookmarks       ││
+│  └─────────────────────┘  └─────────────────────┘  └──────────────────┘│
+│  Gateway: gateway01.eu-central-1.prod.aws.tidbcloud.com:4000        │
+│  SSL/TLS Required (ca.pem) | MySQL Compatible | Auto-scaling        │
+└──────────────────────────────────────────────────────────────────────┘
+         ↓                 ↓                 ↓
+┌─────────────────┬──────────────────┬────────────────┐
+│    MinIO/S3     │     MongoDB      │     Redis      │
+│ (Design Files)  │  (Future Use)    │    (Cache)     │
+└─────────────────┴──────────────────┴────────────────┘
 ```
 
 ## 3. Core Components
@@ -68,12 +81,22 @@ Web App (Next.js) ←→ Mobile PWA
 - Computer Vision for Drone Data
 
 ### 3.4 Data Storage
-- **PostgreSQL**
-  - User data
-  - Authentication
-  - Transactional data
-- **MongoDB**
-  - Project documents
+- **TiDB Serverless** (MySQL-compatible distributed SQL database)
+  - **Connection**: gateway01.eu-central-1.prod.aws.tidbcloud.com:4000
+  - **SSL/TLS**: Required for all connections (ca.pem certificate)
+  - **Service Databases**:
+    - `design_synapse_user_db` - User accounts, authentication, roles
+    - `design_synapse_project_db` - Projects, tasks, collaboration data
+    - `design_synapse_knowledge_db` - Resources, bookmarks, citations
+  - **Features**:
+    - Auto-scaling based on workload (serverless)
+    - HTAP capabilities (transactional + analytical)
+    - Built-in high availability and disaster recovery
+    - Pay-per-use pricing model
+    - MySQL compatibility for ecosystem integration
+    - Distributed architecture for global scale
+- **MongoDB** (Future consideration)
+  - Complex document structures
   - Design metadata
   - Vendor catalogs
 - **MinIO/S3**
@@ -143,4 +166,3 @@ Web App (Next.js) ←→ Mobile PWA
 - AI model expansion
 - AR/VR capabilities
 - Mobile native apps
-- International market expansion

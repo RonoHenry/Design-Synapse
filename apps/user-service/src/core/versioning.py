@@ -1,6 +1,5 @@
-"""
-API versioning configuration and utilities.
-"""
+"""API versioning configuration and utilities for route management."""
+
 from enum import Enum
 from typing import Optional
 
@@ -18,7 +17,7 @@ def get_api_version(
     accept_version: Optional[str] = Header(
         None,
         description="API version to use. If not specified, latest version is used.",
-        example="v1",
+        examples=["v1", "v2"],
     )
 ) -> ApiVersion:
     """
@@ -42,5 +41,8 @@ def get_api_version(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
-            detail=f"API version {accept_version} is not supported. Supported versions: {[v.value for v in ApiVersion]}",
+            detail=(
+                f"API version {accept_version} is not supported. "
+                f"Available versions: {[v.value for v in ApiVersion]}"
+            ),
         )

@@ -1,54 +1,27 @@
 #!/bin/bash
-set -e
+# DEPRECATED: This script was used for PostgreSQL setup.
+# The project now uses TiDB Serverless, which does not require local database initialization.
+#
+# To set up databases on TiDB Serverless:
+# 1. Log in to your TiDB Cloud console
+# 2. Connect to your TiDB cluster using the MySQL client or TiDB Cloud SQL Editor
+# 3. Run the following SQL commands:
+#
+# CREATE DATABASE IF NOT EXISTS design_synapse_user_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+# CREATE DATABASE IF NOT EXISTS design_synapse_project_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+# CREATE DATABASE IF NOT EXISTS design_synapse_knowledge_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+# CREATE DATABASE IF NOT EXISTS design_synapse_marketplace_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+# CREATE DATABASE IF NOT EXISTS design_synapse_design_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+# CREATE DATABASE IF NOT EXISTS design_synapse_analytics_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+#
+# 4. Run Alembic migrations for each service:
+#    cd apps/user-service && alembic upgrade head
+#    cd apps/project-service && alembic upgrade head
+#    cd apps/knowledge-service && alembic upgrade head
+#
+# Note: TiDB Serverless handles user management and permissions through the cloud console.
+# Service-specific users are not required as all services use the same TiDB cluster credentials.
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-    -- Create service-specific roles
-    CREATE ROLE design_synapse_analytics LOGIN PASSWORD 'analytics_password';
-    CREATE ROLE design_synapse_design LOGIN PASSWORD 'design_password';
-    CREATE ROLE design_synapse_marketplace LOGIN PASSWORD 'marketplace_password';
-    CREATE ROLE design_synapse_project LOGIN PASSWORD 'project_password';
-    CREATE ROLE design_synapse_user LOGIN PASSWORD 'user_password';
-
-    -- Create databases
-    CREATE DATABASE design_synapse_user_db;
-    CREATE DATABASE design_synapse_marketplace_db;
-    CREATE DATABASE design_synapse_design_db;
-    CREATE DATABASE design_synapse_project_db;
-    CREATE DATABASE design_synapse_analytics_db;
-
-    -- Grant connect privileges only to specific roles for their databases
-    GRANT CONNECT ON DATABASE design_synapse_user_db TO design_synapse_user;
-    GRANT CONNECT ON DATABASE design_synapse_marketplace_db TO design_synapse_marketplace;
-    GRANT CONNECT ON DATABASE design_synapse_design_db TO design_synapse_design;
-    GRANT CONNECT ON DATABASE design_synapse_project_db TO design_synapse_project;
-    GRANT CONNECT ON DATABASE design_synapse_analytics_db TO design_synapse_analytics;
-
-    -- Revoke public access
-    REVOKE CONNECT ON DATABASE design_synapse_user_db FROM PUBLIC;
-    REVOKE CONNECT ON DATABASE design_synapse_marketplace_db FROM PUBLIC;
-    REVOKE CONNECT ON DATABASE design_synapse_design_db FROM PUBLIC;
-    REVOKE CONNECT ON DATABASE design_synapse_project_db FROM PUBLIC;
-    REVOKE CONNECT ON DATABASE design_synapse_analytics_db FROM PUBLIC;
-EOSQL
-
-# Connect to each database and set up schema permissions
-for db in user marketplace design project analytics; do
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "design_synapse_${db}_db" <<-EOSQL
-        REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
-        REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC;
-        REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
-
-        GRANT ALL ON ALL TABLES IN SCHEMA public TO design_synapse_${db};
-        GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO design_synapse_${db};
-        GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO design_synapse_${db};
-
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public
-        GRANT ALL ON TABLES TO design_synapse_${db};
-
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public
-        GRANT ALL ON SEQUENCES TO design_synapse_${db};
-
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public
-        GRANT ALL ON FUNCTIONS TO design_synapse_${db};
-EOSQL
-done
+echo "This script is deprecated. Please use TiDB Serverless for database setup."
+echo "See the comments in this file for instructions."
+exit 1

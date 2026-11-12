@@ -59,15 +59,22 @@ Current limits: single storey, orthogonal plans, one external wall thickness. Re
 
 ```
 apps/
-  platform/          Active development: building model, takeoff, and the stages that follow
-  design-service/    Earlier FastAPI prototype (AI design generation); parts will be ported into platform
-  user-service/      Earlier prototype: users and authentication
-  analytics-service/ Earlier prototype
-  frontend/          Earlier Next.js prototype
-docs/                Original design notes and requirements
+  platform/              Active development: building model, takeoff, and the stages that follow
+  design-service/        Earlier FastAPI prototype (AI design generation); parts will be ported into platform
+  architectural-service/ Frozen: earlier prototype (design management, space planning)
+  engineering-service/   Frozen: structural, MEP and civil calculations (ASCE 7, ASHRAE, NEC, IPC)
+  vendor-service/        Frozen: vendors, products, orders; product data will feed vendor pricing
+  labor-service/         Frozen: labour marketplace prototype
+  project-service/       Frozen: projects and collaboration
+  knowledge-service/     Frozen: document search over building codes
+  user-service/          Earlier prototype: users and authentication
+  api-gateway/           Frozen: request routing between services
+  analytics-service/     Earlier prototype
+  frontend/              Earlier Next.js prototype
+docs/                    Original design notes and requirements
 ```
 
-The other services from the original multi-service design (engineering, architectural, vendor, labor, project, knowledge) are on their own branches and frozen. I'll bring them in one at a time once the core chain works.
+The frozen services come from the original multi-service design. They are kept as they are and not under active development; I'll bring them into the platform one at a time once the core chain works.
 
 ## Running the takeoff
 

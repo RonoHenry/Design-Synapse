@@ -1,7 +1,7 @@
 """
-Tests for the User model.
+Comprehensive tests for the User model.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 from src.models.user import User
