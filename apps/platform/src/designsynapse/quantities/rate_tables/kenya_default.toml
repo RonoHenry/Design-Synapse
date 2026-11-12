@@ -1,0 +1,367 @@
+# Kenya default specifications and material constants.
+#
+# STATUS: UNVERIFIED. These are typical Kenyan specifications and textbook
+# material constants, written as a starting point. A practising quantity
+# surveyor must check every coefficient before BOQs are shown to customers.
+#
+# Specs: each BOQ item references a spec. `materials` gives the quantity of
+# each material per one unit of the item, BEFORE wastage.
+# Materials: `wastage` is a fraction added on top when ordering.
+#
+# Densities assumed: sand 1.6 t/m3, ballast 1.5 t/m3, hardcore 1.6 t/m3
+# (loose, with 25% compaction allowance), murram 1.6 t/m3.
+# Cement: 50 kg bag, 1440 kg/m3. Dry volume factor: concrete 1.54, mortar 1.33.
+
+[meta]
+name = "Kenya default"
+region = "KE"
+currency = "KES"
+verified = false
+
+[defaults]
+footing_concrete = "concrete_c15"
+slab_concrete = "concrete_c20"
+ring_beam_concrete = "concrete_c20"
+oversite = "oversite_strip_150"
+excavation = "excavate_trench"
+backfill = "backfill_trench"
+hardcore = "hardcore_200"
+blinding = "murram_blinding_50"
+anti_termite = "anti_termite"
+dpm = "dpm_1000g"
+mesh = "brc_a142"
+formwork = "formwork_beam_sides"
+plaster = "plaster_internal_12"
+render = "render_external_15"
+screed = "screed_25"
+ceiling = "ceiling_gypsum"
+paint_internal = "paint_emulsion"
+paint_external = "paint_weatherproof"
+paint_ceiling = "paint_emulsion_ceiling"
+roof_covering = "roofing_g30"
+ridge = "ridge_cap"
+fascia = "fascia_board"
+barge = "barge_board"
+truss = "timber_truss"
+purlin = "purlin_50x75"
+main_bar = "rebar_high_yield"
+link_bar = "rebar_mild_steel"
+
+# Walling and DPC specs chosen by wall thickness in millimetres.
+[defaults.walling]
+200 = "mcs_200"
+150 = "mcs_150"
+
+[defaults.dpc]
+200 = "dpc_200"
+150 = "dpc_150"
+
+# ---------------------------------------------------------------- materials
+
+[materials.cement]
+name = "Portland cement 32.5N (50 kg)"
+unit = "bag"
+wastage = 0.05
+
+[materials.sand]
+name = "River sand"
+unit = "t"
+wastage = 0.10
+
+[materials.ballast]
+name = "Ballast 20 mm"
+unit = "t"
+wastage = 0.05
+
+[materials.hardcore]
+name = "Hardcore"
+unit = "t"
+wastage = 0.05
+
+[materials.murram]
+name = "Murram"
+unit = "t"
+wastage = 0.05
+
+[materials.stone_mcs]
+name = "Machine-cut stone 400 x 200 x 200 mm"
+unit = "pc"
+wastage = 0.05
+
+[materials.stone_mcs_150]
+name = "Machine-cut stone 400 x 200 x 150 mm"
+unit = "pc"
+wastage = 0.05
+
+[materials.polythene_1000g]
+name = "Polythene DPM 1000 gauge"
+unit = "m2"
+wastage = 0.10
+
+[materials.brc_a142]
+name = "BRC mesh A142"
+unit = "m2"
+wastage = 0.10
+
+[materials.dpc_felt_200]
+name = "Bituminous DPC 200 mm"
+unit = "m"
+wastage = 0.05
+
+[materials.dpc_felt_150]
+name = "Bituminous DPC 150 mm"
+unit = "m"
+wastage = 0.05
+
+[materials.termiticide]
+name = "Anti-termite concentrate"
+unit = "L"
+wastage = 0.0
+
+[materials.bar_y12]
+name = "Y12 high yield bar, 12 m"
+unit = "pc"
+wastage = 0.05
+
+[materials.bar_r8]
+name = "R8 mild steel bar, 12 m"
+unit = "pc"
+wastage = 0.05
+
+[materials.binding_wire]
+name = "Binding wire"
+unit = "kg"
+wastage = 0.0
+
+[materials.formwork_timber]
+name = "Sawn cypress 150 x 25 mm (formwork)"
+unit = "m"
+wastage = 0.10
+
+[materials.roofing_sheet_g30]
+name = "Pre-painted box profile roofing sheet, gauge 30"
+unit = "m2"
+wastage = 0.0
+
+[materials.ridge_cap]
+name = "Ridge cap, gauge 30"
+unit = "m"
+wastage = 0.05
+
+[materials.roofing_nails]
+name = "Roofing nails with washers"
+unit = "kg"
+wastage = 0.0
+
+[materials.fascia_timber]
+name = "Fascia board 200 x 25 mm"
+unit = "m"
+wastage = 0.05
+
+[materials.truss]
+name = "Treated timber roof truss (site or factory made)"
+unit = "pc"
+wastage = 0.0
+
+[materials.purlin_timber]
+name = "Treated cypress purlin 50 x 75 mm"
+unit = "m"
+wastage = 0.10
+
+[materials.emulsion_paint]
+name = "Vinyl silk emulsion"
+unit = "L"
+wastage = 0.05
+
+[materials.weatherproof_paint]
+name = "Exterior weatherproof paint"
+unit = "L"
+wastage = 0.05
+
+[materials.ceramic_floor_tile]
+name = "Ceramic floor tiles"
+unit = "m2"
+wastage = 0.0
+
+[materials.tile_adhesive]
+name = "Tile adhesive (20 kg)"
+unit = "bag"
+wastage = 0.0
+
+[materials.tile_skirting]
+name = "Ceramic tile skirting 100 mm"
+unit = "m"
+wastage = 0.0
+
+[materials.gypsum_board]
+name = "Gypsum ceiling board 1200 x 2400 mm"
+unit = "pc"
+wastage = 0.05
+
+[materials.brandering]
+name = "Ceiling brandering 50 x 50 mm"
+unit = "m"
+wastage = 0.10
+
+# -------------------------------------------------------------------- specs
+
+[specs.oversite_strip_150]
+description = "Clear site and excavate oversite to remove topsoil average 150 mm deep"
+unit = "m2"
+
+[specs.excavate_trench]
+description = "Excavate foundation trench not exceeding 1.5 m deep, in ordinary soil"
+unit = "m3"
+
+[specs.backfill_trench]
+description = "Return, fill and ram selected excavated material around foundations"
+unit = "m3"
+
+[specs.concrete_c15]
+description = "Plain concrete class 15 (1:3:6) in foundation footings"
+unit = "m3"
+materials = { cement = 4.4, sand = 0.74, ballast = 1.39 }
+
+[specs.concrete_c20]
+description = "Concrete class 20 (1:2:4)"
+unit = "m3"
+materials = { cement = 6.4, sand = 0.70, ballast = 1.32 }
+
+[specs.mcs_200]
+description = "200 mm machine-cut natural stone walling in cement-sand (1:4) mortar"
+unit = "m2"
+materials = { stone_mcs = 12.5, cement = 0.19, sand = 0.043 }
+
+[specs.mcs_150]
+description = "150 mm machine-cut natural stone walling in cement-sand (1:4) mortar"
+unit = "m2"
+materials = { stone_mcs_150 = 12.5, cement = 0.15, sand = 0.032 }
+
+[specs.hardcore_200]
+description = "200 mm thick approved hardcore filling, well compacted"
+unit = "m2"
+materials = { hardcore = 0.40 }
+
+[specs.murram_blinding_50]
+description = "50 mm thick murram blinding to hardcore"
+unit = "m2"
+materials = { murram = 0.10 }
+
+[specs.anti_termite]
+description = "Anti-termite treatment to surface of blinding"
+unit = "m2"
+materials = { termiticide = 0.05 }
+
+[specs.dpm_1000g]
+description = "1000 gauge polythene damp-proof membrane laid with 300 mm laps"
+unit = "m2"
+materials = { polythene_1000g = 1.10 }
+
+[specs.brc_a142]
+description = "BRC mesh reinforcement A142 in ground slab, 300 mm laps"
+unit = "m2"
+materials = { brc_a142 = 1.15 }
+
+[specs.dpc_200]
+description = "Bituminous felt damp-proof course, 200 mm wide, bedded in mortar"
+unit = "m"
+materials = { dpc_felt_200 = 1.0 }
+
+[specs.dpc_150]
+description = "Bituminous felt damp-proof course, 150 mm wide, bedded in mortar"
+unit = "m"
+materials = { dpc_felt_150 = 1.0 }
+
+[specs.rebar_high_yield]
+description = "High yield steel bar reinforcement to BS 4449"
+unit = "kg"
+# 1 / (12 m x 0.888 kg/m) bars per kg for Y12; other sizes need their own spec.
+materials = { bar_y12 = 0.0938, binding_wire = 0.01 }
+
+[specs.rebar_mild_steel]
+description = "Mild steel bar reinforcement (links) to BS 4449"
+unit = "kg"
+# 1 / (12 m x 0.395 kg/m) bars per kg for R8.
+materials = { bar_r8 = 0.211, binding_wire = 0.01 }
+
+[specs.formwork_beam_sides]
+description = "Sawn formwork to sides of ring beam"
+unit = "m2"
+materials = { formwork_timber = 3.0 }
+
+[specs.roofing_g30]
+description = "Gauge 30 pre-painted box profile roofing sheets fixed to purlins, measured on slope"
+unit = "m2"
+# Side and end laps: about 15% more sheet than roof area.
+materials = { roofing_sheet_g30 = 1.15, roofing_nails = 0.05 }
+
+[specs.ridge_cap]
+description = "Gauge 30 ridge and hip capping"
+unit = "m"
+materials = { ridge_cap = 1.0 }
+
+[specs.fascia_board]
+description = "200 x 25 mm fascia board, treated, fixed to rafter ends"
+unit = "m"
+materials = { fascia_timber = 1.0 }
+
+[specs.barge_board]
+description = "200 x 25 mm barge board, treated, fixed to gable ends"
+unit = "m"
+materials = { fascia_timber = 1.0 }
+
+[specs.timber_truss]
+description = "Treated timber roof truss to engineer's details"
+unit = "Nr"
+materials = { truss = 1.0 }
+
+[specs.purlin_50x75]
+description = "50 x 75 mm treated cypress purlins"
+unit = "m"
+materials = { purlin_timber = 1.0 }
+
+[specs.plaster_internal_12]
+description = "12 mm cement-sand (1:4) plaster to internal walls"
+unit = "m2"
+materials = { cement = 0.115, sand = 0.026 }
+
+[specs.render_external_15]
+description = "15 mm cement-sand (1:4) render to external walls"
+unit = "m2"
+materials = { cement = 0.146, sand = 0.032 }
+
+[specs.screed_25]
+description = "25 mm cement-sand (1:3) screed to floors"
+unit = "m2"
+materials = { cement = 0.29, sand = 0.048 }
+
+[specs.ceramic_tiles]
+description = "300 x 300 mm ceramic floor tiles on adhesive, grouted"
+unit = "m2"
+skirting = "tile_skirting"
+materials = { ceramic_floor_tile = 1.10, tile_adhesive = 0.22 }
+
+[specs.tile_skirting]
+description = "100 mm ceramic tile skirting"
+unit = "m"
+materials = { tile_skirting = 1.05 }
+
+[specs.ceiling_gypsum]
+description = "9 mm gypsum ceiling boards on 50 x 50 mm brandering"
+unit = "m2"
+materials = { gypsum_board = 0.35, brandering = 2.5 }
+
+[specs.paint_emulsion]
+description = "Prepare and apply three coats vinyl silk emulsion to plastered walls"
+unit = "m2"
+materials = { emulsion_paint = 0.25 }
+
+[specs.paint_emulsion_ceiling]
+description = "Prepare and apply three coats vinyl silk emulsion to ceilings"
+unit = "m2"
+materials = { emulsion_paint = 0.25 }
+
+[specs.paint_weatherproof]
+description = "Prepare and apply three coats weatherproof paint to rendered walls"
+unit = "m2"
+materials = { weatherproof_paint = 0.30 }

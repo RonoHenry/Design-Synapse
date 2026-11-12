@@ -3,6 +3,16 @@
 ## Overview
 AI-driven platform for the DAEC (Design, Architecture, Engineering, Construction) industry, streamlining the built environment workflow in Africa.
 
+## Current Focus (November 2026)
+
+Development is concentrated on one connected chain, built as a single modular app in `apps/platform`:
+
+**Design → Architectural Documentation → Quantities (BOQ) → Vendor Pricing**
+
+The first market is Kenya / East Africa: metric units, masonry-first construction, and KES pricing from local suppliers. Quantities are computed deterministically from building geometry; AI only suggests layouts.
+
+**Frozen services.** These services are kept as-is and are not under active development. They will be brought back one at a time once the chain works end to end: `engineering-service`, `labor-service`, `project-service`, `knowledge-service`, `analytics-service`, `marketplace-service`, `api-gateway`. Useful code from `design-service`, `architectural-service` and `vendor-service` is being ported into `apps/platform`.
+
 ## Project Structure
 ```
 designsynapse/
