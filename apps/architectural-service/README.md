@@ -1,5 +1,8 @@
 # Architectural Service
 
+> [!NOTE]
+> **Status: paused prototype.** This service comes from DesignSynapse's earlier service-oriented architecture and is not under active development. It corresponds to the **Architecture and documentation** stage of the [platform vision](../../README.md#platform-vision) and will be integrated into the platform in a later phase. See the [main README](../../README.md) for the project's current scope.
+
 Architectural design management, building code compliance checking, and structural analysis service for the DesignSynapse platform.
 
 ## Features

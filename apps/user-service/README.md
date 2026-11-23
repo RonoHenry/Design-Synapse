@@ -1,5 +1,8 @@
 # User Service
 
+> [!NOTE]
+> **Status: paused prototype.** This service comes from DesignSynapse's earlier service-oriented architecture and is not under active development. It corresponds to the **Identity and access** stage of the [platform vision](../../README.md#platform-vision) and will be integrated into the platform in a later phase. See the [main README](../../README.md) for the project's current scope.
+
 User authentication, authorization, and profile management service for DesignSynapse.
 
 ## Overview

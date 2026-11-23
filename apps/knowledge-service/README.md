@@ -1,5 +1,8 @@
 # Knowledge Service
 
+> [!NOTE]
+> **Status: paused prototype.** This service comes from DesignSynapse's earlier service-oriented architecture and is not under active development. It corresponds to the **Codes and standards** stage of the [platform vision](../../README.md#platform-vision) and will be integrated into the platform in a later phase. See the [main README](../../README.md) for the project's current scope.
+
 Intelligent knowledge management and search service for DesignSynapse, providing AI-powered content analysis, vector search, and recommendation capabilities.
 
 ## Overview
