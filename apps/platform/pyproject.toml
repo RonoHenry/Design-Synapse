@@ -16,7 +16,7 @@ dev = ["pytest>=8"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-designsynapse = ["quantities/rate_tables/*.toml"]
+designsynapse = ["quantities/rate_tables/*.toml", "pricing/product_maps/*.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
