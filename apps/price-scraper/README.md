@@ -27,7 +27,7 @@ Bulk materials (aggregates, masonry units, reinforcement, iron roofing sheets an
 
 Each run writes one CSV file, `data/prices-YYYY-MM-DD.csv`, with one row per priced product. The `data/` directory is excluded from version control.
 
-The column set is a contract with the platform's pricing module and is pinned by [`tests/test_csv_contract.py`](tests/test_csv_contract.py). Any change must be made together with the platform's reader.
+The column set is a contract with the [platform's pricing module](../platform/src/designsynapse/pricing/prices.py) and is pinned by [`tests/test_csv_contract.py`](tests/test_csv_contract.py). Any change must be made together with the platform's reader.
 
 | Column | Type | Description |
 |---|---|---|

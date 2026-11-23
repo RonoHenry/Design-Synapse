@@ -1,6 +1,7 @@
-"""The CSV columns are read by apps/platform vendor pricing; changing them breaks it.
+"""The CSV columns are read by apps/platform pricing; changing them breaks it.
 
-If a change here is intended, update the platform's reader in the same commit.
+If a change here is intended, update the platform's reader
+(apps/platform/src/designsynapse/pricing/prices.py) in the same commit.
 """
 
 from price_scraper.__main__ import FIELDS

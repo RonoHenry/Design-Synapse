@@ -28,7 +28,7 @@ flowchart LR
     input["Building input<br/>walls, openings, rooms, roof"] --> model["Building data model"]
     model --> boq["Bill of quantities<br/>with measurement audit trail"]
     boq --> materials["Material schedule<br/>with wastage allowances"]
-    materials --> priced["Priced bill of quantities<br/>KES"]
+    materials --> priced["Priced material schedule<br/>KES"]
     shops[("Supplier price data<br/>public catalogues")] --> priced
     model --> drawings["Drawings and schedules"]
     brief["Design brief"] -.->|AI-assisted layout| input
@@ -36,18 +36,17 @@ flowchart LR
     classDef built stroke-width:2px
     classDef next stroke-width:2px,stroke-dasharray:6 4
     classDef planned stroke-dasharray:2 3
-    class input,model,boq,materials,shops built
-    class priced next
+    class input,model,boq,materials,shops,priced built
     class drawings,brief planned
 ```
 
-*Solid outline: implemented. Dashed: in development. Dotted: planned.*
+*Solid outline: implemented. Dotted: planned.*
 
 ### Design principles
 
 - **Single source of truth.** Every output is derived from one building model; nothing is re-keyed.
 - **Deterministic and auditable.** Identical inputs always produce identical bills of quantities, and each item records how it was measured. AI is reserved for design assistance, such as layout suggestions, and is never used to produce quantities or prices.
-- **Configuration over code.** Specifications, material constants and wastage factors are maintained in a version-controlled rate table, [`kenya_default.toml`](apps/platform/src/designsynapse/quantities/rate_tables/kenya_default.toml), which domain experts can review and adjust without modifying code.
+- **Configuration over code.** Specifications, material constants and wastage factors are maintained in a version-controlled rate table, [`kenya_default.toml`](apps/platform/src/designsynapse/quantities/rate_tables/kenya_default.toml), which domain experts can review and adjust without modifying code. The supplier products accepted for each material are maintained in the same way, in a product map, [`kenya_default.toml`](apps/platform/src/designsynapse/pricing/product_maps/kenya_default.toml).
 - **Explicit scope.** Geometry outside the supported scope raises an error rather than an approximation, and materials without a verified supplier match are reported as unpriced.
 
 ## Capabilities
@@ -60,7 +59,7 @@ DesignSynapse is in early development and is currently distributed as a Python l
 | Quantity takeoff | Bill of quantities in ten sections, from substructure to painting, measured by the centreline (girth) method with adjustments at wall junctions; every item carries its measurement trace | Implemented |
 | Material scheduling | Conversion of measured work into procurement quantities (cement, aggregates, masonry units, roofing and reinforcement) with configurable wastage allowances | Implemented |
 | Supplier price data | Automated collection of building-material prices from public supplier catalogues in Kenya: about 1,600 products across three suppliers as of November 2026 | Implemented |
-| Priced bill of quantities | Material schedule priced in KES against matched supplier products | In development |
+| Priced material schedule | Material schedule priced in KES against a reviewed product map, rounded up to whole supplier packs, with each price traceable to its supplier listing; materials without a matched product are reported as unpriced, with the reason | Implemented; coverage limited to materials sold through online catalogues |
 
 ### Intended users
 
@@ -166,10 +165,33 @@ python -m price_scraper          # writes data/prices-YYYY-MM-DD.csv
 
 The collector reads each supplier's public product catalogue over HTTPS at a conservative request rate. Suppliers are registered in [`stores.py`](apps/price-scraper/price_scraper/stores.py) only after their robots.txt has been reviewed; sites that restrict automated access are excluded.
 
+### Pricing the material schedule
+
+Continuing the takeoff example, with a price snapshot from the collector:
+
+```python
+from designsynapse.pricing import default_product_map, load_price_list, price_schedule
+
+prices = load_price_list("../price-scraper/data/prices-2026-11-12.csv")
+priced = price_schedule(bill, prices, default_product_map())
+
+cement = priced.line("cement").offer
+print(f"Cement: {cement.packs} bags x KES {cement.pack_price:,} = KES {cement.amount:,}")
+print(f"Priced: KES {priced.priced_total:,}; "
+      f"{len(priced.unpriced())} of {len(priced.lines)} materials unpriced")
+```
+
+```text
+Cement: 67 bags x KES 850 = KES 56,950
+Priced: KES 163,050; 25 of 29 materials unpriced
+```
+
+Where several products are accepted for a material, the lowest price per material unit is used, preferring products in stock. Each priced line records the supplier, product, listing URL and collection date. Prices exclude delivery, labour, plant, overheads and profit.
+
 ## Roadmap
 
-- Review of the default rate table by a practising quantity surveyor
-- Priced bill of quantities in KES, based on a reviewed mapping from supplier products to materials
+- Review of the default rate table and product map by a practising quantity surveyor
+- Per-size price collection for products sold in several pack sizes, such as paint
 - Price coverage for bulk materials not sold through online catalogues: aggregates, masonry, reinforcement, roofing sheets and timber
 - Drawing production: floor plans, door and window schedules, and export of the bill of quantities to PDF
 - AI-assisted layout from a written design brief
@@ -198,7 +220,7 @@ The repository contains early prototypes of several of these modules from a prev
 
 ```
 apps/
-  platform/            Building data model, quantity takeoff and material scheduling (active)
+  platform/            Building data model, quantity takeoff, material scheduling and pricing (active)
   price-scraper/       Supplier price data collection (active)
   *-service/           Prototype modules from the previous architecture (paused)
   analytics-service/   Placeholder (no code yet)

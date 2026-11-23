@@ -1,0 +1,138 @@
+# Kenya default product map: the supplier products accepted for each material
+# in the Kenya default rate table.
+#
+# STATUS: UNVERIFIED. Products were matched from their catalogue listings in
+# November 2026. A quantity surveyor must confirm that each product meets the
+# material's specification before prices are shown to customers.
+#
+# Each entry names a product by `store` and `product_id`, the keys used in the
+# apps/price-scraper CSV. `pack` is the quantity of the material, in its
+# rate-table unit, that one product supplies.
+#
+# When several products are accepted for a material, the one with the lowest
+# price per material unit is used. In-stock products are preferred, and ties
+# go to the product listed first.
+#
+# Map only single-price listings. For a product sold in several sizes, the
+# collected price is the price of the cheapest size, so the pack is unknown.
+#
+# Materials not mapped here are reported as unpriced. Known gaps as of
+# November 2026:
+# - Sand, ballast, hardcore, murram, machine-cut stone, reinforcement bars,
+#   binding wire, timber, trusses and roofing sheets: not sold by the
+#   registered suppliers.
+# - Polythene DPM 1000 gauge: listed by gypsumceilingkenya (8534, 8537), but
+#   the roll size is not published.
+# - Vinyl silk emulsion: listed in 1, 4 and 20 L sizes under one product, so
+#   only the cheapest size's price is collected.
+# - Termiticide, weatherproof paint, roofing nails, ridge cap, ceramic floor
+#   tiles, tile adhesive and tile skirting: no matching product listed.
+
+[meta]
+name = "Kenya default"
+region = "KE"
+currency = "KES"
+verified = false
+
+# ------------------------------------------------------------------ cement
+# Portland cement 32.5N, 50 kg bag. Bamburi Fundi (ebuild 26799) is excluded:
+# its listing gives it as 22.5N, below the specified strength class. The
+# gypsumceilingkenya Bamburi listing (8507) is excluded because it covers
+# four products under one price.
+
+[[materials.cement]]  # Bamburi Tembo 50 kg, general purpose
+store = "ebuild"
+product_id = 24938
+pack = 1
+
+[[materials.cement]]  # Bamburi Nguvu 50 kg, structural grade
+store = "ebuild"
+product_id = 24936
+pack = 1
+
+# ------------------------------------------------------------- reinforcement
+
+[[materials.brc_a142]]  # BRC A142 sheet, 2.4 x 4.8 m = 11.52 m2
+store = "ebuild"
+product_id = 26424
+pack = 11.52
+
+# ------------------------------------------------------------ damp proofing
+# Bituminous DPC sold as a 1 m x 7 m roll and cut into strips on site: five
+# 200 mm strips (35 m) or six 150 mm strips (42 m) per roll. Each width is
+# rounded up to whole rolls separately, so a building with both widths may
+# show one roll more than cutting both from the same rolls would need.
+
+[[materials.dpc_felt_200]]  # Damp Proof Course (DPC) 1 x 7 m roll
+store = "gypsumceilingkenya"
+product_id = 8532
+pack = 35
+
+[[materials.dpc_felt_150]]  # Damp Proof Course (DPC) 1 x 7 m roll
+store = "gypsumceilingkenya"
+product_id = 8532
+pack = 42
+
+# --------------------------------------------------------------- ceilings
+# Regular 9 mm gypsum board, 1200 x 2400 mm or 4 x 8 ft. Moisture-resistant
+# and fire-rated boards are a different specification and are excluded.
+
+[[materials.gypsum_board]]  # Blue Swan 9 mm 1200 x 2400
+store = "ebuild"
+product_id = 24811
+pack = 1
+
+[[materials.gypsum_board]]  # Hada 9 mm 1200 x 2400
+store = "ebuild"
+product_id = 1830
+pack = 1
+
+[[materials.gypsum_board]]  # Hada 9 mm 4 x 8 ft
+store = "ebuild"
+product_id = 24809
+pack = 1
+
+[[materials.gypsum_board]]  # Knauf 9 mm 4 x 8 ft
+store = "ebuild"
+product_id = 26257
+pack = 1
+
+[[materials.gypsum_board]]  # Gyproc Regular 9 mm 1200 x 2400
+store = "ebuild"
+product_id = 25518
+pack = 1
+
+[[materials.gypsum_board]]  # Blue Swan 9 mm 1200 x 2400
+store = "gypsumceilingkenya"
+product_id = 6776
+pack = 1
+
+[[materials.gypsum_board]]  # Decor 9 mm 1200 x 2400
+store = "gypsumceilingkenya"
+product_id = 6395
+pack = 1
+
+[[materials.gypsum_board]]  # Thump 9 mm 1200 x 2400
+store = "gypsumceilingkenya"
+product_id = 6976
+pack = 1
+
+[[materials.gypsum_board]]  # Hada 9 mm 1200 x 2400
+store = "gypsumceilingkenya"
+product_id = 3471
+pack = 1
+
+[[materials.gypsum_board]]  # Comply 9 mm 1200 x 2400
+store = "gypsumceilingkenya"
+product_id = 6400
+pack = 1
+
+[[materials.gypsum_board]]  # Knauf 9 mm 1200 x 2400
+store = "gypsumceilingkenya"
+product_id = 2386
+pack = 1
+
+[[materials.gypsum_board]]  # Gyproc Regular 9 mm 4 x 8 ft
+store = "gypsumceilingkenya"
+product_id = 97
+pack = 1
